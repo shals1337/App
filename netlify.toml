@@ -1,0 +1,16 @@
+# Netlify configuration for Mia's Vite + React site.
+# Docs: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app fallback: serve index.html for any unknown route so client-
+# side navigation works (harmless even for this one-page site).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

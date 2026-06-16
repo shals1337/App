@@ -45,9 +45,43 @@ src/
 index.html         HTML shell
 ```
 
+## Deploying to Netlify (private link for your phone)
+
+This repo is Netlify-ready — the build settings live in `netlify.toml`, so you
+don't have to type anything in. Pick whichever route is easier:
+
+### Easiest: drag-and-drop (no account connection needed)
+
+1. On your computer, run `npm install` then `npm run build` to create the
+   `dist/` folder.
+2. Go to <https://app.netlify.com/drop> and drag the `dist` folder onto the
+   page.
+3. Netlify gives you a live URL instantly — open it in Safari on your iPhone.
+
+> Note: drag-and-drop is a one-time upload. When you change the site, build
+> again and re-drop. For automatic updates, use the connected-repo route below.
+
+### Recommended: connect the repo (auto-deploys on every push)
+
+1. Push this repo to **GitHub** (keep it private if you like).
+2. Sign in at <https://app.netlify.com> → **Add new site** → **Import an
+   existing project** → choose GitHub and pick this repo.
+3. Netlify reads `netlify.toml`, so just click **Deploy**. Build command
+   (`npm run build`) and publish folder (`dist`) are already filled in.
+4. You get a URL like `https://your-site.netlify.app`. Every push to the branch
+   redeploys automatically.
+
+### Make the link private (password protection)
+
+Netlify's built-in **password protection / SSO** is part of their paid plans.
+Free ways to keep it semi-private:
+
+- **Obscure URL:** the random `*.netlify.app` name is hard to guess. Fine for
+  casual sharing.
+- **Basic Auth:** add a `_headers` file or use a Netlify Edge Function to
+  require a password. Tell me and I'll add it.
+
 ## Keeping it private
 
 This is just the code. To keep it private, store it in a **private** GitHub
-repository. You can run it locally with `npm run dev` any time. If you ever want
-to publish it (e.g. GitHub Pages, Netlify, or Vercel), let me know and I can set
-that up.
+repository. You can run it locally with `npm run dev` any time.
