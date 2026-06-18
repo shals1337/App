@@ -40,6 +40,7 @@
           <span class="nav-toggle-bar" aria-hidden="true"></span>
         </button>
         <ul id="nav-list" class="nav-list">
+          <li><a href="#vaelg-bil">Find din bil</a></li>
           <li><a href="#produkter">Produkter</a></li>
           <li><a href="#kategorier">Kategorier</a></li>
           <li><a href="#saadan">Sådan handler du</a></li>
@@ -70,8 +71,8 @@
             Vælg dine varer online og <strong>betal nemt ved afhentning</strong>.
           </p>
           <div class="hero-actions">
-            <a href="#produkter" class="btn btn-primary">Se alle produkter</a>
-            <a href="#saadan" class="btn btn-ghost">Sådan handler du</a>
+            <a href="#vaelg-bil" class="btn btn-primary">Find fælge til din bil</a>
+            <a href="#produkter" class="btn btn-ghost">Se alle produkter</a>
           </div>
           <ul class="hero-badges">
             <li>✓ Betal ved afhentning</li>
@@ -119,6 +120,47 @@
       </div>
     </section>
 
+    <section class="finder" id="vaelg-bil">
+      <div class="container">
+        <h2 class="section-title">Find fælge &amp; dæk til din bil</h2>
+        <p class="section-sub">Vælg din bil, så viser vi boltcirkel, centerhul og de varer der passer.</p>
+
+        <div class="finder-card">
+          <div class="finder-selects">
+            <label>Mærke
+              <select id="sel-make"><option value="">Vælg mærke…</option></select>
+            </label>
+            <label>Model
+              <select id="sel-model" disabled><option value="">Vælg model…</option></select>
+            </label>
+            <label>Generation / årgang
+              <select id="sel-gen" disabled><option value="">Vælg generation…</option></select>
+            </label>
+            <label>Motor
+              <select id="sel-engine" disabled><option value="">Vælg motor…</option></select>
+            </label>
+          </div>
+          <button type="button" class="finder-reset" id="finder-reset" hidden>Nulstil valg</button>
+        </div>
+
+        <div class="finder-result" id="finder-result" hidden>
+          <div class="fr-head">
+            <h3 id="fr-title">Din bil</h3>
+            <span class="fr-badge">Fitment-data</span>
+          </div>
+          <div class="spec-grid">
+            <div class="spec"><span>Boltcirkel (PCD)</span><strong id="fr-pcd">–</strong></div>
+            <div class="spec"><span>Centerhul</span><strong id="fr-bore">–</strong></div>
+            <div class="spec"><span>Bolte / møtrik</span><strong id="fr-stud">–</strong></div>
+            <div class="spec"><span>OE-dækstørrelse</span><strong id="fr-tyre">–</strong></div>
+            <div class="spec"><span>Fælgstørrelser</span><strong id="fr-sizes">–</strong></div>
+          </div>
+          <p class="fr-note">⚠️ Vejledende værdier — kontrollér altid mod bilens registreringsattest eller din nuværende fælg.</p>
+          <a href="#produkter" class="btn btn-primary" id="fr-show">Vis varer der passer til min bil</a>
+        </div>
+      </div>
+    </section>
+
     <section class="products" id="produkter">
       <div class="container">
         <div class="products-head">
@@ -136,6 +178,14 @@
           <div class="filter-row">
             <span class="filter-label">Kategori:</span>
             <div class="chips" id="cat-filter"></div>
+          </div>
+          <div class="filter-row car-filter-row" id="car-filter-row" hidden>
+            <span class="filter-label">Min bil:</span>
+            <label class="car-toggle">
+              <input type="checkbox" id="car-only-toggle" />
+              <span id="car-only-label">Vis kun varer der passer</span>
+            </label>
+            <button type="button" class="chip chip-clear" id="car-clear">Ryd bil ✕</button>
           </div>
         </div>
 
@@ -223,6 +273,7 @@
   </aside>
 
   <script src="products.js"></script>
+  <script src="fitment.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

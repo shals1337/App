@@ -25,8 +25,9 @@
   }
 
   /* ---------- State ---------- */
-  var state = { type: "alle", category: "alle" };
+  var state = { type: "alle", category: "alle", carOnly: false };
   var cart = [];
+  var car = null; // { make, model, gen (objekt), engine }
 
   /* ---------- Kategorier ---------- */
   function renderCategories() {
@@ -85,24 +86,37 @@
     });
   }
 
+  /* ---------- Bil-fit ---------- */
+  // Et produkt passer til bilen hvis: fælg har samme boltcirkel (PCD),
+  // eller dæk har en diameter der indgår i bilens fælgstørrelser.
+  function fitsCar(p) {
+    if (!car || !car.gen) return false;
+    if (p.kind === "faelge") return p.bolt === car.gen.pcd;
+    if (p.kind === "daek") return (car.gen.sizes || []).indexOf(p.dia) !== -1;
+    return false;
+  }
+
   /* ---------- Produkter ---------- */
   function renderProducts() {
     var grid = byId("product-grid");
     grid.innerHTML = "";
     var list = PRODUCTS.filter(function (p) {
       return (state.type === "alle" || p.condition === state.type) &&
-             (state.category === "alle" || p.category === state.category);
+             (state.category === "alle" || p.category === state.category) &&
+             (!state.carOnly || fitsCar(p));
     });
 
     byId("empty-state").hidden = list.length !== 0;
 
     list.forEach(function (p) {
+      var fit = fitsCar(p);
       var card = document.createElement("article");
-      card.className = "product-card";
+      card.className = "product-card" + (fit ? " fits" : "");
       var tagClass = p.condition === "ny" ? "tag-ny" : "tag-brugt";
       var tagText = p.condition === "ny" ? "Ny" : "Brugt";
+      var fitTag = fit ? '<span class="product-tag tag-fit">✓ Passer til din bil</span>' : "";
       card.innerHTML =
-        '<div class="product-media"><span class="product-tag ' + tagClass + '">' + tagText + "</span>" + wheelSVG() + "</div>" +
+        '<div class="product-media"><span class="product-tag ' + tagClass + '">' + tagText + "</span>" + fitTag + wheelSVG() + "</div>" +
         '<div class="product-body">' +
           '<span class="product-cat">' + catName[p.category] + "</span>" +
           "<h3>" + p.name + "</h3>" +
@@ -231,8 +245,119 @@
     }
   });
 
+  /* ---------- Bil-vælger ---------- */
+  var selMake = byId("sel-make"), selModel = byId("sel-model"),
+      selGen = byId("sel-gen"), selEngine = byId("sel-engine");
+
+  function opt(value, label) {
+    var o = document.createElement("option");
+    o.value = value; o.textContent = label; return o;
+  }
+  function resetSelect(sel, placeholder) {
+    sel.innerHTML = "";
+    sel.appendChild(opt("", placeholder));
+    sel.disabled = true;
+  }
+
+  function populateMakes() {
+    Object.keys(FITMENT).sort().forEach(function (m) { selMake.appendChild(opt(m, m)); });
+  }
+
+  function onMakeChange() {
+    resetSelect(selModel, "Vælg model…");
+    resetSelect(selGen, "Vælg generation…");
+    resetSelect(selEngine, "Vælg motor…");
+    var make = selMake.value;
+    if (!make) { updateCar(); return; }
+    Object.keys(FITMENT[make]).forEach(function (mod) { selModel.appendChild(opt(mod, mod)); });
+    selModel.disabled = false;
+    updateCar();
+  }
+
+  function onModelChange() {
+    resetSelect(selGen, "Vælg generation…");
+    resetSelect(selEngine, "Vælg motor…");
+    var make = selMake.value, mod = selModel.value;
+    if (!mod) { updateCar(); return; }
+    FITMENT[make][mod].forEach(function (g, i) {
+      selGen.appendChild(opt(String(i), g.code + " · " + g.years));
+    });
+    selGen.disabled = false;
+    updateCar();
+  }
+
+  function onGenChange() {
+    resetSelect(selEngine, "Vælg motor (valgfri)…");
+    var make = selMake.value, mod = selModel.value, gi = selGen.value;
+    if (gi === "") { updateCar(); return; }
+    var g = FITMENT[make][mod][gi];
+    (g.engines || []).forEach(function (e) { selEngine.appendChild(opt(e, e)); });
+    selEngine.disabled = false;
+    updateCar();
+  }
+
+  function currentGen() {
+    var make = selMake.value, mod = selModel.value, gi = selGen.value;
+    if (!make || !mod || gi === "") return null;
+    return FITMENT[make][mod][gi];
+  }
+
+  function updateCar() {
+    var g = currentGen();
+    byId("finder-reset").hidden = !selMake.value;
+
+    if (!g) {
+      car = null;
+      byId("finder-result").hidden = true;
+      byId("car-filter-row").hidden = true;
+      state.carOnly = false;
+      byId("car-only-toggle").checked = false;
+      renderProducts();
+      return;
+    }
+
+    car = { make: selMake.value, model: selModel.value, gen: g, engine: selEngine.value };
+
+    var title = car.make + " " + car.model + " " + g.code +
+      (car.engine ? " " + car.engine : "");
+    byId("fr-title").textContent = title;
+    byId("fr-pcd").textContent = g.pcd;
+    byId("fr-bore").textContent = g.bore + " mm";
+    byId("fr-stud").textContent = g.stud;
+    byId("fr-tyre").textContent = g.oeTyre;
+    byId("fr-sizes").textContent = g.sizes.join("\" / ") + "\"";
+    byId("finder-result").hidden = false;
+
+    byId("car-filter-row").hidden = false;
+    byId("car-only-label").textContent = "Vis kun varer der passer til " + car.make + " " + car.model;
+    renderProducts();
+  }
+
+  function resetFinder() {
+    selMake.value = "";
+    onMakeChange();
+  }
+
+  selMake.addEventListener("change", onMakeChange);
+  selModel.addEventListener("change", onModelChange);
+  selGen.addEventListener("change", onGenChange);
+  selEngine.addEventListener("change", updateCar);
+  byId("finder-reset").addEventListener("click", resetFinder);
+
+  byId("fr-show").addEventListener("click", function () {
+    state.carOnly = true;
+    byId("car-only-toggle").checked = true;
+    renderProducts();
+  });
+  byId("car-only-toggle").addEventListener("change", function (e) {
+    state.carOnly = e.target.checked;
+    renderProducts();
+  });
+  byId("car-clear").addEventListener("click", resetFinder);
+
   /* ---------- Init ---------- */
   byId("year").textContent = new Date().getFullYear();
+  populateMakes();
   renderCategories();
   renderFilters();
   renderProducts();
