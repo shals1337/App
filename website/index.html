@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midtjysk Fælge og Dæk — Brugte og nye fælge & dæk</title>
+  <meta name="description" content="Midtjysk Fælge og Dæk sælger brugte og nye fælge og dæk til alle bilmærker og kategorier. Betal ved afhentning i Midtjylland." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a href="#top" class="brand" aria-label="Midtjysk Fælge og Dæk - forside">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" width="40" height="40" role="img" aria-hidden="true">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="3"/>
+            <circle cx="24" cy="24" r="6" fill="currentColor"/>
+            <g stroke="currentColor" stroke-width="3" stroke-linecap="round">
+              <line x1="24" y1="9" x2="24" y2="17"/>
+              <line x1="24" y1="31" x2="24" y2="39"/>
+              <line x1="9" y1="24" x2="17" y2="24"/>
+              <line x1="31" y1="24" x2="39" y2="24"/>
+              <line x1="13.4" y1="13.4" x2="19" y2="19"/>
+              <line x1="29" y1="29" x2="34.6" y2="34.6"/>
+              <line x1="34.6" y1="13.4" x2="29" y2="19"/>
+              <line x1="19" y1="29" x2="13.4" y2="34.6"/>
+            </g>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <strong>Midtjysk</strong>
+          <span>Fælge &amp; Dæk</span>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Hovedmenu">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-list">
+          <span class="sr-only">Menu</span>
+          <span class="nav-toggle-bar" aria-hidden="true"></span>
+        </button>
+        <ul id="nav-list" class="nav-list">
+          <li><a href="#produkter">Produkter</a></li>
+          <li><a href="#kategorier">Kategorier</a></li>
+          <li><a href="#saadan">Sådan handler du</a></li>
+          <li><a href="#kontakt">Kontakt</a></li>
+        </ul>
+      </nav>
+
+      <a href="#kurv" class="cart-button" id="cart-button">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+          <path d="M1 1h4l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/>
+        </svg>
+        <span class="sr-only">Forespørgsel</span>
+        <span class="cart-count" id="cart-count" hidden>0</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="hero-text">
+          <p class="eyebrow">Brugte &amp; nye — alle bilmærker</p>
+          <h1>Fælge og dæk der passer til <span>din bil</span></h1>
+          <p class="lead">
+            Hos Midtjysk Fælge og Dæk finder du kvalitetsfælge og dæk til alle
+            bilkategorier — fra personbil og SUV til varevogn og veteran.
+            Vælg dine varer online og <strong>betal nemt ved afhentning</strong>.
+          </p>
+          <div class="hero-actions">
+            <a href="#produkter" class="btn btn-primary">Se alle produkter</a>
+            <a href="#saadan" class="btn btn-ghost">Sådan handler du</a>
+          </div>
+          <ul class="hero-badges">
+            <li>✓ Betal ved afhentning</li>
+            <li>✓ Brugte &amp; nye</li>
+            <li>✓ Alle bilkategorier</li>
+          </ul>
+        </div>
+        <div class="hero-card" aria-hidden="true">
+          <div class="hero-wheel">
+            <svg viewBox="0 0 240 240" width="100%" height="100%" role="img" aria-label="Illustration af en fælg">
+              <defs>
+                <radialGradient id="rim" cx="50%" cy="45%" r="60%">
+                  <stop offset="0%" stop-color="#e9edf2"/>
+                  <stop offset="60%" stop-color="#b9c2cc"/>
+                  <stop offset="100%" stop-color="#7c8794"/>
+                </radialGradient>
+              </defs>
+              <circle cx="120" cy="120" r="112" fill="#15181d"/>
+              <circle cx="120" cy="120" r="96" fill="#23272e"/>
+              <circle cx="120" cy="120" r="78" fill="url(#rim)"/>
+              <g fill="#2b3037">
+                <circle cx="120" cy="120" r="22"/>
+              </g>
+              <g stroke="#6c7682" stroke-width="10" stroke-linecap="round">
+                <line x1="120" y1="120" x2="120" y2="50"/>
+                <line x1="120" y1="120" x2="181" y2="155"/>
+                <line x1="120" y1="120" x2="59" y2="155"/>
+                <line x1="120" y1="120" x2="178" y2="92"/>
+                <line x1="120" y1="120" x2="62" y2="92"/>
+              </g>
+              <g fill="#d8dde3">
+                <circle cx="120" cy="120" r="9"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="categories" id="kategorier">
+      <div class="container">
+        <h2 class="section-title">Vælg din bilkategori</h2>
+        <p class="section-sub">Vi har fælge og dæk til alle slags biler.</p>
+        <div class="category-grid" id="category-grid"><!-- udfyldes af script.js --></div>
+      </div>
+    </section>
+
+    <section class="products" id="produkter">
+      <div class="container">
+        <div class="products-head">
+          <div>
+            <h2 class="section-title">Produkter</h2>
+            <p class="section-sub">Filtrér efter type og bilkategori.</p>
+          </div>
+        </div>
+
+        <div class="filters" role="group" aria-label="Filtrér produkter">
+          <div class="filter-row">
+            <span class="filter-label">Type:</span>
+            <div class="chips" id="type-filter"></div>
+          </div>
+          <div class="filter-row">
+            <span class="filter-label">Kategori:</span>
+            <div class="chips" id="cat-filter"></div>
+          </div>
+        </div>
+
+        <div class="product-grid" id="product-grid"></div>
+        <p class="empty-state" id="empty-state" hidden>Ingen produkter matcher dit filter.</p>
+      </div>
+    </section>
+
+    <section class="how" id="saadan">
+      <div class="container">
+        <h2 class="section-title">Sådan handler du</h2>
+        <p class="section-sub">Enkelt og trygt — du betaler først, når du henter.</p>
+        <ol class="steps">
+          <li>
+            <span class="step-num">1</span>
+            <h3>Vælg dine varer</h3>
+            <p>Find de fælge og dæk der passer til din bil, og læg dem i din forespørgsel.</p>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <h3>Send forespørgsel</h3>
+            <p>Udfyld navn og telefon. Vi bekræfter pris og at varerne er klar.</p>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <h3>Afhent &amp; betal</h3>
+            <p>Du henter varerne hos os i Midtjylland og <strong>betaler ved afhentning</strong> — kontant eller MobilePay.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="contact" id="kontakt">
+      <div class="container contact-inner">
+        <div>
+          <h2 class="section-title">Kontakt os</h2>
+          <p class="section-sub">Spørgsmål om en vare, mål eller pasform? Ring eller skriv.</p>
+          <ul class="contact-list">
+            <li><span>Telefon</span><a href="tel:+4500000000">+45 00 00 00 00</a></li>
+            <li><span>E-mail</span><a href="mailto:info@midtjyskfaelge.dk">info@midtjyskfaelge.dk</a></li>
+            <li><span>Adresse</span>Industrivej 1, 7400 Herning</li>
+            <li><span>Åbningstider</span>Man–fre 9–17 · Lør 10–14</li>
+          </ul>
+          <p class="payment-note">💳 Bemærk: Vi tager <strong>betaling ved afhentning</strong> — kontant eller MobilePay.</p>
+        </div>
+        <form class="contact-form" id="contact-form" novalidate>
+          <h3>Skriv til os</h3>
+          <label>Navn <input type="text" name="name" required autocomplete="name" /></label>
+          <label>Telefon <input type="tel" name="phone" required autocomplete="tel" /></label>
+          <label>Besked <textarea name="message" rows="4" placeholder="F.eks. bilmærke, model og hvilke fælge/dæk du leder efter"></textarea></label>
+          <button type="submit" class="btn btn-primary">Send besked</button>
+          <p class="form-status" id="contact-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> Midtjysk Fælge og Dæk · Brugte &amp; nye fælge og dæk · Betal ved afhentning</p>
+      <a href="#top" class="to-top">Til toppen ↑</a>
+    </div>
+  </footer>
+
+  <!-- Forespørgsels-panel (kurv) -->
+  <aside class="cart-panel" id="kurv" aria-hidden="true" aria-label="Din forespørgsel">
+    <div class="cart-overlay" data-close-cart></div>
+    <div class="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+      <div class="cart-header">
+        <h2 id="cart-title">Din forespørgsel</h2>
+        <button class="cart-close" data-close-cart aria-label="Luk">×</button>
+      </div>
+      <div class="cart-items" id="cart-items"></div>
+      <div class="cart-footer">
+        <div class="cart-total"><span>Anslået i alt</span><strong id="cart-total">0 kr.</strong></div>
+        <p class="cart-pay-note">Betal ved afhentning</p>
+        <form class="cart-form" id="cart-form">
+          <label>Navn <input type="text" name="name" required autocomplete="name" /></label>
+          <label>Telefon <input type="tel" name="phone" required autocomplete="tel" /></label>
+          <button type="submit" class="btn btn-primary btn-block" id="cart-submit" disabled>Send forespørgsel</button>
+          <p class="form-status" id="cart-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <script src="products.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
