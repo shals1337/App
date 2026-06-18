@@ -17,3 +17,6 @@ xcuserdata/
 .build/
 .swiftpm/
 Packages/
+
+# Website preview screenshots (generated, not source)
+website/preview/
