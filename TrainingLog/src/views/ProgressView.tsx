@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../state/AppContext';
+import type { MuscleGroup } from '../types';
 import { est1RM } from '../lib/stats';
 import { formatWeight, todayISODate } from '../lib/format';
 import { LineChart, type ChartPoint } from '../components/LineChart';
@@ -68,6 +69,25 @@ export function ProgressView() {
     [bodyWeight],
   );
 
+  /* completed sets per muscle group, last 30 days */
+  const muscleSplit = useMemo(() => {
+    const cutoff = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    const counts = new Map<MuscleGroup, number>();
+    for (const s of sessions) {
+      if (s.startedAt < cutoff) continue;
+      for (const logged of s.exercises) {
+        const done = logged.sets.filter((x) => x.completed).length;
+        if (done === 0) continue;
+        const group =
+          exercises.find((e) => e.id === logged.exerciseId)?.muscleGroup ?? 'Other';
+        counts.set(group, (counts.get(group) ?? 0) + done);
+      }
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [sessions, exercises]);
+
+  const maxSplit = Math.max(1, ...muscleSplit.map(([, n]) => n));
+
   function logWeight() {
     const v = Number(weightInput);
     if (!v || v <= 0) return;
@@ -122,6 +142,27 @@ export function ProgressView() {
             ) : (
               <p className="empty">No data for this exercise yet.</p>
             )}
+          </div>
+        </section>
+      )}
+
+      {muscleSplit.length > 0 && (
+        <section>
+          <h2 className="section-title">Muscle split · last 30 days</h2>
+          <div className="card">
+            {muscleSplit.map(([group, count]) => (
+              <div className="split-row" key={group}>
+                <span className="split-name">{group}</span>
+                <div className="split-track">
+                  <div
+                    className="split-bar"
+                    style={{ width: `${(count / maxSplit) * 100}%` }}
+                  />
+                </div>
+                <span className="split-count mono">{count}</span>
+              </div>
+            ))}
+            <p className="muted small split-note">completed sets per muscle group</p>
           </div>
         </section>
       )}

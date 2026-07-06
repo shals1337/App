@@ -111,3 +111,34 @@ export const DownloadIcon = ({ size }: IconProps) => (
     <path d="M12 4v11M7.5 11 12 15.5 16.5 11M4.5 19.5h15" />
   </svg>
 );
+
+export const GearIcon = ({ size }: IconProps) => (
+  <svg {...base(size)}>
+    <path d="M4 8h8M17 8h3M4 16h4M12.5 16H20" />
+    <circle cx="14.5" cy="8" r="2.3" />
+    <circle cx="10" cy="16" r="2.3" />
+  </svg>
+);
+
+export const PlateIcon = ({ size }: IconProps) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="2.5" />
+  </svg>
+);
+
+export const RepeatIcon = ({ size }: IconProps) => (
+  <svg {...base(size)}>
+    <path d="M17 3.5 20.5 7 17 10.5" />
+    <path d="M20.5 7H8a4.5 4.5 0 0 0-4.5 4.5" />
+    <path d="M7 20.5 3.5 17 7 13.5" />
+    <path d="M3.5 17H16a4.5 4.5 0 0 0 4.5-4.5" />
+  </svg>
+);
+
+export const NoteIcon = ({ size }: IconProps) => (
+  <svg {...base(size)}>
+    <rect x="4.5" y="3.5" width="15" height="17" rx="3" />
+    <path d="M8.5 9h7M8.5 13h7M8.5 17h4" />
+  </svg>
+);

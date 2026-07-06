@@ -30,6 +30,14 @@ no backend: everything is stored on-device (`localStorage`).
 - **Exercise library** — ~50 built-in exercises organised by muscle group,
   search and filter, per-exercise records and recent-session breakdown, plus
   custom exercises.
+- **Calendar** — month view in History with trained days highlighted; tap a
+  day to open that session.
+- **Muscle split** — completed sets per muscle group over the last 30 days.
+- **Plate calculator** — plates per side for any target weight and bar.
+- **Workout notes** — jot how the session felt; shown in history.
+- **Repeat workout** — restart any past session with its sets prefilled.
+- **Settings** — default rest duration, rest-end sound, and JSON
+  backup export/import.
 
 ## Run
 

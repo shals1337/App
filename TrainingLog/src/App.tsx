@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { WorkoutSession } from './types';
 import { AppProvider, useApp } from './state/AppContext';
 import { HomeView } from './views/HomeView';
 import { HistoryView } from './views/HistoryView';
@@ -26,10 +27,24 @@ const TABS: { id: Tab; label: string; icon: typeof HomeIcon }[] = [
 ];
 
 function Shell() {
-  const { active } = useApp();
+  const { active, setActive } = useApp();
   const [tab, setTab] = useState<Tab>('home');
   const [inWorkout, setInWorkout] = useState(false);
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+
+  function repeatSession(session: WorkoutSession) {
+    if (active) return;
+    setActive({
+      name: session.name,
+      startedAt: new Date().toISOString(),
+      exercises: session.exercises.map((e) => ({
+        exerciseId: e.exerciseId,
+        sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, completed: false })),
+      })),
+    });
+    setOpenSessionId(null);
+    setInWorkout(true);
+  }
 
   if (inWorkout) {
     return (
@@ -42,8 +57,10 @@ function Shell() {
     );
   }
 
+  const showPill = !!active && !inWorkout;
+
   return (
-    <div className="app">
+    <div className={showPill ? 'app has-pill' : 'app'}>
       <main className="content">
         {tab === 'home' && (
           <HomeView
@@ -58,14 +75,18 @@ function Shell() {
           />
         )}
         {tab === 'history' && (
-          <HistoryView openSessionId={openSessionId} onOpenSession={setOpenSessionId} />
+          <HistoryView
+            openSessionId={openSessionId}
+            onOpenSession={setOpenSessionId}
+            onRepeat={repeatSession}
+          />
         )}
         {tab === 'workout' && <StartWorkoutView onBegin={() => setInWorkout(true)} />}
         {tab === 'exercises' && <ExercisesView />}
         {tab === 'progress' && <ProgressView />}
       </main>
 
-      {active && !inWorkout && (
+      {showPill && (
         <button className="resume-pill" onClick={() => setInWorkout(true)}>
           Workout in progress — tap to resume
         </button>

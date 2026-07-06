@@ -16,6 +16,7 @@ import type {
 } from '../types';
 import { BUILTIN_EXERCISES } from '../data/exercises';
 import {
+  type ImportPayload,
   loadActiveWorkout,
   loadBodyWeight,
   loadCustomExercises,
@@ -49,6 +50,7 @@ interface AppState {
   deleteBodyWeight: (date: string) => void;
   setActive: (a: ActiveWorkout | null) => void;
   setSettings: (s: Settings) => void;
+  importData: (payload: ImportPayload) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -100,6 +102,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setBodyWeight((prev) => prev.filter((e) => e.date !== date)),
     setActive: setActiveState,
     setSettings: setSettingsState,
+    importData: (payload) => {
+      setSessions(payload.sessions);
+      setCustomExercises(payload.customExercises);
+      setTemplatesState(payload.templates);
+      setBodyWeight(payload.bodyWeight);
+    },
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

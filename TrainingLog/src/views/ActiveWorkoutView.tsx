@@ -2,9 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../state/AppContext';
 import type { LoggedExercise, SetEntry, WorkoutSession } from '../types';
 import { est1RM, prsInSession, sessionSetCount, sessionVolume } from '../lib/stats';
-import { formatDuration, formatVolume, formatWeight } from '../lib/format';
+import { formatCompact, formatDuration, formatWeight } from '../lib/format';
 import { ExercisePicker } from '../components/ExercisePicker';
-import { CheckIcon, PlusIcon, TimerIcon, TrophyIcon, XIcon } from '../components/Icons';
+import { PlateCalculator } from '../components/PlateCalculator';
+import {
+  CheckIcon,
+  PlateIcon,
+  PlusIcon,
+  TimerIcon,
+  TrophyIcon,
+  XIcon,
+} from '../components/Icons';
 import { newId } from '../id';
 
 interface Props {
@@ -32,11 +40,14 @@ export function ActiveWorkoutView({ onDone }: Props) {
   const { active, setActive, sessions, exerciseById, addSession, settings, setSettings } =
     useApp();
   const [showPicker, setShowPicker] = useState(false);
+  const [showPlates, setShowPlates] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [summary, setSummary] = useState<WorkoutSession | null>(null);
   const [now, setNow] = useState(Date.now());
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
+  const [armedDelete, setArmedDelete] = useState<string | null>(null);
   const beeped = useRef(false);
+  const disarmTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -48,13 +59,13 @@ export function ActiveWorkoutView({ onDone }: Props) {
     if (restLeft !== null && restLeft <= 0) {
       if (!beeped.current) {
         beeped.current = true;
-        beep();
+        if (settings.restSound) beep();
       }
       setRestEndsAt(null);
     } else if (restLeft !== null && restLeft > 0) {
       beeped.current = false;
     }
-  }, [restLeft]);
+  }, [restLeft, settings.restSound]);
 
   /* leave the workout screen if there is nothing to show (e.g. stale state) */
   const hasContent = !!active || !!summary;
@@ -147,12 +158,21 @@ export function ActiveWorkoutView({ onDone }: Props) {
     );
   }
 
-  function removeSet(exIdx: number, setIdx: number) {
-    update(
-      active!.exercises.map((e, i) =>
-        i !== exIdx ? e : { ...e, sets: e.sets.filter((_, j) => j !== setIdx) },
-      ),
-    );
+  /* first tap arms the row (number turns into a red ×), second tap deletes */
+  function tapSetNumber(exIdx: number, setIdx: number) {
+    const key = `${exIdx}-${setIdx}`;
+    clearTimeout(disarmTimer.current);
+    if (armedDelete === key) {
+      setArmedDelete(null);
+      update(
+        active!.exercises.map((e, i) =>
+          i !== exIdx ? e : { ...e, sets: e.sets.filter((_, j) => j !== setIdx) },
+        ),
+      );
+    } else {
+      setArmedDelete(key);
+      disarmTimer.current = setTimeout(() => setArmedDelete(null), 2000);
+    }
   }
 
   function removeExercise(exIdx: number) {
@@ -178,6 +198,7 @@ export function ActiveWorkoutView({ onDone }: Props) {
       startedAt: active!.startedAt,
       durationSec: elapsed,
       exercises,
+      note: active!.note?.trim() || undefined,
     };
     addSession(session);
     setActive(null);
@@ -212,6 +233,13 @@ export function ActiveWorkoutView({ onDone }: Props) {
           />
           <span className="muted small mono">{formatDuration(elapsed)}</span>
         </div>
+        <button
+          className="icon-btn"
+          onClick={() => setShowPlates(true)}
+          aria-label="Plate calculator"
+        >
+          <PlateIcon size={19} />
+        </button>
         <button className="finish-btn" onClick={finish} disabled={!anyCompleted}>
           Finish
         </button>
@@ -240,14 +268,17 @@ export function ActiveWorkoutView({ onDone }: Props) {
 
               {ex.sets.map((s, setIdx) => {
                 const p = prev?.[setIdx];
+                const armed = armedDelete === `${exIdx}-${setIdx}`;
                 return (
                   <div className={s.completed ? 'set-grid done' : 'set-grid'} key={setIdx}>
                     <button
-                      className="set-num"
-                      onClick={() => removeSet(exIdx, setIdx)}
-                      aria-label={`Remove set ${setIdx + 1}`}
+                      className={armed ? 'set-num armed' : 'set-num'}
+                      onClick={() => tapSetNumber(exIdx, setIdx)}
+                      aria-label={
+                        armed ? 'Tap again to remove set' : `Set ${setIdx + 1} — tap twice to remove`
+                      }
                     >
-                      {setIdx + 1}
+                      {armed ? '×' : setIdx + 1}
                     </button>
                     <span className="prev-hint">
                       {p ? `${formatWeight(p.weight)}×${p.reps}` : '—'}
@@ -287,6 +318,14 @@ export function ActiveWorkoutView({ onDone }: Props) {
         <button className="ghost-btn big" onClick={() => setShowPicker(true)}>
           <PlusIcon size={17} /> Add exercise
         </button>
+
+        <textarea
+          className="note-input"
+          placeholder="Workout notes…"
+          rows={2}
+          value={active.note ?? ''}
+          onChange={(e) => setActive({ ...active, note: e.target.value })}
+        />
       </div>
 
       {restLeft !== null && restLeft > 0 && (
@@ -306,6 +345,8 @@ export function ActiveWorkoutView({ onDone }: Props) {
       {showPicker && (
         <ExercisePicker onPick={addExercise} onClose={() => setShowPicker(false)} />
       )}
+
+      {showPlates && <PlateCalculator onClose={() => setShowPlates(false)} />}
 
       {confirmCancel && (
         <div className="sheet-backdrop" onClick={() => setConfirmCancel(false)}>
@@ -347,8 +388,8 @@ function SummaryModal({ session, onClose }: { session: WorkoutSession; onClose: 
             <span className="stat-label">duration</span>
           </div>
           <div className="stat-tile">
-            <span className="stat-value">{formatVolume(sessionVolume(session))}</span>
-            <span className="stat-label">volume</span>
+            <span className="stat-value">{formatCompact(sessionVolume(session))}</span>
+            <span className="stat-label">kg volume</span>
           </div>
           <div className="stat-tile">
             <span className="stat-value">{sessionSetCount(session)}</span>

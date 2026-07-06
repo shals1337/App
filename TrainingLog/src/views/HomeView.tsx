@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp } from '../state/AppContext';
 import {
   recentPRs,
@@ -5,9 +6,9 @@ import {
   thisWeekSessions,
   weekStreak,
 } from '../lib/stats';
-import { formatDate, formatVolume, greeting } from '../lib/format';
-import { DownloadIcon, TrophyIcon } from '../components/Icons';
-import { exportAllData } from '../storage';
+import { formatCompact, formatDate, formatVolume, greeting } from '../lib/format';
+import { GearIcon, TrophyIcon } from '../components/Icons';
+import { SettingsSheet } from '../components/SettingsSheet';
 
 interface Props {
   onStartWorkout: () => void;
@@ -16,6 +17,7 @@ interface Props {
 
 export function HomeView({ onStartWorkout, onOpenSession }: Props) {
   const { sessions, exerciseById, active } = useApp();
+  const [showSettings, setShowSettings] = useState(false);
 
   const week = thisWeekSessions(sessions);
   const weekVolume = week.reduce((sum, s) => sum + sessionVolume(s), 0);
@@ -25,16 +27,6 @@ export function HomeView({ onStartWorkout, onOpenSession }: Props) {
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
     .slice(0, 3);
 
-  function exportData() {
-    const blob = new Blob([exportAllData()], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `training-log-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   return (
     <div className="view">
       <header className="page-header">
@@ -42,25 +34,28 @@ export function HomeView({ onStartWorkout, onOpenSession }: Props) {
           <p className="eyebrow">{greeting()}</p>
           <h1>Training Log</h1>
         </div>
-        <button className="icon-btn" onClick={exportData} aria-label="Export data">
-          <DownloadIcon size={20} />
+        <button className="icon-btn" onClick={() => setShowSettings(true)} aria-label="Settings">
+          <GearIcon size={20} />
         </button>
       </header>
 
-      <div className="stat-grid">
-        <div className="stat-tile">
-          <span className="stat-value">{week.length}</span>
-          <span className="stat-label">workouts this week</span>
+      <section>
+        <h2 className="section-title">This week</h2>
+        <div className="stat-grid">
+          <div className="stat-tile">
+            <span className="stat-value">{week.length}</span>
+            <span className="stat-label">workouts</span>
+          </div>
+          <div className="stat-tile">
+            <span className="stat-value">{formatCompact(weekVolume)}</span>
+            <span className="stat-label">kg volume</span>
+          </div>
+          <div className="stat-tile">
+            <span className="stat-value">{streak}</span>
+            <span className="stat-label">week streak</span>
+          </div>
         </div>
-        <div className="stat-tile">
-          <span className="stat-value">{formatVolume(weekVolume)}</span>
-          <span className="stat-label">volume this week</span>
-        </div>
-        <div className="stat-tile">
-          <span className="stat-value">{streak}</span>
-          <span className="stat-label">week streak</span>
-        </div>
-      </div>
+      </section>
 
       <button className="cta" onClick={onStartWorkout}>
         {active ? 'Resume workout' : 'Start workout'}
@@ -115,6 +110,8 @@ export function HomeView({ onStartWorkout, onOpenSession }: Props) {
           </div>
         )}
       </section>
+
+      {showSettings && <SettingsSheet onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

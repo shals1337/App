@@ -15,6 +15,11 @@
     calc(5.5rem + env(safe-area-inset-bottom));
 }
 
+/* reserve room for the resume pill so it never covers content */
+.app.has-pill .content {
+  padding-bottom: calc(8.5rem + env(safe-area-inset-bottom));
+}
+
 .view {
   display: flex;
   flex-direction: column;
@@ -96,10 +101,15 @@
   min-width: 56px;
   padding: 0.25rem 0.4rem;
   border-radius: 10px;
+  transition: color 0.15s;
 }
 
 .nav-item.active {
   color: var(--accent-text);
+}
+
+.nav-item.active:not(.nav-workout) {
+  background: var(--accent-soft);
 }
 
 .nav-label {
@@ -255,6 +265,7 @@
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .stat-label {
@@ -269,14 +280,19 @@
 .cta {
   display: block;
   width: 100%;
-  background: var(--accent);
+  background: linear-gradient(135deg, #9d6bff, var(--accent));
   color: #fff;
   font-size: 1rem;
   font-weight: 650;
   padding: 0.85rem;
   border-radius: 14px;
   text-align: center;
-  transition: opacity 0.15s;
+  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.28);
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.cta:active {
+  transform: scale(0.985);
 }
 
 .cta:disabled {
@@ -510,7 +526,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding-bottom: 5rem;
+  /* keep the last card and notes clear of the floating rest bar */
+  padding-bottom: 7.5rem;
 }
 
 .exercise-card {
@@ -558,6 +575,13 @@
   font-size: 0.85rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
+}
+
+.set-num.armed {
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 1.05rem;
 }
 
 .prev-hint {
@@ -642,16 +666,30 @@
 }
 
 .sheet {
+  position: relative;
   width: 100%;
   max-width: 560px;
   max-height: 86svh;
   background: var(--surface);
   border-radius: 20px 20px 0 0;
-  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  padding: 1.35rem 1rem calc(1rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   overflow: hidden;
+}
+
+/* grab handle */
+.sheet::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--surface-3);
 }
 
 .sheet-header {
@@ -892,4 +930,230 @@
 
 .weight-list {
   margin-top: 0.4rem;
+}
+
+/* ---------- settings ---------- */
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.settings-group .section-title {
+  margin-bottom: 0;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  padding: 0.2rem 0;
+}
+
+.switch {
+  appearance: none;
+  width: 46px;
+  height: 27px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+
+.switch:checked {
+  background: var(--accent);
+}
+
+.switch:checked::after {
+  transform: translateX(19px);
+}
+
+.grow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* ---------- notes ---------- */
+
+.note-input {
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+  resize: vertical;
+  min-height: 3.2rem;
+}
+
+.note-input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.note-card {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  color: var(--muted);
+}
+
+.note-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+/* ---------- calendar ---------- */
+
+.calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.calendar-month {
+  font-size: 0.92rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+  justify-items: center;
+}
+
+.calendar-daylabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0.15rem 0;
+}
+
+.calendar-day {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.calendar-day:disabled {
+  cursor: default;
+}
+
+.calendar-day.trained {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+.calendar-day.today {
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1.5px;
+}
+
+/* ---------- muscle split ---------- */
+
+.split-row {
+  display: grid;
+  grid-template-columns: 5.4rem 1fr 2.2rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.28rem 0;
+}
+
+.split-name {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.split-track {
+  height: 10px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.split-bar {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--series-1);
+  min-width: 4px;
+}
+
+.split-count {
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.split-note {
+  margin-top: 0.4rem;
+}
+
+/* ---------- plate calculator ---------- */
+
+.plate-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plate-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.plate-chip {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 650;
+  font-size: 0.95rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.plate-chip em {
+  font-style: normal;
+  opacity: 0.75;
+  font-weight: 550;
+}
+
+/* ---------- press feedback ---------- */
+
+.secondary-btn:active,
+.ghost-btn:active,
+.icon-btn:active,
+.chip:active {
+  transform: scale(0.97);
 }

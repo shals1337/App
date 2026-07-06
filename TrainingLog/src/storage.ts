@@ -96,7 +96,7 @@ export function saveActiveWorkout(v: ActiveWorkout | null): void {
 }
 
 export function loadSettings(): Settings {
-  return read<Settings>(KEYS.settings) ?? { restSec: 90 };
+  return { restSec: 90, restSound: true, ...read<Partial<Settings>>(KEYS.settings) };
 }
 
 export function saveSettings(v: Settings): void {
@@ -115,4 +115,23 @@ export function exportAllData(): string {
     null,
     2,
   );
+}
+
+export interface ImportPayload {
+  sessions: WorkoutSession[];
+  customExercises: Exercise[];
+  templates: Template[];
+  bodyWeight: BodyWeightEntry[];
+}
+
+/** Parse a previously exported backup; throws on shape mismatch. */
+export function parseImport(json: string): ImportPayload {
+  const data = JSON.parse(json) as Partial<ImportPayload>;
+  if (!Array.isArray(data.sessions)) throw new Error('missing sessions');
+  return {
+    sessions: data.sessions,
+    customExercises: Array.isArray(data.customExercises) ? data.customExercises : [],
+    templates: Array.isArray(data.templates) ? data.templates : [],
+    bodyWeight: Array.isArray(data.bodyWeight) ? data.bodyWeight : [],
+  };
 }

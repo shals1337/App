@@ -57,8 +57,10 @@ export interface ActiveWorkout {
   startedAt: string;
   exercises: LoggedExercise[];
   fromTemplateId?: string;
+  note?: string;
 }
 
 export interface Settings {
   restSec: number;
+  restSound: boolean;
 }

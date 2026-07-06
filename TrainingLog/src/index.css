@@ -41,7 +41,9 @@
 body {
   margin: 0;
   min-height: 100svh;
-  background: var(--bg);
+  background:
+    radial-gradient(600px 320px at 50% -80px, rgba(139, 92, 246, 0.09), transparent 70%),
+    var(--bg);
   overscroll-behavior-y: none;
 }
 
@@ -79,9 +81,15 @@ input::placeholder {
 
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+textarea:focus,
+input:focus {
+  outline-color: var(--accent);
 }
 
 input[type='number'] {

@@ -3,6 +3,7 @@ import { useApp } from '../state/AppContext';
 import type { WorkoutSession } from '../types';
 import { prsInSession, sessionSetCount, sessionVolume } from '../lib/stats';
 import {
+  formatCompact,
   formatDate,
   formatDateLong,
   formatDuration,
@@ -10,14 +11,16 @@ import {
   formatVolume,
   formatWeight,
 } from '../lib/format';
-import { ChevronLeftIcon, TrashIcon, TrophyIcon } from '../components/Icons';
+import { MonthCalendar } from '../components/MonthCalendar';
+import { ChevronLeftIcon, NoteIcon, RepeatIcon, TrashIcon, TrophyIcon } from '../components/Icons';
 
 interface Props {
   openSessionId: string | null;
   onOpenSession: (id: string | null) => void;
+  onRepeat: (session: WorkoutSession) => void;
 }
 
-export function HistoryView({ openSessionId, onOpenSession }: Props) {
+export function HistoryView({ openSessionId, onOpenSession, onRepeat }: Props) {
   const { sessions } = useApp();
 
   const sorted = useMemo(
@@ -27,7 +30,13 @@ export function HistoryView({ openSessionId, onOpenSession }: Props) {
 
   const open = sorted.find((s) => s.id === openSessionId);
   if (open) {
-    return <SessionDetail session={open} onBack={() => onOpenSession(null)} />;
+    return (
+      <SessionDetail
+        session={open}
+        onBack={() => onOpenSession(null)}
+        onRepeat={onRepeat}
+      />
+    );
   }
 
   const byMonth: { month: string; items: WorkoutSession[] }[] = [];
@@ -44,6 +53,8 @@ export function HistoryView({ openSessionId, onOpenSession }: Props) {
         <h1>History</h1>
         <span className="muted small">{sessions.length} workouts</span>
       </header>
+
+      <MonthCalendar sessions={sessions} onPickDay={onOpenSession} />
 
       {sorted.length === 0 && (
         <div className="card">
@@ -84,11 +95,13 @@ export function HistoryView({ openSessionId, onOpenSession }: Props) {
 function SessionDetail({
   session,
   onBack,
+  onRepeat,
 }: {
   session: WorkoutSession;
   onBack: () => void;
+  onRepeat: (session: WorkoutSession) => void;
 }) {
-  const { sessions, exerciseById, deleteSession } = useApp();
+  const { sessions, exerciseById, deleteSession, active } = useApp();
   const [confirm, setConfirm] = useState(false);
   const prs = prsInSession(sessions, session);
   const prSet = new Set(prs.map((p) => p.exerciseId));
@@ -116,14 +129,21 @@ function SessionDetail({
           <span className="stat-label">duration</span>
         </div>
         <div className="stat-tile">
-          <span className="stat-value">{formatVolume(sessionVolume(session))}</span>
-          <span className="stat-label">volume</span>
+          <span className="stat-value">{formatCompact(sessionVolume(session))}</span>
+          <span className="stat-label">kg volume</span>
         </div>
         <div className="stat-tile">
           <span className="stat-value">{sessionSetCount(session)}</span>
           <span className="stat-label">sets</span>
         </div>
       </div>
+
+      {session.note && (
+        <div className="card note-card">
+          <NoteIcon size={16} />
+          <p>{session.note}</p>
+        </div>
+      )}
 
       {session.exercises.map((e) => (
         <div className="card" key={e.exerciseId}>
@@ -149,6 +169,17 @@ function SessionDetail({
           </div>
         </div>
       ))}
+
+      <button
+        className="secondary-btn"
+        disabled={!!active}
+        onClick={() => onRepeat(session)}
+      >
+        <RepeatIcon size={16} /> Repeat this workout
+      </button>
+      {active && (
+        <p className="muted small">Finish your current workout before repeating one.</p>
+      )}
 
       {confirm && (
         <div className="sheet-backdrop" onClick={() => setConfirm(false)}>
