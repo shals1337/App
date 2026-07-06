@@ -1,37 +1,37 @@
 :root {
-  --text: #1f2024;
-  --muted: #6b6375;
-  --bg: #fdfdfc;
-  --surface: #ffffff;
-  --surface-2: #f4f3ec;
-  --border: #e5e4e7;
-  --accent: #7c3aed;
-  --danger: #d1435b;
+  --bg: #0c0d10;
+  --surface: #16181d;
+  --surface-2: #1e2127;
+  --surface-3: #262a31;
+  --border: #262a31;
+  --border-soft: #1e2127;
+  --text: #f2f3f5;
+  --muted: #8b919c;
+  --accent: #8b5cf6;
+  --accent-soft: rgba(139, 92, 246, 0.16);
+  --accent-text: #a78bfa;
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* chart tokens (validated against --surface) */
+  --series-1: #9085e9;
+  --chart-grid: #23262d;
+  --chart-tick: #8b919c;
 
-  font: 16px/145% var(--sans);
-  color-scheme: light dark;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Consolas, monospace;
+
+  font: 16px/1.45 var(--sans);
+  color-scheme: dark;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #f3f4f6;
-    --muted: #9ca3af;
-    --bg: #16171d;
-    --surface: #1c1d24;
-    --surface-2: #22232b;
-    --border: #2e303a;
-    --accent: #c084fc;
-    --danger: #f0899b;
-  }
+  -webkit-tap-highlight-color: transparent;
 }
 
 * {
@@ -41,4 +41,55 @@
 body {
   margin: 0;
   min-height: 100svh;
+  background: var(--bg);
+  overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }

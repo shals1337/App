@@ -1,42 +1,118 @@
-import type { Exercise, WorkoutSession } from './types';
+import type {
+  ActiveWorkout,
+  BodyWeightEntry,
+  Exercise,
+  Settings,
+  Template,
+  WorkoutSession,
+} from './types';
+import { STARTER_TEMPLATES } from './data/exercises';
 
-const EXERCISES_KEY = 'training-log.exercises';
-const SESSIONS_KEY = 'training-log.sessions';
+const KEYS = {
+  customExercises: 'tl.v2.customExercises',
+  sessions: 'tl.v2.sessions',
+  templates: 'tl.v2.templates',
+  bodyWeight: 'tl.v2.bodyWeight',
+  activeWorkout: 'tl.v2.activeWorkout',
+  settings: 'tl.v2.settings',
+} as const;
 
-const STARTER_EXERCISES: Exercise[] = [
-  { id: 'squat', name: 'Squat' },
-  { id: 'bench-press', name: 'Bench Press' },
-  { id: 'deadlift', name: 'Deadlift' },
-  { id: 'overhead-press', name: 'Overhead Press' },
-  { id: 'pull-up', name: 'Pull-up' },
-];
-
-function readJSON<T>(key: string, fallback: T): T {
+function read<T>(key: string): T | null {
   const raw = localStorage.getItem(key);
-  if (!raw) return fallback;
+  if (raw === null) return null;
   try {
     return JSON.parse(raw) as T;
   } catch {
-    return fallback;
+    return null;
   }
 }
 
-function writeJSON<T>(key: string, value: T): void {
+function write<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export function loadExercises(): Exercise[] {
-  return readJSON(EXERCISES_KEY, STARTER_EXERCISES);
+/* v1 (first version of this app) stored sessions under other keys with a
+   simpler shape; convert them once so no logged workout is lost. */
+interface V1Session {
+  id: string;
+  date: string;
+  exercises: { exerciseId: string; sets: { reps: number; weight: number }[] }[];
 }
 
-export function saveExercises(exercises: Exercise[]): void {
-  writeJSON(EXERCISES_KEY, exercises);
+function migrateV1(): WorkoutSession[] {
+  const old = read<V1Session[]>('training-log.sessions');
+  if (!old) return [];
+  return old.map((s) => ({
+    id: s.id,
+    name: 'Workout',
+    startedAt: `${s.date}T12:00:00`,
+    durationSec: 0,
+    exercises: s.exercises.map((e) => ({
+      exerciseId: e.exerciseId,
+      sets: e.sets.map((set) => ({ ...set, completed: true })),
+    })),
+  }));
 }
 
 export function loadSessions(): WorkoutSession[] {
-  return readJSON(SESSIONS_KEY, []);
+  return read<WorkoutSession[]>(KEYS.sessions) ?? migrateV1();
 }
 
-export function saveSessions(sessions: WorkoutSession[]): void {
-  writeJSON(SESSIONS_KEY, sessions);
+export function saveSessions(v: WorkoutSession[]): void {
+  write(KEYS.sessions, v);
+}
+
+export function loadCustomExercises(): Exercise[] {
+  return read<Exercise[]>(KEYS.customExercises) ?? [];
+}
+
+export function saveCustomExercises(v: Exercise[]): void {
+  write(KEYS.customExercises, v);
+}
+
+export function loadTemplates(): Template[] {
+  return read<Template[]>(KEYS.templates) ?? STARTER_TEMPLATES;
+}
+
+export function saveTemplates(v: Template[]): void {
+  write(KEYS.templates, v);
+}
+
+export function loadBodyWeight(): BodyWeightEntry[] {
+  return read<BodyWeightEntry[]>(KEYS.bodyWeight) ?? [];
+}
+
+export function saveBodyWeight(v: BodyWeightEntry[]): void {
+  write(KEYS.bodyWeight, v);
+}
+
+export function loadActiveWorkout(): ActiveWorkout | null {
+  return read<ActiveWorkout>(KEYS.activeWorkout);
+}
+
+export function saveActiveWorkout(v: ActiveWorkout | null): void {
+  if (v === null) localStorage.removeItem(KEYS.activeWorkout);
+  else write(KEYS.activeWorkout, v);
+}
+
+export function loadSettings(): Settings {
+  return read<Settings>(KEYS.settings) ?? { restSec: 90 };
+}
+
+export function saveSettings(v: Settings): void {
+  write(KEYS.settings, v);
+}
+
+export function exportAllData(): string {
+  return JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      sessions: loadSessions(),
+      customExercises: loadCustomExercises(),
+      templates: loadTemplates(),
+      bodyWeight: loadBodyWeight(),
+    },
+    null,
+    2,
+  );
 }

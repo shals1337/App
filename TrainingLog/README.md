@@ -1,25 +1,35 @@
 # Training Log
 
-A workout logging web app: log exercises, sets, reps and weight, browse
-your history, and track progress per exercise over time. Installable as a
-PWA so it can be added to your phone's home screen and used like a native
-app (works offline after the first load).
+A clean, dark-themed workout tracking web app with the feature set of a paid
+training app — templates, live workout logging with rest timer, PR detection,
+progress charts, and body-weight tracking. Installable as a PWA so it lives on
+your phone's home screen and works offline after the first load. No account,
+no backend: everything is stored on-device (`localStorage`).
 
 ## Features
 
-- **Log workouts** — pick exercises from your library and add sets (reps +
-  weight) for today's session.
-- **History** — browse past workouts, expand a day to see every set logged,
-  delete a session if needed.
-- **Progress** — pick an exercise and see your best set and total volume
-  per session as a simple bar chart and table.
-- **Exercises** — add, rename, and remove the exercises in your library.
-  Ships with a few common lifts as starters.
-- **Persistent** — everything is saved in the browser (`localStorage`), no
-  account or backend required.
-- **Installable** — has a web app manifest, icons, and a service worker, so
-  browsers offer "Add to Home Screen" and it opens full-screen like a
-  native app.
+- **Dashboard** — workouts, volume, and week streak at a glance, recent PRs,
+  quick access to your latest sessions, JSON data export.
+- **Workout templates** — ships with Push/Pull/Legs starters; create, edit,
+  and delete your own routines with target set counts.
+- **Live workout logging** — session timer, per-set weight/reps entry,
+  *previous session* values shown inline (tap ✓ on an empty row to repeat
+  last time's set), add/remove sets and exercises mid-workout.
+- **Rest timer** — starts automatically when you complete a set, with
+  ±15s adjustment, skip, and a beep when time is up.
+- **PR detection** — best-weight and estimated-1RM records are detected on
+  finish and celebrated in the workout summary, on the dashboard, and as
+  badges in history.
+- **In-progress persistence** — an active workout survives closing or
+  reloading the app; a resume pill brings you back into it.
+- **History** — sessions grouped by month with volume/sets/duration, full
+  set-by-set detail views, delete with confirmation.
+- **Progress charts** — per-exercise est. 1RM, best set, and volume over
+  time as interactive SVG line charts (touch/hover crosshair).
+- **Body weight tracking** — daily log with its own trend chart.
+- **Exercise library** — ~50 built-in exercises organised by muscle group,
+  search and filter, per-exercise records and recent-session breakdown, plus
+  custom exercises.
 
 ## Run
 
@@ -28,8 +38,8 @@ npm install
 npm run dev
 ```
 
-Then open the printed local URL. On a phone, open the same URL in the
-browser and use "Add to Home Screen" (Safari) or "Install app" (Chrome).
+Open the printed URL. On a phone, open the same URL and use
+"Add to Home Screen" (Safari) or "Install app" (Chrome).
 
 ## Build
 
@@ -40,23 +50,25 @@ npm run preview
 
 ## Project layout
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `src/App.tsx` | Tab navigation and top-level state (exercises, sessions). |
-| `src/storage.ts` | `localStorage` persistence and starter exercise data. |
-| `src/types.ts` | `Exercise`, `SetEntry`, `LoggedExercise`, `WorkoutSession` models. |
-| `src/components/LogWorkoutView.tsx` | Build and save today's workout. |
-| `src/components/HistoryView.tsx` | Browse and delete past sessions. |
-| `src/components/ProgressView.tsx` | Per-exercise progression chart. |
-| `src/components/ExercisesView.tsx` | Manage the exercise library. |
-| `vite.config.ts` | PWA manifest/icons/service-worker config (`vite-plugin-pwa`). |
-| `public/icons/icon-source.svg` | Source icon; regenerate PNGs from it if you change branding. |
+| `src/App.tsx` | Shell, bottom tab navigation, active-workout routing. |
+| `src/state/AppContext.tsx` | All app state + `localStorage` persistence. |
+| `src/types.ts` | Data models (sessions, sets, templates, body weight…). |
+| `src/data/exercises.ts` | Built-in exercise library and starter templates. |
+| `src/lib/stats.ts` | Est. 1RM (Epley), volume, PRs, records, streaks. |
+| `src/views/HomeView.tsx` | Dashboard: stats, PRs, recent workouts, export. |
+| `src/views/StartWorkoutView.tsx` | Template list + template editor. |
+| `src/views/ActiveWorkoutView.tsx` | Live logging, rest timer, summary. |
+| `src/views/HistoryView.tsx` | Month-grouped history + session detail. |
+| `src/views/ProgressView.tsx` | Exercise charts + body-weight tracking. |
+| `src/views/ExercisesView.tsx` | Library, search/filter, exercise detail. |
+| `src/components/LineChart.tsx` | Interactive SVG line chart. |
+| `vite.config.ts` | PWA manifest/icons/service-worker (`vite-plugin-pwa`). |
 
 ## Customizing
 
-- **Starter exercises:** edit `STARTER_EXERCISES` in `src/storage.ts`.
-- **Colors/theme:** edit the CSS variables in `src/index.css` (light and
-  dark variants) and `theme_color`/`background_color` in `vite.config.ts`.
-- **App name/icon:** update the `manifest` block in `vite.config.ts`, the
-  `<title>`/meta tags in `index.html`, and regenerate the PNGs in
-  `public/icons/` from `icon-source.svg`.
+- **Theme:** design tokens live in `src/index.css` (`--accent`, surfaces, …).
+- **Exercise library / starter templates:** `src/data/exercises.ts`.
+- **App name/icon:** `vite.config.ts` manifest, `index.html` meta tags, and
+  the PNGs in `public/icons/` (regenerate from `icon-source.svg`).
