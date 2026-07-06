@@ -132,7 +132,7 @@ export function LineChart({ points, unit, height = 180 }: Props) {
         )}
 
         <path d={areaPath} className="chart-area" />
-        <path d={linePath} className="chart-line" />
+        <path d={linePath} className="chart-line" pathLength={1} />
 
         {points.map((p, i) => (
           <g key={i}>
@@ -167,7 +167,7 @@ export function LineChart({ points, unit, height = 180 }: Props) {
           </span>
         ) : (
           <span className="muted">
-            {points.length} session{points.length === 1 ? '' : 's'}
+            {points.length} {points.length === 1 ? 'måling' : 'målinger'}
           </span>
         )}
       </div>
