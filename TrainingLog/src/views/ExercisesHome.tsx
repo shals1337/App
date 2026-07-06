@@ -22,10 +22,10 @@ export function ExercisesHome({ onOpenExercise }: Props) {
     return tracked
       .map((id) => {
         const logs = logsFor(id);
-        return { id, exercise: exerciseById(id), ...progression(logs) };
+        return { id, exercise: exerciseById(id), prog: progression(logs) };
       })
       .filter((r) => r.exercise)
-      .sort((a, b) => (b.last?.date ?? '').localeCompare(a.last?.date ?? ''));
+      .sort((a, b) => (b.prog?.lastDate ?? '').localeCompare(a.prog?.lastDate ?? ''));
   }, [tracked, logsFor, exerciseById]);
 
   return (
@@ -65,10 +65,10 @@ export function ExercisesHome({ onOpenExercise }: Props) {
                 <span className="muted small">{r.exercise!.muscleGroup}</span>
               </div>
               <div className="list-row-end">
-                {r.last ? (
+                {r.prog ? (
                   <>
-                    <span className="row-weight">{formatWeight(r.last.weight)} kg</span>
-                    <DeltaChip delta={r.delta} />
+                    <span className="row-weight">{formatWeight(r.prog.lastValue)} kg</span>
+                    <DeltaChip delta={r.prog.delta} />
                   </>
                 ) : (
                   <span className="muted small">ikke logget endnu</span>
