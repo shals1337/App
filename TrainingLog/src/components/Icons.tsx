@@ -142,3 +142,17 @@ export const NoteIcon = ({ size }: IconProps) => (
     <path d="M8.5 9h7M8.5 13h7M8.5 17h4" />
   </svg>
 );
+
+export const FlameIcon = ({ size }: IconProps) => (
+  <svg {...base(size)}>
+    <path d="M12 3.5c.5 3-1.5 4.5-2.8 6C7.8 11.2 7 12.8 7 14.5a5 5 0 0 0 10 0c0-2.2-1.2-3.8-2.2-5.2-.7 1-1.6 1.6-1.6 1.6.5-2.5-.2-5.4-1.2-7.4Z" />
+  </svg>
+);
+
+export const TargetIcon = ({ size }: IconProps) => (
+  <svg {...base(size)}>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="4.5" />
+    <circle cx="12" cy="12" r="0.8" />
+  </svg>
+);

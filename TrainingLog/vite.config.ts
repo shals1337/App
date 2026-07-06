@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon-source.svg'],
       manifest: {
-        name: 'Training Log',
-        short_name: 'Training Log',
-        description: 'Log workouts, track sets and reps, and see your progress over time.',
+        name: 'Min Træning',
+        short_name: 'Træning',
+        description: 'Følg dine maskiner, vægte og din egen vægt.',
         start_url: '/',
         display: 'standalone',
         background_color: '#0c0d10',

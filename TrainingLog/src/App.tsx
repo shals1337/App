@@ -1,121 +1,67 @@
 import { useState } from 'react';
-import type { WorkoutSession } from './types';
 import { AppProvider, useApp } from './state/AppContext';
-import { HomeView } from './views/HomeView';
-import { HistoryView } from './views/HistoryView';
-import { StartWorkoutView } from './views/StartWorkoutView';
-import { ExercisesView } from './views/ExercisesView';
-import { ProgressView } from './views/ProgressView';
-import { ActiveWorkoutView } from './views/ActiveWorkoutView';
-import {
-  ChartIcon,
-  DumbbellIcon,
-  HistoryIcon,
-  HomeIcon,
-  PlusIcon,
-} from './components/Icons';
+import { ExercisesHome } from './views/ExercisesHome';
+import { ExerciseDetail } from './views/ExerciseDetail';
+import { WeightView } from './views/WeightView';
+import { NutritionView } from './views/NutritionView';
+import { DumbbellIcon, FlameIcon, ScaleIcon } from './components/Icons';
 import './App.css';
 
-type Tab = 'home' | 'history' | 'workout' | 'exercises' | 'progress';
-
-const TABS: { id: Tab; label: string; icon: typeof HomeIcon }[] = [
-  { id: 'home', label: 'Home', icon: HomeIcon },
-  { id: 'history', label: 'History', icon: HistoryIcon },
-  { id: 'workout', label: 'Workout', icon: PlusIcon },
-  { id: 'exercises', label: 'Exercises', icon: DumbbellIcon },
-  { id: 'progress', label: 'Progress', icon: ChartIcon },
-];
+type Tab = 'exercises' | 'nutrition' | 'weight';
 
 function Shell() {
-  const { active, setActive } = useApp();
-  const [tab, setTab] = useState<Tab>('home');
-  const [inWorkout, setInWorkout] = useState(false);
-  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+  const { exerciseById, trackExercise } = useApp();
+  const [tab, setTab] = useState<Tab>('exercises');
+  const [openId, setOpenId] = useState<string | null>(null);
 
-  function repeatSession(session: WorkoutSession) {
-    if (active) return;
-    setActive({
-      name: session.name,
-      startedAt: new Date().toISOString(),
-      exercises: session.exercises.map((e) => ({
-        exerciseId: e.exerciseId,
-        sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps, completed: false })),
-      })),
-    });
-    setOpenSessionId(null);
-    setInWorkout(true);
+  const open = openId ? exerciseById(openId) : undefined;
+
+  function openExercise(id: string) {
+    trackExercise(id);
+    setOpenId(id);
   }
-
-  if (inWorkout) {
-    return (
-      <ActiveWorkoutView
-        onDone={() => {
-          setInWorkout(false);
-          setTab('home');
-        }}
-      />
-    );
-  }
-
-  const showPill = !!active && !inWorkout;
 
   return (
-    <div className={showPill ? 'app has-pill' : 'app'}>
+    <div className="app">
       <main className="content">
-        {tab === 'home' && (
-          <HomeView
-            onStartWorkout={() => {
-              if (active) setInWorkout(true);
-              else setTab('workout');
-            }}
-            onOpenSession={(id) => {
-              setOpenSessionId(id);
-              setTab('history');
-            }}
-          />
-        )}
-        {tab === 'history' && (
-          <HistoryView
-            openSessionId={openSessionId}
-            onOpenSession={setOpenSessionId}
-            onRepeat={repeatSession}
-          />
-        )}
-        {tab === 'workout' && <StartWorkoutView onBegin={() => setInWorkout(true)} />}
-        {tab === 'exercises' && <ExercisesView />}
-        {tab === 'progress' && <ProgressView />}
+        {tab === 'exercises' &&
+          (open ? (
+            <ExerciseDetail exercise={open} onBack={() => setOpenId(null)} />
+          ) : (
+            <ExercisesHome onOpenExercise={openExercise} />
+          ))}
+        {tab === 'nutrition' && <NutritionView />}
+        {tab === 'weight' && <WeightView />}
       </main>
 
-      {showPill && (
-        <button className="resume-pill" onClick={() => setInWorkout(true)}>
-          Workout in progress — tap to resume
-        </button>
-      )}
-
       <nav className="bottom-nav">
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          const isWorkoutTab = t.id === 'workout';
-          return (
-            <button
-              key={t.id}
-              className={
-                (t.id === tab ? 'nav-item active' : 'nav-item') +
-                (isWorkoutTab ? ' nav-workout' : '')
-              }
-              onClick={() => {
-                if (t.id === 'history') setOpenSessionId(null);
-                setTab(t.id);
-              }}
-              aria-label={t.label}
-            >
-              <span className={isWorkoutTab ? 'nav-plus' : ''}>
-                <Icon size={isWorkoutTab ? 24 : 22} />
-              </span>
-              <span className="nav-label">{t.label}</span>
-            </button>
-          );
-        })}
+        <button
+          className={tab === 'exercises' ? 'nav-item active' : 'nav-item'}
+          onClick={() => {
+            setTab('exercises');
+            if (tab === 'exercises') setOpenId(null);
+          }}
+          aria-label="Øvelser"
+        >
+          <DumbbellIcon size={22} />
+          <span className="nav-label">Øvelser</span>
+        </button>
+        <button
+          className={tab === 'nutrition' ? 'nav-item active' : 'nav-item'}
+          onClick={() => setTab('nutrition')}
+          aria-label="Kost"
+        >
+          <FlameIcon size={22} />
+          <span className="nav-label">Kost</span>
+        </button>
+        <button
+          className={tab === 'weight' ? 'nav-item active' : 'nav-item'}
+          onClick={() => setTab('weight')}
+          aria-label="Min vægt"
+        >
+          <ScaleIcon size={22} />
+          <span className="nav-label">Min vægt</span>
+        </button>
       </nav>
     </div>
   );

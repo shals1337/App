@@ -1,20 +1,19 @@
 import type {
-  ActiveWorkout,
   BodyWeightEntry,
   Exercise,
-  Settings,
-  Template,
-  WorkoutSession,
+  FoodEntry,
+  LogEntry,
+  MuscleGroup,
+  NutritionGoals,
 } from './types';
-import { STARTER_TEMPLATES } from './data/exercises';
 
 const KEYS = {
-  customExercises: 'tl.v2.customExercises',
-  sessions: 'tl.v2.sessions',
-  templates: 'tl.v2.templates',
-  bodyWeight: 'tl.v2.bodyWeight',
-  activeWorkout: 'tl.v2.activeWorkout',
-  settings: 'tl.v2.settings',
+  tracked: 'tl.v3.tracked',
+  logs: 'tl.v3.logs',
+  customExercises: 'tl.v3.customExercises',
+  bodyWeight: 'tl.v3.bodyWeight',
+  food: 'tl.v3.food',
+  goals: 'tl.v3.goals',
 } as const;
 
 function read<T>(key: string): T | null {
@@ -31,86 +30,136 @@ function write<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-/* v1 (first version of this app) stored sessions under other keys with a
-   simpler shape; convert them once so no logged workout is lost. */
-interface V1Session {
+/* ---- migration from the old session-based versions (v1/v2) ---- */
+
+interface OldSet {
+  reps: number;
+  weight: number;
+  completed?: boolean;
+}
+interface OldSession {
   id: string;
-  date: string;
-  exercises: { exerciseId: string; sets: { reps: number; weight: number }[] }[];
+  startedAt?: string;
+  date?: string;
+  exercises: { exerciseId: string; sets: OldSet[] }[];
+}
+interface OldExercise {
+  id: string;
+  name: string;
+  muscleGroup?: string;
+  custom?: boolean;
 }
 
-function migrateV1(): WorkoutSession[] {
-  const old = read<V1Session[]>('training-log.sessions');
-  if (!old) return [];
-  return old.map((s) => ({
-    id: s.id,
-    name: 'Workout',
-    startedAt: `${s.date}T12:00:00`,
-    durationSec: 0,
-    exercises: s.exercises.map((e) => ({
-      exerciseId: e.exerciseId,
-      sets: e.sets.map((set) => ({ ...set, completed: true })),
-    })),
-  }));
+const GROUP_MAP: Record<string, MuscleGroup> = {
+  Chest: 'Bryst',
+  Back: 'Ryg',
+  Legs: 'Ben',
+  Shoulders: 'Skuldre',
+  Arms: 'Arme',
+  Core: 'Mave',
+  Other: 'Andet',
+};
+
+/** Flatten old workout sessions into per-exercise log entries (best set per day). */
+function migrateLogs(): LogEntry[] {
+  const sessions =
+    read<OldSession[]>('tl.v2.sessions') ?? read<OldSession[]>('training-log.sessions');
+  if (!sessions) return [];
+  const logs: LogEntry[] = [];
+  for (const s of sessions) {
+    const date = s.startedAt ?? (s.date ? `${s.date}T12:00:00` : null);
+    if (!date) continue;
+    for (const ex of s.exercises) {
+      const done = ex.sets.filter((x) => x.completed !== false && x.weight > 0);
+      if (done.length === 0) continue;
+      const best = done.reduce((a, b) => (b.weight > a.weight ? b : a));
+      logs.push({
+        id: `${s.id}-${ex.exerciseId}`,
+        exerciseId: ex.exerciseId,
+        date,
+        weight: best.weight,
+        reps: best.reps || undefined,
+      });
+    }
+  }
+  return logs;
 }
 
-export function loadSessions(): WorkoutSession[] {
-  return read<WorkoutSession[]>(KEYS.sessions) ?? migrateV1();
+export function loadLogs(): LogEntry[] {
+  return read<LogEntry[]>(KEYS.logs) ?? migrateLogs();
 }
 
-export function saveSessions(v: WorkoutSession[]): void {
-  write(KEYS.sessions, v);
+export function saveLogs(v: LogEntry[]): void {
+  write(KEYS.logs, v);
+}
+
+export function loadTracked(): string[] {
+  const stored = read<string[]>(KEYS.tracked);
+  if (stored) return stored;
+  return [...new Set(loadLogs().map((l) => l.exerciseId))];
+}
+
+export function saveTracked(v: string[]): void {
+  write(KEYS.tracked, v);
 }
 
 export function loadCustomExercises(): Exercise[] {
-  return read<Exercise[]>(KEYS.customExercises) ?? [];
+  const stored = read<Exercise[]>(KEYS.customExercises);
+  if (stored) return stored;
+  const old = read<OldExercise[]>('tl.v2.customExercises');
+  if (!old) return [];
+  return old.map((e) => ({
+    id: e.id,
+    name: e.name,
+    muscleGroup: GROUP_MAP[e.muscleGroup ?? ''] ?? 'Andet',
+    custom: true,
+  }));
 }
 
 export function saveCustomExercises(v: Exercise[]): void {
   write(KEYS.customExercises, v);
 }
 
-export function loadTemplates(): Template[] {
-  return read<Template[]>(KEYS.templates) ?? STARTER_TEMPLATES;
-}
-
-export function saveTemplates(v: Template[]): void {
-  write(KEYS.templates, v);
-}
-
 export function loadBodyWeight(): BodyWeightEntry[] {
-  return read<BodyWeightEntry[]>(KEYS.bodyWeight) ?? [];
+  return (
+    read<BodyWeightEntry[]>(KEYS.bodyWeight) ??
+    read<BodyWeightEntry[]>('tl.v2.bodyWeight') ??
+    []
+  );
 }
 
 export function saveBodyWeight(v: BodyWeightEntry[]): void {
   write(KEYS.bodyWeight, v);
 }
 
-export function loadActiveWorkout(): ActiveWorkout | null {
-  return read<ActiveWorkout>(KEYS.activeWorkout);
+export function loadFood(): FoodEntry[] {
+  return read<FoodEntry[]>(KEYS.food) ?? [];
 }
 
-export function saveActiveWorkout(v: ActiveWorkout | null): void {
-  if (v === null) localStorage.removeItem(KEYS.activeWorkout);
-  else write(KEYS.activeWorkout, v);
+export function saveFood(v: FoodEntry[]): void {
+  write(KEYS.food, v);
 }
 
-export function loadSettings(): Settings {
-  return { restSec: 90, restSound: true, ...read<Partial<Settings>>(KEYS.settings) };
+export function loadGoals(): NutritionGoals {
+  return read<NutritionGoals>(KEYS.goals) ?? { kcal: null, protein: null };
 }
 
-export function saveSettings(v: Settings): void {
-  write(KEYS.settings, v);
+export function saveGoals(v: NutritionGoals): void {
+  write(KEYS.goals, v);
 }
+
+/* ---- backup ---- */
 
 export function exportAllData(): string {
   return JSON.stringify(
     {
       exportedAt: new Date().toISOString(),
-      sessions: loadSessions(),
+      logs: loadLogs(),
+      tracked: loadTracked(),
       customExercises: loadCustomExercises(),
-      templates: loadTemplates(),
       bodyWeight: loadBodyWeight(),
+      food: loadFood(),
+      goals: loadGoals(),
     },
     null,
     2,
@@ -118,20 +167,28 @@ export function exportAllData(): string {
 }
 
 export interface ImportPayload {
-  sessions: WorkoutSession[];
+  logs: LogEntry[];
+  tracked: string[];
   customExercises: Exercise[];
-  templates: Template[];
   bodyWeight: BodyWeightEntry[];
+  food: FoodEntry[];
+  goals: NutritionGoals;
 }
 
-/** Parse a previously exported backup; throws on shape mismatch. */
 export function parseImport(json: string): ImportPayload {
   const data = JSON.parse(json) as Partial<ImportPayload>;
-  if (!Array.isArray(data.sessions)) throw new Error('missing sessions');
+  if (!Array.isArray(data.logs)) throw new Error('missing logs');
   return {
-    sessions: data.sessions,
+    logs: data.logs,
+    tracked: Array.isArray(data.tracked)
+      ? data.tracked
+      : [...new Set(data.logs.map((l) => l.exerciseId))],
     customExercises: Array.isArray(data.customExercises) ? data.customExercises : [],
-    templates: Array.isArray(data.templates) ? data.templates : [],
     bodyWeight: Array.isArray(data.bodyWeight) ? data.bodyWeight : [],
+    food: Array.isArray(data.food) ? data.food : [],
+    goals:
+      data.goals && typeof data.goals === 'object'
+        ? { kcal: data.goals.kcal ?? null, protein: data.goals.protein ?? null }
+        : { kcal: null, protein: null },
   };
 }

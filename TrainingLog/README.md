@@ -1,82 +1,64 @@
-# Training Log
+# Min Træning
 
-A clean, dark-themed workout tracking web app with the feature set of a paid
-training app — templates, live workout logging with rest timer, PR detection,
-progress charts, and body-weight tracking. Installable as a PWA so it lives on
-your phone's home screen and works offline after the first load. No account,
-no backend: everything is stored on-device (`localStorage`).
+En simpel, mørk trænings-app (PWA) på dansk: følg de maskiner og øvelser du
+bruger, hvilken vægt du løfter, og hvor meget du går op — plus din egen vægt
+og en kcal/protein-tæller. Ingen konto, ingen backend: alt gemmes på enheden
+(`localStorage`).
 
-## Features
+## Funktioner
 
-- **Dashboard** — workouts, volume, and week streak at a glance, recent PRs,
-  quick access to your latest sessions, JSON data export.
-- **Workout templates** — ships with Push/Pull/Legs starters; create, edit,
-  and delete your own routines with target set counts.
-- **Live workout logging** — session timer, per-set weight/reps entry,
-  *previous session* values shown inline (tap ✓ on an empty row to repeat
-  last time's set), add/remove sets and exercises mid-workout.
-- **Rest timer** — starts automatically when you complete a set, with
-  ±15s adjustment, skip, and a beep when time is up.
-- **PR detection** — best-weight and estimated-1RM records are detected on
-  finish and celebrated in the workout summary, on the dashboard, and as
-  badges in history.
-- **In-progress persistence** — an active workout survives closing or
-  reloading the app; a resume pill brings you back into it.
-- **History** — sessions grouped by month with volume/sets/duration, full
-  set-by-set detail views, delete with confirmation.
-- **Progress charts** — per-exercise est. 1RM, best set, and volume over
-  time as interactive SVG line charts (touch/hover crosshair).
-- **Body weight tracking** — daily log with its own trend chart.
-- **Exercise library** — ~50 built-in exercises organised by muscle group,
-  search and filter, per-exercise records and recent-session breakdown, plus
-  custom exercises.
-- **Calendar** — month view in History with trained days highlighted; tap a
-  day to open that session.
-- **Muscle split** — completed sets per muscle group over the last 30 days.
-- **Plate calculator** — plates per side for any target weight and bar.
-- **Workout notes** — jot how the session felt; shown in history.
-- **Repeat workout** — restart any past session with its sets prefilled.
-- **Settings** — default rest duration, rest-end sound, and JSON
-  backup export/import.
+- **Øvelser** — tilføj de maskiner/øvelser du bruger (fx Leg Press, Ab Crunch,
+  Dumbbell Curl) fra et bibliotek med ~60 øvelser fordelt på muskelgrupper,
+  eller opret dine egne. Forsiden viser din seneste vægt pr. øvelse og hvor
+  meget du er gået op (↑ 5 kg).
+- **Log & fremgang** — tryk på en øvelse, tast vægt (og evt. reps), og følg
+  din fremgang: nuværende/bedste vægt, samlet fremgang og en graf over tid.
+- **Kost** — daglig kcal- og protein-tæller med valgfrie daglige mål
+  (fremdriftsbjælker), hurtig indtastning af måltider og totaler for de
+  seneste dage.
+- **Min vægt** — log din kropsvægt og se udviklingen som graf.
+- **Backup** — eksportér/importér alle data som JSON.
+- **Ingen zoom** — appen opfører sig som en native app (ingen pinch/dobbelt-
+  tryk-zoom, ingen auto-zoom ved inputfelter). Danske komma-decimaler ("82,5")
+  understøttes.
+- **PWA** — føj til hjemmeskærm, virker offline efter første load.
 
-## Run
+## Kør
 
 ```
 npm install
 npm run dev
 ```
 
-Open the printed URL. On a phone, open the same URL and use
-"Add to Home Screen" (Safari) or "Install app" (Chrome).
+Åbn den viste URL. På telefonen: åbn samme URL og vælg "Føj til hjemmeskærm"
+(Safari) eller "Installér app" (Chrome).
 
-## Build
+## Byg
 
 ```
 npm run build
 npm run preview
 ```
 
-## Project layout
+## Projektstruktur
 
-| Path | Purpose |
-|------|---------|
-| `src/App.tsx` | Shell, bottom tab navigation, active-workout routing. |
-| `src/state/AppContext.tsx` | All app state + `localStorage` persistence. |
-| `src/types.ts` | Data models (sessions, sets, templates, body weight…). |
-| `src/data/exercises.ts` | Built-in exercise library and starter templates. |
-| `src/lib/stats.ts` | Est. 1RM (Epley), volume, PRs, records, streaks. |
-| `src/views/HomeView.tsx` | Dashboard: stats, PRs, recent workouts, export. |
-| `src/views/StartWorkoutView.tsx` | Template list + template editor. |
-| `src/views/ActiveWorkoutView.tsx` | Live logging, rest timer, summary. |
-| `src/views/HistoryView.tsx` | Month-grouped history + session detail. |
-| `src/views/ProgressView.tsx` | Exercise charts + body-weight tracking. |
-| `src/views/ExercisesView.tsx` | Library, search/filter, exercise detail. |
-| `src/components/LineChart.tsx` | Interactive SVG line chart. |
-| `vite.config.ts` | PWA manifest/icons/service-worker (`vite-plugin-pwa`). |
+| Sti | Formål |
+|-----|--------|
+| `src/App.tsx` | Skal, bund-navigation (Øvelser / Kost / Min vægt). |
+| `src/state/AppContext.tsx` | Al app-state + `localStorage`-persistens. |
+| `src/types.ts` | Datamodeller (øvelser, logs, kost, kropsvægt, mål). |
+| `src/data/exercises.ts` | Indbygget øvelsesbibliotek pr. muskelgruppe. |
+| `src/storage.ts` | Lagring, backup og migrering fra ældre versioner. |
+| `src/views/ExercisesHome.tsx` | Forsiden: dine øvelser med seneste vægt + delta. |
+| `src/views/ExerciseDetail.tsx` | Log vægt, statistik, graf og historik. |
+| `src/views/NutritionView.tsx` | Kcal/protein-tæller, mål og seneste dage. |
+| `src/views/WeightView.tsx` | Kropsvægt: log, graf og historik. |
+| `src/components/LineChart.tsx` | Interaktiv SVG-graf. |
+| `vite.config.ts` | PWA-manifest/ikoner/service worker (`vite-plugin-pwa`). |
 
-## Customizing
+## Tilpasning
 
-- **Theme:** design tokens live in `src/index.css` (`--accent`, surfaces, …).
-- **Exercise library / starter templates:** `src/data/exercises.ts`.
-- **App name/icon:** `vite.config.ts` manifest, `index.html` meta tags, and
-  the PNGs in `public/icons/` (regenerate from `icon-source.svg`).
+- **Tema:** design-tokens ligger i `src/index.css` (`--accent`, flader m.m.).
+- **Øvelsesbibliotek:** `src/data/exercises.ts`.
+- **App-navn/ikon:** manifestet i `vite.config.ts`, meta-tags i `index.html`
+  og PNG'erne i `public/icons/`.

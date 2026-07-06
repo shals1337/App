@@ -1,11 +1,11 @@
 export type MuscleGroup =
-  | 'Chest'
-  | 'Back'
-  | 'Legs'
-  | 'Shoulders'
-  | 'Arms'
-  | 'Core'
-  | 'Other';
+  | 'Bryst'
+  | 'Ryg'
+  | 'Ben'
+  | 'Skuldre'
+  | 'Arme'
+  | 'Mave'
+  | 'Andet';
 
 export interface Exercise {
   id: string;
@@ -14,36 +14,14 @@ export interface Exercise {
   custom?: boolean;
 }
 
-export interface SetEntry {
-  reps: number;
+/** One logged set on a machine/exercise: what weight you lifted that day. */
+export interface LogEntry {
+  id: string;
+  exerciseId: string;
+  /** ISO datetime */
+  date: string;
   weight: number;
-  completed: boolean;
-}
-
-export interface LoggedExercise {
-  exerciseId: string;
-  sets: SetEntry[];
-}
-
-export interface WorkoutSession {
-  id: string;
-  name: string;
-  /** ISO datetime the workout started */
-  startedAt: string;
-  durationSec: number;
-  exercises: LoggedExercise[];
-  note?: string;
-}
-
-export interface TemplateExercise {
-  exerciseId: string;
-  targetSets: number;
-}
-
-export interface Template {
-  id: string;
-  name: string;
-  exercises: TemplateExercise[];
+  reps?: number;
 }
 
 export interface BodyWeightEntry {
@@ -52,15 +30,17 @@ export interface BodyWeightEntry {
   weight: number;
 }
 
-export interface ActiveWorkout {
-  name: string;
-  startedAt: string;
-  exercises: LoggedExercise[];
-  fromTemplateId?: string;
-  note?: string;
+/** One food/meal entry on a given day. */
+export interface FoodEntry {
+  id: string;
+  /** YYYY-MM-DD */
+  date: string;
+  name?: string;
+  kcal: number;
+  protein: number;
 }
 
-export interface Settings {
-  restSec: number;
-  restSound: boolean;
+export interface NutritionGoals {
+  kcal: number | null;
+  protein: number | null;
 }
