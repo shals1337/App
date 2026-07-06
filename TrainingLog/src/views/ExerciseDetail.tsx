@@ -5,6 +5,8 @@ import { formatDate, formatWeight, localDateKey, shortDate } from '../lib/format
 import { LineChart, type ChartPoint } from '../components/LineChart';
 import { CheckIcon, ChevronLeftIcon, TrashIcon, XIcon } from '../components/Icons';
 import { DeltaChip } from '../components/DeltaChip';
+import { ExercisePoseIcon } from '../components/ExercisePoseIcon';
+import { poseFor } from '../data/exercises';
 import { progression } from '../lib/progression';
 import { newId } from '../id';
 
@@ -63,6 +65,7 @@ export function ExerciseDetail({ exercise, onBack }: Props) {
         <button className="icon-btn" onClick={onBack} aria-label="Tilbage">
           <ChevronLeftIcon size={20} />
         </button>
+        <ExercisePoseIcon pose={poseFor(exercise)} group={exercise.muscleGroup} size={52} />
         <div className="detail-title">
           <h1>{exercise.name}</h1>
           <span className="muted small">{exercise.muscleGroup}</span>

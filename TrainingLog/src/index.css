@@ -1,24 +1,31 @@
 :root {
-  --bg: #0c0d10;
-  --surface: #16181d;
-  --surface-2: #1e2127;
-  --surface-3: #262a31;
-  --border: #262a31;
-  --border-soft: #1e2127;
-  --text: #f2f3f5;
-  --muted: #8b919c;
+  --bg: #0a0a0d;
+  --surface: #15161b;
+  --surface-2: #1d1f26;
+  --surface-3: #262933;
+  --border: #262933;
+  --border-soft: #1d1f26;
+  --text: #f5f5f7;
+  --muted: #8d8fa3;
   --accent: #8b5cf6;
+  --accent-2: #ec4899;
   --accent-soft: rgba(139, 92, 246, 0.16);
-  --accent-text: #a78bfa;
-  --success: #4ade80;
-  --success-soft: rgba(74, 222, 128, 0.14);
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, 0.14);
+  --accent-text: #b79bff;
+  --success: #34e5a8;
+  --success-soft: rgba(52, 229, 168, 0.14);
+  --danger: #ff6b81;
+  --danger-soft: rgba(255, 107, 129, 0.14);
+  --warn: #ffb84d;
+
+  /* aurora background blobs */
+  --aurora-1: #8b5cf6;
+  --aurora-2: #22d3c8;
+  --aurora-3: #ec4899;
 
   /* chart tokens (validated against --surface) */
-  --series-1: #9085e9;
-  --chart-grid: #23262d;
-  --chart-tick: #8b919c;
+  --series-1: #a78bfa;
+  --chart-grid: #22242c;
+  --chart-tick: #8d8fa3;
 
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'SF Mono', Consolas, monospace;
@@ -41,18 +48,93 @@
 html {
   /* no pinch/double-tap zoom — the app should feel native */
   touch-action: manipulation;
+  background: var(--bg);
 }
 
 body {
   margin: 0;
   min-height: 100svh;
-  background:
-    radial-gradient(600px 320px at 50% -80px, rgba(139, 92, 246, 0.09), transparent 70%),
-    var(--bg);
+  background: var(--bg);
   overscroll-behavior-y: none;
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+  position: relative;
+}
+
+/* ---------- animated aurora background ---------- */
+
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora::before,
+.aurora::after,
+.aurora .blob {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.28;
+  will-change: transform;
+}
+
+.aurora .blob-1 {
+  width: 60vmax;
+  height: 60vmax;
+  left: -20vmax;
+  top: -28vmax;
+  background: var(--aurora-1);
+  animation: drift-a 26s ease-in-out infinite;
+}
+
+.aurora .blob-2 {
+  width: 50vmax;
+  height: 50vmax;
+  right: -22vmax;
+  top: 6vmax;
+  background: var(--aurora-2);
+  opacity: 0.18;
+  animation: drift-b 32s ease-in-out infinite;
+}
+
+.aurora .blob-3 {
+  width: 55vmax;
+  height: 55vmax;
+  left: 8vmax;
+  bottom: -30vmax;
+  background: var(--aurora-3);
+  opacity: 0.16;
+  animation: drift-c 30s ease-in-out infinite;
+}
+
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6vmax, 5vmax) scale(1.08); }
+  66% { transform: translate(-4vmax, 8vmax) scale(0.96); }
+}
+
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-7vmax, 6vmax) scale(1.1); }
+}
+
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(5vmax, -6vmax) scale(1.05); }
+  75% { transform: translate(-6vmax, -3vmax) scale(0.94); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora .blob-1,
+  .aurora .blob-2,
+  .aurora .blob-3 {
+    animation: none;
+  }
 }
 
 input,
@@ -65,8 +147,9 @@ h1,
 h2,
 h3 {
   margin: 0;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 button {

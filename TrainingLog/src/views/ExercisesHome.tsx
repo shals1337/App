@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../state/AppContext';
 import { formatWeight } from '../lib/format';
 import { progression } from '../lib/progression';
+import { poseFor } from '../data/exercises';
 import { ExercisePicker } from '../components/ExercisePicker';
 import { DeltaChip } from '../components/DeltaChip';
+import { ExercisePoseIcon } from '../components/ExercisePoseIcon';
 import { GearIcon, PlusIcon } from '../components/Icons';
 import { BackupSheet } from '../components/BackupSheet';
 
@@ -45,8 +47,8 @@ export function ExercisesHome({ onOpenExercise }: Props) {
       {rows.length === 0 ? (
         <div className="card">
           <p className="empty">
-            Tilføj de maskiner og øvelser du bruger — fx Leg Press, Ab Crunch eller
-            Dumbbell Curl. Så kan du logge din vægt og følge hvor meget du går op.
+            Tilføj de maskiner og øvelser du bruger — fx Benpres, Mavebøjninger eller
+            Bicep Curl. Så kan du logge din vægt og følge hvor meget du går op.
           </p>
         </div>
       ) : (
@@ -57,6 +59,7 @@ export function ExercisesHome({ onOpenExercise }: Props) {
               key={r.id}
               onClick={() => onOpenExercise(r.id)}
             >
+              <ExercisePoseIcon pose={poseFor(r.exercise!)} group={r.exercise!.muscleGroup} />
               <div className="list-row-main">
                 <span>{r.exercise!.name}</span>
                 <span className="muted small">{r.exercise!.muscleGroup}</span>

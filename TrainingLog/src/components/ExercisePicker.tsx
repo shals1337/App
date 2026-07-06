@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../state/AppContext';
-import { MUSCLE_GROUPS } from '../data/exercises';
+import { MUSCLE_GROUPS, poseFor } from '../data/exercises';
 import type { MuscleGroup } from '../types';
 import { newId } from '../id';
 import { PlusIcon, SearchIcon, XIcon } from './Icons';
+import { ExercisePoseIcon } from './ExercisePoseIcon';
 
 interface Props {
   excludeIds?: string[];
@@ -72,6 +73,7 @@ export function ExercisePicker({ excludeIds = [], onPick, onClose }: Props) {
         <div className="sheet-list">
           {filtered.map((e) => (
             <button className="list-row row-btn" key={e.id} onClick={() => onPick(e.id)}>
+              <ExercisePoseIcon pose={poseFor(e)} group={e.muscleGroup} size={38} />
               <div className="list-row-main">
                 <span>{e.name}</span>
                 <span className="muted small">{e.muscleGroup}</span>

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useApp } from '../state/AppContext';
 import type { NutritionGoals } from '../types';
 import { shortDate, todayISODate } from '../lib/format';
+import { QUICK_FOODS } from '../data/foods';
 import { TargetIcon, XIcon } from '../components/Icons';
 import { newId } from '../id';
 
@@ -50,6 +51,7 @@ export function NutritionView() {
   const [kcal, setKcal] = useState('');
   const [protein, setProtein] = useState('');
   const [showGoals, setShowGoals] = useState(false);
+  const [justAdded, setJustAdded] = useState<string | null>(null);
 
   const today = todayISODate();
   const todayEntries = useMemo(
@@ -90,6 +92,18 @@ export function NutritionView() {
     setProtein('');
   }
 
+  function quickAdd(item: (typeof QUICK_FOODS)[number]) {
+    addFood({
+      id: newId(),
+      date: today,
+      name: `${item.emoji} ${item.name}`,
+      kcal: item.kcal,
+      protein: item.protein,
+    });
+    setJustAdded(item.id);
+    setTimeout(() => setJustAdded((cur) => (cur === item.id ? null : cur)), 500);
+  }
+
   return (
     <div className="view">
       <header className="page-header">
@@ -111,6 +125,26 @@ export function NutritionView() {
           </p>
         )}
       </div>
+
+      <section>
+        <h2 className="section-title">Hurtig tilføjelse</h2>
+        <div className="quick-food-grid">
+          {QUICK_FOODS.map((item) => (
+            <button
+              key={item.id}
+              className={justAdded === item.id ? 'quick-food added' : 'quick-food'}
+              onClick={() => quickAdd(item)}
+            >
+              <span className="quick-food-emoji">{item.emoji}</span>
+              <span className="quick-food-name">{item.name}</span>
+              <span className="quick-food-meta">{item.serving}</span>
+              <span className="quick-food-meta muted">
+                {item.kcal} kcal · {item.protein}g
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <div className="card log-card">
         <input
