@@ -2,6 +2,9 @@
 
 A simple iOS app: spin a wheel and get a task to do. Built with SwiftUI.
 
+> This repo also contains [`TrainingLog`](TrainingLog/README.md), an
+> installable web app for logging workouts.
+
 ## Features
 
 - **Spin the wheel** — tap *Spin* and the wheel animates to a random task.

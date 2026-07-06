@@ -17,3 +17,9 @@ xcuserdata/
 .build/
 .swiftpm/
 Packages/
+
+# Node
+node_modules/
+dist/
+*.local
+npm-debug.log*
