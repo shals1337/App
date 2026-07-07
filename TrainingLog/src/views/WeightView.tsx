@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '../state/AppContext';
-import { formatWeight, shortDate, todayISODate } from '../lib/format';
+import { formatWeight, mondayKeyOf, shortDate } from '../lib/format';
 import { LineChart, type ChartPoint } from '../components/LineChart';
 import { XIcon } from '../components/Icons';
+
+const DAY_MS = 86400000;
 
 function WeightGoalCard({ start, current }: { start: number; current: number }) {
   const { weightGoal, setWeightGoal } = useApp();
@@ -114,10 +116,14 @@ export function WeightView() {
     ? current - first
     : null;
 
+  const thisWeekKey = mondayKeyOf(new Date());
+  const loggedThisWeek = sorted[0]?.date === thisWeekKey ? sorted[0] : null;
+  const daysUntilNextWeek = 7 - Math.round((Date.now() - new Date(thisWeekKey).getTime()) / DAY_MS);
+
   function log() {
     const v = Number(input.replace(',', '.'));
     if (!v || v <= 0) return;
-    addBodyWeight({ date: todayISODate(), weight: v });
+    addBodyWeight({ date: thisWeekKey, weight: v });
     setInput('');
   }
 
@@ -125,7 +131,7 @@ export function WeightView() {
     <div className="view">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Følg din egen vægt</p>
+          <p className="eyebrow">Ét vejescheck-in om ugen</p>
           <h1>Min vægt</h1>
         </div>
       </header>
@@ -133,7 +139,7 @@ export function WeightView() {
       <div className="card log-card">
         <div className="log-inputs">
           <label className="log-field">
-            <span>Dagens vægt (kg)</span>
+            <span>Ugens vægt (kg)</span>
             <input
               type="text"
               inputMode="decimal"
@@ -148,9 +154,17 @@ export function WeightView() {
             onClick={log}
             disabled={!Number(input.replace(',', '.'))}
           >
-            Log
+            {loggedThisWeek ? 'Opdatér' : 'Log'}
           </button>
         </div>
+        {loggedThisWeek ? (
+          <p className="muted small">
+            Logget denne uge: {formatWeight(loggedThisWeek.weight)} kg. Næste check-in om{' '}
+            {daysUntilNextWeek} dag{daysUntilNextWeek === 1 ? '' : 'e'} — eller opdatér ovenfor.
+          </p>
+        ) : (
+          <p className="muted small">Vej dig én gang om ugen for det mest pålidelige billede.</p>
+        )}
       </div>
 
       <div className="stat-grid two">
@@ -189,13 +203,13 @@ export function WeightView() {
 
       {sorted.length > 0 && (
         <section>
-          <h2 className="section-title">Historik</h2>
+          <h2 className="section-title">Ugentlig historik</h2>
           <div className="card">
             {(showAll ? sorted : sorted.slice(0, 7)).map((e) => (
               <div className="list-row" key={e.date}>
                 <div className="list-row-main">
                   <span>{formatWeight(e.weight)} kg</span>
-                  <span className="muted small">{shortDate(e.date)}</span>
+                  <span className="muted small">Uge fra {shortDate(e.date)}</span>
                 </div>
                 <button
                   className="icon-btn subtle"
@@ -217,7 +231,7 @@ export function WeightView() {
 
       {sorted.length === 0 && (
         <div className="card">
-          <p className="empty">Log din vægt første gang ovenfor — så tegner grafen sig selv.</p>
+          <p className="empty">Log din vægt for første gang ovenfor — så tegner grafen sig selv, uge for uge.</p>
         </div>
       )}
     </div>

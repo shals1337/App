@@ -33,3 +33,14 @@ export function localDateKey(iso: string): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
+/** YYYY-MM-DD of the Monday for the week containing `d` (local time). */
+export function mondayKeyOf(d: Date): string {
+  const monday = new Date(d);
+  const day = (monday.getDay() + 6) % 7; // Mon=0..Sun=6
+  monday.setDate(monday.getDate() - day);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, '0');
+  const day2 = String(monday.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day2}`;
+}
