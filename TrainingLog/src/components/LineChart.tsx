@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 export interface ChartPoint {
   label: string;
@@ -9,9 +9,11 @@ interface Props {
   points: ChartPoint[];
   unit: string;
   height?: number;
+  /** series color; defaults to the app accent */
+  color?: string;
 }
 
-const PAD = { top: 20, right: 12, bottom: 24, left: 38 };
+const PAD = { top: 22, right: 14, bottom: 26, left: 40 };
 const W = 360;
 
 function niceTicks(min: number, max: number): number[] {
@@ -33,12 +35,64 @@ function niceTicks(min: number, max: number): number[] {
   return ticks;
 }
 
-/** Single-series line chart with area fill, crosshair hover, and selective labels. */
-export function LineChart({ points, unit, height = 180 }: Props) {
-  const [hover, setHover] = useState<number | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+/** Monotone cubic smoothing — smooth curve that never overshoots the data. */
+function monotonePath(xs: number[], ys: number[]): string {
+  const n = xs.length;
+  if (n === 0) return '';
+  if (n === 1) return `M${xs[0]},${ys[0]}`;
+  if (n === 2) return `M${xs[0]},${ys[0]} L${xs[1]},${ys[1]}`;
 
-  const { xs, ys, ticks, plotW, plotH } = useMemo(() => {
+  const dx: number[] = [];
+  const dy: number[] = [];
+  const slope: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx[i] = xs[i + 1] - xs[i];
+    dy[i] = ys[i + 1] - ys[i];
+    slope[i] = dy[i] / dx[i];
+  }
+  const m: number[] = [slope[0]];
+  for (let i = 1; i < n - 1; i++) {
+    if (slope[i - 1] * slope[i] <= 0) m[i] = 0;
+    else {
+      const w1 = 2 * dx[i] + dx[i - 1];
+      const w2 = dx[i] + 2 * dx[i - 1];
+      m[i] = (w1 + w2) / (w1 / slope[i - 1] + w2 / slope[i]);
+    }
+  }
+  m[n - 1] = slope[n - 2];
+
+  let d = `M${xs[0]},${ys[0]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const x1 = xs[i] + dx[i] / 3;
+    const y1 = ys[i] + (m[i] * dx[i]) / 3;
+    const x2 = xs[i + 1] - dx[i] / 3;
+    const y2 = ys[i + 1] - (m[i + 1] * dx[i]) / 3;
+    d += ` C${x1},${y1} ${x2},${y2} ${xs[i + 1]},${ys[i + 1]}`;
+  }
+  return d;
+}
+
+function fmt(v: number): string {
+  if (v >= 1000) return Math.round(v).toLocaleString('da-DK');
+  return `${Math.round(v * 10) / 10}`.replace('.', ',');
+}
+
+/** Premium single-series area chart: smooth curve, gradient fill, animated draw, hover bubble. */
+export function LineChart({ points, unit, height = 190, color }: Props) {
+  const [hover, setHover] = useState<number | null>(null);
+  const [drawn, setDrawn] = useState(false);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const uid = useId().replace(/:/g, '');
+  const stroke = color ?? 'var(--series-1)';
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return setDrawn(true);
+    const t = setTimeout(() => setDrawn(true), 30);
+    return () => clearTimeout(t);
+  }, []);
+
+  const geo = useMemo(() => {
     const plotW = W - PAD.left - PAD.right;
     const plotH = height - PAD.top - PAD.bottom;
     const values = points.map((p) => p.value);
@@ -54,48 +108,17 @@ export function LineChart({ points, unit, height = 180 }: Props) {
         : PAD.left + (i / (points.length - 1)) * plotW,
     );
     const ys = values.map((v) => PAD.top + plotH - ((v - lo) / span) * plotH);
-    return { xs, ys, ticks, plotW, plotH, lo, span };
+    const yFor = (v: number) => PAD.top + plotH - ((v - lo) / span) * plotH;
+    return { plotW, plotH, xs, ys, ticks, yFor };
   }, [points, height]);
 
   if (points.length === 0) return null;
 
-  const yFor = (v: number) => {
-    const loTick = ticks[0];
-    const hiTick = ticks[ticks.length - 1];
-    const lo = Math.min(Math.min(...points.map((p) => p.value)), loTick);
-    const hi = Math.max(Math.max(...points.map((p) => p.value)), hiTick);
-    const span = hi - lo || 1;
-    return PAD.top + plotH - ((v - lo) / span) * plotH;
-  };
-
-  const linePath = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x},${ys[i]}`).join(' ');
-  const areaPath = `${linePath} L${xs[xs.length - 1]},${PAD.top + plotH} L${xs[0]},${PAD.top + plotH} Z`;
-
-  // selective direct labels: min, max, and last point only
-  const values = points.map((p) => p.value);
-  const labeled = new Set([
-    values.indexOf(Math.max(...values)),
-    values.indexOf(Math.min(...values)),
-    points.length - 1,
-  ]);
-
-  function onMove(e: React.PointerEvent) {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const rect = svg.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * W;
-    let best = 0;
-    let bestDist = Infinity;
-    xs.forEach((px, i) => {
-      const d = Math.abs(px - x);
-      if (d < bestDist) {
-        bestDist = d;
-        best = i;
-      }
-    });
-    setHover(best);
-  }
-
+  const { plotW, plotH, xs, ys, ticks, yFor } = geo;
+  const baseline = PAD.top + plotH;
+  const line = monotonePath(xs, ys);
+  const area = `${line} L${xs[xs.length - 1]},${baseline} L${xs[0]},${baseline} Z`;
+  const lastIdx = points.length - 1;
   const h = hover;
 
   return (
@@ -104,70 +127,102 @@ export function LineChart({ points, unit, height = 180 }: Props) {
         ref={svgRef}
         viewBox={`0 0 ${W} ${height}`}
         className="line-chart"
-        onPointerMove={onMove}
+        onPointerMove={(e) => {
+          const svg = svgRef.current;
+          if (!svg) return;
+          const rect = svg.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * W;
+          let best = 0;
+          let bd = Infinity;
+          xs.forEach((px, i) => {
+            const dd = Math.abs(px - x);
+            if (dd < bd) {
+              bd = dd;
+              best = i;
+            }
+          });
+          setHover(best);
+        }}
         onPointerLeave={() => setHover(null)}
       >
+        <defs>
+          <linearGradient id={`fill${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity="0.32" />
+            <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={`stroke${uid}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={stroke} stopOpacity="0.65" />
+            <stop offset="100%" stopColor={stroke} stopOpacity="1" />
+          </linearGradient>
+          <filter id={`glow${uid}`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
         {ticks.map((t) => (
           <g key={t}>
-            <line
-              x1={PAD.left}
-              x2={PAD.left + plotW}
-              y1={yFor(t)}
-              y2={yFor(t)}
-              className="grid-line"
-            />
-            <text x={PAD.left - 6} y={yFor(t) + 3.5} className="tick-label" textAnchor="end">
+            <line x1={PAD.left} x2={PAD.left + plotW} y1={yFor(t)} y2={yFor(t)} className="grid-line" />
+            <text x={PAD.left - 8} y={yFor(t) + 3.5} className="tick-label" textAnchor="end">
               {t >= 1000 ? `${Math.round(t / 100) / 10}k` : t}
             </text>
           </g>
         ))}
 
-        <text x={PAD.left} y={height - 6} className="tick-label" textAnchor="start">
+        <text x={PAD.left} y={height - 7} className="tick-label" textAnchor="start">
           {points[0].label}
         </text>
         {points.length > 1 && (
-          <text x={PAD.left + plotW} y={height - 6} className="tick-label" textAnchor="end">
-            {points[points.length - 1].label}
+          <text x={PAD.left + plotW} y={height - 7} className="tick-label" textAnchor="end">
+            {points[lastIdx].label}
           </text>
         )}
 
-        <path d={areaPath} className="chart-area" />
-        <path d={linePath} className="chart-line" pathLength={1} />
+        <path d={area} fill={`url(#fill${uid})`} className={drawn ? 'chart-area in' : 'chart-area'} />
+        <path
+          d={line}
+          fill="none"
+          stroke={`url(#stroke${uid})`}
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          pathLength={1}
+          className={drawn ? 'chart-line in' : 'chart-line'}
+        />
 
-        {points.map((p, i) => (
-          <g key={i}>
-            {(labeled.has(i) || h === i) && (
-              <text
-                x={xs[i]}
-                y={ys[i] - 8}
-                className="point-label"
-                textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}
-              >
-                {p.value >= 1000 ? Math.round(p.value).toLocaleString() : p.value}
-              </text>
-            )}
-            <circle cx={xs[i]} cy={ys[i]} r={h === i ? 5 : 3.5} className="chart-dot" />
-          </g>
-        ))}
+        {/* endpoint glow dot */}
+        <circle
+          cx={xs[lastIdx]}
+          cy={ys[lastIdx]}
+          r="4.2"
+          fill={stroke}
+          filter={`url(#glow${uid})`}
+          className="chart-endpoint"
+        />
 
         {h !== null && (
-          <line
-            x1={xs[h]}
-            x2={xs[h]}
-            y1={PAD.top}
-            y2={PAD.top + plotH}
-            className="crosshair"
-          />
+          <>
+            <line x1={xs[h]} x2={xs[h]} y1={PAD.top} y2={baseline} className="crosshair" />
+            <circle cx={xs[h]} cy={ys[h]} r="5.5" fill="var(--surface)" stroke={stroke} strokeWidth="2.5" />
+          </>
         )}
       </svg>
+
       <div className="chart-caption">
         {h !== null ? (
           <span>
-            <strong>{points[h].value >= 1000 ? Math.round(points[h].value).toLocaleString() : points[h].value} {unit}</strong> · {points[h].label}
+            <strong>
+              {fmt(points[h].value)} {unit}
+            </strong>{' '}
+            · {points[h].label}
           </span>
         ) : (
           <span className="muted">
-            {points.length} {points.length === 1 ? 'måling' : 'målinger'}
+            {fmt(points[lastIdx].value)} {unit} nu · {points.length}{' '}
+            {points.length === 1 ? 'måling' : 'målinger'}
           </span>
         )}
       </div>
