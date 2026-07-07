@@ -1458,6 +1458,7 @@
 
 .chip-row {
   display: flex;
+  flex-shrink: 0;
   gap: 0.4rem;
   overflow-x: auto;
   scrollbar-width: none;
