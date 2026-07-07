@@ -15,6 +15,7 @@ const KEYS = {
   food: 'tl.v3.food',
   goals: 'tl.v3.goals',
   exerciseGoals: 'tl.v3.exerciseGoals',
+  weightGoal: 'tl.v3.weightGoal',
 } as const;
 
 /** exerciseId -> target weight in kg */
@@ -160,6 +161,15 @@ export function saveGoals(v: NutritionGoals): void {
   write(KEYS.goals, v);
 }
 
+export function loadWeightGoal(): number | null {
+  return read<number>(KEYS.weightGoal);
+}
+
+export function saveWeightGoal(v: number | null): void {
+  if (v && v > 0) write(KEYS.weightGoal, v);
+  else localStorage.removeItem(KEYS.weightGoal);
+}
+
 /* ---- backup ---- */
 
 export function exportAllData(): string {
@@ -173,6 +183,7 @@ export function exportAllData(): string {
       food: loadFood(),
       goals: loadGoals(),
       exerciseGoals: loadExerciseGoals(),
+      weightGoal: loadWeightGoal(),
     },
     null,
     2,
@@ -187,6 +198,7 @@ export interface ImportPayload {
   food: FoodEntry[];
   goals: NutritionGoals;
   exerciseGoals: ExerciseGoals;
+  weightGoal: number | null;
 }
 
 export function parseImport(json: string): ImportPayload {
@@ -208,5 +220,6 @@ export function parseImport(json: string): ImportPayload {
       data.exerciseGoals && typeof data.exerciseGoals === 'object'
         ? data.exerciseGoals
         : {},
+    weightGoal: typeof data.weightGoal === 'number' ? data.weightGoal : null,
   };
 }

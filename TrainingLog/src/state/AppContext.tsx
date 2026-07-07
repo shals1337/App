@@ -25,6 +25,7 @@ import {
   loadGoals,
   loadLogs,
   loadTracked,
+  loadWeightGoal,
   saveBodyWeight,
   saveCustomExercises,
   saveExerciseGoals,
@@ -32,6 +33,7 @@ import {
   saveGoals,
   saveLogs,
   saveTracked,
+  saveWeightGoal,
 } from '../storage';
 import { useAuth } from './AuthContext';
 import { pullRemote, pushRemote } from '../lib/sync';
@@ -46,6 +48,7 @@ interface AppState {
   food: FoodEntry[];
   goals: NutritionGoals;
   exerciseGoals: ExerciseGoals;
+  weightGoal: number | null;
   syncStatus: SyncStatus;
   exerciseById: (id: string) => Exercise | undefined;
   logsFor: (exerciseId: string) => LogEntry[];
@@ -60,6 +63,7 @@ interface AppState {
   addFood: (e: FoodEntry) => void;
   deleteFood: (id: string) => void;
   setGoals: (g: NutritionGoals) => void;
+  setWeightGoal: (v: number | null) => void;
   importData: (payload: ImportPayload) => void;
 }
 
@@ -74,6 +78,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [food, setFood] = useState(loadFood);
   const [goals, setGoalsState] = useState(loadGoals);
   const [exerciseGoals, setExerciseGoals] = useState(loadExerciseGoals);
+  const [weightGoal, setWeightGoalState] = useState(loadWeightGoal);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('off');
 
   useEffect(() => saveCustomExercises(customExercises), [customExercises]);
@@ -83,6 +88,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => saveFood(food), [food]);
   useEffect(() => saveGoals(goals), [goals]);
   useEffect(() => saveExerciseGoals(exerciseGoals), [exerciseGoals]);
+  useEffect(() => saveWeightGoal(weightGoal), [weightGoal]);
 
   function importData(payload: ImportPayload) {
     setLogs(payload.logs);
@@ -92,6 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFood(payload.food);
     setGoalsState(payload.goals);
     setExerciseGoals(payload.exerciseGoals ?? {});
+    setWeightGoalState(payload.weightGoal ?? null);
   }
 
   /* always-fresh snapshot of the synced slices */
@@ -103,8 +110,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     food,
     goals,
     exerciseGoals,
+    weightGoal,
   });
-  stateRef.current = { logs, tracked, customExercises, bodyWeight, food, goals, exerciseGoals };
+  stateRef.current = {
+    logs,
+    tracked,
+    customExercises,
+    bodyWeight,
+    food,
+    goals,
+    exerciseGoals,
+    weightGoal,
+  };
 
   const hydratedFor = useRef<string | null>(null);
   const skipPush = useRef(false);
@@ -151,7 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSyncStatus('synced');
     }, 800);
     return () => clearTimeout(pushTimer.current);
-  }, [logs, tracked, customExercises, bodyWeight, food, goals, exerciseGoals, user]);
+  }, [logs, tracked, customExercises, bodyWeight, food, goals, exerciseGoals, weightGoal, user]);
 
   const exercises = [...BUILTIN_EXERCISES, ...customExercises].sort((a, b) =>
     a.name.localeCompare(b.name, 'da'),
@@ -165,6 +182,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     food,
     goals,
     exerciseGoals,
+    weightGoal,
     syncStatus,
     exerciseById: (id) => exercises.find((e) => e.id === id),
     logsFor: (exerciseId) =>
@@ -194,6 +212,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addFood: (entry) => setFood((prev) => [...prev, entry]),
     deleteFood: (id) => setFood((prev) => prev.filter((e) => e.id !== id)),
     setGoals: setGoalsState,
+    setWeightGoal: (v) => setWeightGoalState(v && v > 0 ? v : null),
     importData,
   };
 

@@ -83,7 +83,7 @@ function GoalCard({ exerciseId, current }: { exerciseId: string; current: number
   }
 
   const pct = Math.min(100, Math.round((current / target!) * 100));
-  const remaining = Math.round((target! - current) * 10) / 10;
+  const remaining = formatWeight(target! - current);
   const reached = current >= target!;
 
   return (
