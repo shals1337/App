@@ -5,16 +5,23 @@ export type MuscleGroup =
   | 'Skuldre'
   | 'Arme'
   | 'Mave'
+  | 'Kondi'
   | 'Andet';
 
 export interface Exercise {
   id: string;
   name: string;
   muscleGroup: MuscleGroup;
+  /** 'cardio' exercises log time/distance instead of weight */
+  kind?: 'cardio';
   custom?: boolean;
 }
 
-/** One logged set on a machine/exercise: what weight you lifted that day. */
+/**
+ * One logged entry. Strength exercises use `weight` (+ optional `reps`);
+ * cardio exercises use `durationMin` (+ optional `distanceKm`) and leave
+ * `weight` at 0.
+ */
 export interface LogEntry {
   id: string;
   exerciseId: string;
@@ -22,6 +29,8 @@ export interface LogEntry {
   date: string;
   weight: number;
   reps?: number;
+  durationMin?: number;
+  distanceKm?: number;
 }
 
 export interface BodyWeightEntry {

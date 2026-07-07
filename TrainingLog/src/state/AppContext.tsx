@@ -16,15 +16,18 @@ import type {
 } from '../types';
 import { BUILTIN_EXERCISES } from '../data/exercises';
 import {
+  type ExerciseGoals,
   type ImportPayload,
   loadBodyWeight,
   loadCustomExercises,
+  loadExerciseGoals,
   loadFood,
   loadGoals,
   loadLogs,
   loadTracked,
   saveBodyWeight,
   saveCustomExercises,
+  saveExerciseGoals,
   saveFood,
   saveGoals,
   saveLogs,
@@ -42,9 +45,11 @@ interface AppState {
   bodyWeight: BodyWeightEntry[];
   food: FoodEntry[];
   goals: NutritionGoals;
+  exerciseGoals: ExerciseGoals;
   syncStatus: SyncStatus;
   exerciseById: (id: string) => Exercise | undefined;
   logsFor: (exerciseId: string) => LogEntry[];
+  setExerciseGoal: (exerciseId: string, target: number | null) => void;
   trackExercise: (id: string) => void;
   untrackExercise: (id: string) => void;
   addCustomExercise: (e: Exercise) => void;
@@ -68,6 +73,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [bodyWeight, setBodyWeight] = useState(loadBodyWeight);
   const [food, setFood] = useState(loadFood);
   const [goals, setGoalsState] = useState(loadGoals);
+  const [exerciseGoals, setExerciseGoals] = useState(loadExerciseGoals);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('off');
 
   useEffect(() => saveCustomExercises(customExercises), [customExercises]);
@@ -76,6 +82,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => saveBodyWeight(bodyWeight), [bodyWeight]);
   useEffect(() => saveFood(food), [food]);
   useEffect(() => saveGoals(goals), [goals]);
+  useEffect(() => saveExerciseGoals(exerciseGoals), [exerciseGoals]);
 
   function importData(payload: ImportPayload) {
     setLogs(payload.logs);
@@ -84,6 +91,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBodyWeight(payload.bodyWeight);
     setFood(payload.food);
     setGoalsState(payload.goals);
+    setExerciseGoals(payload.exerciseGoals ?? {});
   }
 
   /* always-fresh snapshot of the synced slices */
@@ -94,8 +102,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     bodyWeight,
     food,
     goals,
+    exerciseGoals,
   });
-  stateRef.current = { logs, tracked, customExercises, bodyWeight, food, goals };
+  stateRef.current = { logs, tracked, customExercises, bodyWeight, food, goals, exerciseGoals };
 
   const hydratedFor = useRef<string | null>(null);
   const skipPush = useRef(false);
@@ -142,7 +151,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSyncStatus('synced');
     }, 800);
     return () => clearTimeout(pushTimer.current);
-  }, [logs, tracked, customExercises, bodyWeight, food, goals, user]);
+  }, [logs, tracked, customExercises, bodyWeight, food, goals, exerciseGoals, user]);
 
   const exercises = [...BUILTIN_EXERCISES, ...customExercises].sort((a, b) =>
     a.name.localeCompare(b.name, 'da'),
@@ -155,12 +164,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     bodyWeight,
     food,
     goals,
+    exerciseGoals,
     syncStatus,
     exerciseById: (id) => exercises.find((e) => e.id === id),
     logsFor: (exerciseId) =>
       logs
         .filter((l) => l.exerciseId === exerciseId)
         .sort((a, b) => a.date.localeCompare(b.date)),
+    setExerciseGoal: (exerciseId, target) =>
+      setExerciseGoals((prev) => {
+        const next = { ...prev };
+        if (target && target > 0) next[exerciseId] = target;
+        else delete next[exerciseId];
+        return next;
+      }),
     trackExercise: (id) =>
       setTracked((prev) => (prev.includes(id) ? prev : [...prev, id])),
     untrackExercise: (id) => {

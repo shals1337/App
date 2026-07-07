@@ -7,6 +7,7 @@ const GROUP_HEX: Record<MuscleGroup, string> = {
   Skuldre: '#ffb84d',
   Arme: '#5ce68a',
   Mave: '#ff9f4d',
+  Kondi: '#38bdf8',
   Andet: '#9ca3af',
 };
 

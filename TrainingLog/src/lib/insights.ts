@@ -1,4 +1,5 @@
 import type { Exercise, LogEntry } from '../types';
+import type { ExerciseGoals } from '../storage';
 import { localDateKey } from './format';
 
 /** Monday-based week key, e.g. "2026-W28". */
@@ -98,4 +99,155 @@ export function latestPR(
     }
   }
   return best;
+}
+
+function bestWeightFor(logs: LogEntry[], exerciseId: string): number {
+  let best = 0;
+  for (const l of logs) if (l.exerciseId === exerciseId) best = Math.max(best, l.weight);
+  return best;
+}
+
+export interface GainInsight {
+  exercise: Exercise;
+  gain: number;
+  weeks: number;
+}
+
+/** Largest weight gained on any one exercise over roughly the last 8 weeks. */
+export function biggestGain(
+  logs: LogEntry[],
+  exerciseById: (id: string) => Exercise | undefined,
+): GainInsight | null {
+  const cutoff = Date.now() - 56 * 86400000;
+  const byExercise = new Map<string, LogEntry[]>();
+  for (const l of logs) {
+    if (new Date(l.date).getTime() < cutoff) continue;
+    const arr = byExercise.get(l.exerciseId) ?? [];
+    arr.push(l);
+    byExercise.set(l.exerciseId, arr);
+  }
+  let best: GainInsight | null = null;
+  for (const [exId, entries] of byExercise) {
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+    const firstBest = entries[0].weight;
+    const lastBest = Math.max(...entries.map((e) => e.weight));
+    const gain = lastBest - firstBest;
+    if (gain <= 0) continue;
+    const days =
+      (new Date(entries[entries.length - 1].date).getTime() -
+        new Date(entries[0].date).getTime()) /
+      86400000;
+    const weeks = Math.max(1, Math.round(days / 7));
+    const ex = exerciseById(exId);
+    if (!ex) continue;
+    if (!best || gain > best.gain) best = { exercise: ex, gain, weeks };
+  }
+  return best;
+}
+
+export interface GoalInsight {
+  exercise: Exercise;
+  current: number;
+  target: number;
+  remaining: number;
+  reached: boolean;
+}
+
+/** Goal closest to being reached (or one just reached). */
+export function goalProgress(
+  logs: LogEntry[],
+  exerciseById: (id: string) => Exercise | undefined,
+  goals: ExerciseGoals,
+): { closest: GoalInsight | null; reached: GoalInsight | null } {
+  let closest: GoalInsight | null = null;
+  let reached: GoalInsight | null = null;
+  for (const [exId, target] of Object.entries(goals)) {
+    const ex = exerciseById(exId);
+    if (!ex || !target) continue;
+    const current = bestWeightFor(logs, exId);
+    if (current <= 0) continue;
+    const remaining = Math.round((target - current) * 10) / 10;
+    const info: GoalInsight = { exercise: ex, current, target, remaining, reached: remaining <= 0 };
+    if (info.reached) {
+      if (!reached) reached = info;
+    } else if (!closest || remaining < closest.remaining) {
+      closest = info;
+    }
+  }
+  return { closest, reached };
+}
+
+export type InsightKind = 'goalReached' | 'pr' | 'gain' | 'goal' | 'streak';
+
+export interface Insight {
+  id: string;
+  kind: InsightKind;
+  title: string;
+  sub: string;
+  exerciseId?: string;
+}
+
+/** Up to `max` prioritised insight cards for the dashboard. */
+export function buildInsights(
+  logs: LogEntry[],
+  exerciseById: (id: string) => Exercise | undefined,
+  goals: ExerciseGoals,
+  streakWeeks: number,
+  max = 3,
+): Insight[] {
+  const out: Insight[] = [];
+  const { closest, reached } = goalProgress(logs, exerciseById, goals);
+
+  if (reached) {
+    out.push({
+      id: 'goalReached',
+      kind: 'goalReached',
+      title: 'Mål nået! 🎉',
+      sub: `${reached.exercise.name} · ${reached.target} kg`,
+      exerciseId: reached.exercise.id,
+    });
+  }
+
+  const pr = latestPR(logs, exerciseById);
+  if (pr) {
+    out.push({
+      id: 'pr',
+      kind: 'pr',
+      title: 'Personlig rekord',
+      sub: `${pr.exercise.name} · ${pr.weight} kg`,
+      exerciseId: pr.exercise.id,
+    });
+  }
+
+  const gain = biggestGain(logs, exerciseById);
+  if (gain) {
+    out.push({
+      id: 'gain',
+      kind: 'gain',
+      title: `+${Math.round(gain.gain * 10) / 10} kg fremgang`,
+      sub: `${gain.exercise.name} · ${gain.weeks} uge${gain.weeks === 1 ? '' : 'r'}`,
+      exerciseId: gain.exercise.id,
+    });
+  }
+
+  if (closest) {
+    out.push({
+      id: 'goal',
+      kind: 'goal',
+      title: `${closest.remaining} kg til dit mål`,
+      sub: `${closest.exercise.name} · ${closest.current}/${closest.target} kg`,
+      exerciseId: closest.exercise.id,
+    });
+  }
+
+  if (streakWeeks >= 2) {
+    out.push({
+      id: 'streak',
+      kind: 'streak',
+      title: `${streakWeeks} ugers streak 🔥`,
+      sub: 'Bliv ved — du er i gang!',
+    });
+  }
+
+  return out.slice(0, max);
 }

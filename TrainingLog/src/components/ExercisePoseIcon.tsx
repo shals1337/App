@@ -19,7 +19,12 @@ export type Pose =
   | 'pullup'
   | 'bodyweight'
   | 'kettlebell'
-  | 'rack';
+  | 'rack'
+  | 'treadmill'
+  | 'bike'
+  | 'elliptical'
+  | 'rower'
+  | 'stairs';
 
 const S = {
   fill: 'none',
@@ -221,6 +226,58 @@ function Figure({ pose }: { pose: Pose }) {
           <rect x="3.4" y="5.4" width="2.4" height="5.2" rx="1" fill="currentColor" />
           <rect x="18.2" y="5.4" width="2.4" height="5.2" rx="1" fill="currentColor" />
           <path d="M6 7l1.6-1.4M18 7l-1.6-1.4" {...S} strokeWidth={1.5} opacity="0.7" />
+        </>
+      );
+    case 'treadmill':
+      return (
+        <>
+          {/* treadmill: deck + rear roller + console upright */}
+          <path d="M3 17.5 6 16h13l1.5 1.5" {...S} strokeWidth={2} />
+          <circle cx="4" cy="18.6" r="1.4" {...S} />
+          <path d="M18.5 16V6h2" {...S} />
+          <path d="M20.5 6h.2" {...S} strokeWidth={2.4} />
+          {/* runner */}
+          <circle cx="11" cy="7.4" r="1.4" {...S} />
+          <path d="M11 8.8 9.8 12l-2 .6M11 8.8l1.6 1.4 1.8-.4M11 10.6 9.5 15M11 10.6 12.8 14.6" {...S} />
+        </>
+      );
+    case 'bike':
+      return (
+        <>
+          <circle cx="6" cy="16.5" r="3.2" {...S} />
+          <circle cx="17.5" cy="16.5" r="3.2" {...S} />
+          <path d="M6 16.5 9.5 8h4" {...S} />
+          <path d="M9.5 16.5 12.5 8" {...S} />
+          <path d="M12.5 8 17.5 16.5" {...S} />
+          <path d="M8 8h3M12.5 6.4v1.6" {...S} strokeWidth={1.7} />
+        </>
+      );
+    case 'elliptical':
+      return (
+        <>
+          <ellipse cx="12" cy="15.5" rx="8.5" ry="2.6" {...S} />
+          <circle cx="6" cy="15.5" r="1" fill="currentColor" />
+          <circle cx="18" cy="15" r="1" fill="currentColor" />
+          <path d="M6 15 8.5 6M18 14.5 15.5 6" {...S} />
+          <path d="M8.5 6h7" {...S} strokeWidth={1.8} />
+        </>
+      );
+    case 'rower':
+      return (
+        <>
+          {/* rowing machine: rail, flywheel, seat, handle */}
+          <path d="M3 18h17" {...S} strokeWidth={2} />
+          <circle cx="5" cy="12.5" r="2.6" {...S} />
+          <path d="M7.4 12.5H16" {...S} />
+          <rect x="12" y="16" width="3.4" height="2" rx="0.8" fill="currentColor" />
+          <path d="M18.5 8v10" {...S} opacity="0.6" />
+        </>
+      );
+    case 'stairs':
+      return (
+        <>
+          <path d="M4 19h4v-4h4v-4h4v-4h4" {...S} strokeWidth={2} />
+          <path d="M4 19v-2" {...S} opacity="0.5" />
         </>
       );
   }
