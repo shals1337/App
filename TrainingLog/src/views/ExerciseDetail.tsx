@@ -7,6 +7,7 @@ import { CheckIcon, ChevronLeftIcon, PlusIcon, TrashIcon, XIcon } from '../compo
 import { DeltaChip } from '../components/DeltaChip';
 import { ExercisePoseIcon } from '../components/ExercisePoseIcon';
 import { poseFor } from '../data/exercises';
+import { groupColor } from '../lib/muscleColors';
 import { dailyBests, lastSessionSets, progression } from '../lib/progression';
 import { newId } from '../id';
 
@@ -103,9 +104,10 @@ export function ExerciseDetail({ exercise, onBack }: Props) {
   }
 
   const lastSession = lastSessionSets(logs);
+  const mg = groupColor(exercise.muscleGroup);
 
   return (
-    <div className="view">
+    <div className="view" style={{ ['--mg' as string]: mg }}>
       <header className="page-header detail">
         <button className="icon-btn" onClick={onBack} aria-label="Tilbage">
           <ChevronLeftIcon size={20} />
@@ -193,7 +195,7 @@ export function ExerciseDetail({ exercise, onBack }: Props) {
       </div>
 
       <div className="stat-grid">
-        <div className="stat-tile">
+        <div className="stat-tile hero">
           <span className="stat-value">{prog ? formatWeight(prog.lastValue) : '—'}</span>
           <span className="stat-label">nuværende kg</span>
         </div>
@@ -217,7 +219,7 @@ export function ExerciseDetail({ exercise, onBack }: Props) {
               ? '—'
               : `${totalGain > 0 ? '+' : ''}${formatWeight(totalGain)}`}
           </span>
-          <span className="stat-label">fremgang i alt</span>
+          <span className="stat-label">fremgang</span>
         </div>
       </div>
 
@@ -240,28 +242,37 @@ export function ExerciseDetail({ exercise, onBack }: Props) {
             </p>
           </div>
         ) : (
-          days.map(([dateKey, entries]) => (
-            <div className="card" key={dateKey}>
-              <h3 className="small-title">{formatDate(`${dateKey}T12:00:00`)}</h3>
-              {entries.map((l, i) => (
-                <div className="list-row" key={l.id}>
-                  <div className="list-row-main">
-                    <span>Sæt {i + 1}</span>
-                    <span className="muted small">
-                      {formatWeight(l.weight)} kg{l.reps ? ` × ${l.reps}` : ''}
-                    </span>
-                  </div>
-                  <button
-                    className="icon-btn subtle"
-                    onClick={() => deleteLog(l.id)}
-                    aria-label="Slet sæt"
-                  >
-                    <XIcon size={16} />
-                  </button>
+          days.map(([dateKey, entries]) => {
+            const dayBest = Math.max(...entries.map((e) => e.weight));
+            return (
+              <div className="card day-card" key={dateKey}>
+                <div className="day-head">
+                  <h3 className="small-title">{formatDate(`${dateKey}T12:00:00`)}</h3>
+                  <span className="muted small">
+                    {entries.length} sæt · bedste {formatWeight(dayBest)} kg
+                  </span>
                 </div>
-              ))}
-            </div>
-          ))
+                <div className="set-chips">
+                  {entries.map((l, i) => (
+                    <div className="set-chip" key={l.id}>
+                      <span className="set-chip-idx">{i + 1}</span>
+                      <span className="set-chip-val">
+                        {formatWeight(l.weight)}
+                        {l.reps ? <span className="muted"> × {l.reps}</span> : ''}
+                      </span>
+                      <button
+                        className="set-chip-x"
+                        onClick={() => deleteLog(l.id)}
+                        aria-label="Slet sæt"
+                      >
+                        <XIcon size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })
         )}
       </section>
 

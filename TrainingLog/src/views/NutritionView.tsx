@@ -3,46 +3,13 @@ import { useApp } from '../state/AppContext';
 import type { NutritionGoals } from '../types';
 import { shortDate, todayISODate } from '../lib/format';
 import { QUICK_FOODS } from '../data/foods';
+import { ProgressRing } from '../components/ProgressRing';
 import { TargetIcon, XIcon } from '../components/Icons';
 import { newId } from '../id';
 
 function parseNum(raw: string): number {
   const v = Number(raw.replace(',', '.'));
   return Number.isFinite(v) && v > 0 ? v : 0;
-}
-
-function GoalBar({
-  value,
-  goal,
-  unit,
-  title,
-}: {
-  value: number;
-  goal: number | null;
-  unit: string;
-  title: string;
-}) {
-  const pct = goal ? Math.min(100, (value / goal) * 100) : 0;
-  const reached = goal !== null && value >= goal;
-  return (
-    <div className="goal-block">
-      <div className="goal-head">
-        <span className="goal-title">{title}</span>
-        <span className="goal-nums mono">
-          <strong>{Math.round(value).toLocaleString('da-DK')}</strong>
-          {goal ? ` / ${Math.round(goal).toLocaleString('da-DK')}` : ''} {unit}
-        </span>
-      </div>
-      {goal !== null && (
-        <div className="goal-track">
-          <div
-            className={reached ? 'goal-fill reached' : 'goal-fill'}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function NutritionView() {
@@ -117,12 +84,26 @@ export function NutritionView() {
       </header>
 
       <div className="card goal-card">
-        <GoalBar value={todayKcal} goal={goals.kcal} unit="kcal" title="Kalorier" />
-        <GoalBar value={todayProtein} goal={goals.protein} unit="g" title="Protein" />
+        <div className="ring-row">
+          <ProgressRing
+            value={todayKcal}
+            goal={goals.kcal}
+            unit="kcal"
+            label="Kalorier"
+            color="var(--warn)"
+          />
+          <ProgressRing
+            value={todayProtein}
+            goal={goals.protein}
+            unit="g"
+            label="Protein"
+            color="var(--accent-2)"
+          />
+        </div>
         {goals.kcal === null && goals.protein === null && (
-          <p className="muted small">
-            Tryk på <TargetIcon size={12} /> for at sætte dine daglige mål.
-          </p>
+          <button className="goal-hint" onClick={() => setShowGoals(true)}>
+            <TargetIcon size={14} /> Sæt dine daglige mål
+          </button>
         )}
       </div>
 
