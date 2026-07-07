@@ -1,10 +1,23 @@
 import { useRef, useState } from 'react';
 import { useApp } from '../state/AppContext';
+import { useAuth } from '../state/AuthContext';
 import { exportAllData, parseImport } from '../storage';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { DownloadIcon, XIcon } from './Icons';
 
+function SyncBadge({ status }: { status: 'off' | 'syncing' | 'synced' }) {
+  if (status === 'off') return null;
+  return (
+    <span className={`sync-badge ${status}`}>
+      <span className="sync-dot" />
+      {status === 'syncing' ? 'Synkroniserer…' : 'Synkroniseret'}
+    </span>
+  );
+}
+
 export function BackupSheet({ onClose }: { onClose: () => void }) {
-  const { importData, logs } = useApp();
+  const { importData, logs, syncStatus } = useApp();
+  const { user, signOut, status: authStatus } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -38,11 +51,29 @@ export function BackupSheet({ onClose }: { onClose: () => void }) {
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-header">
-          <h2>Backup</h2>
+          <h2>Konto & backup</h2>
           <button className="icon-btn" onClick={onClose} aria-label="Luk">
             <XIcon size={20} />
           </button>
         </div>
+
+        {user ? (
+          <div className="account-row">
+            <div className="account-info">
+              <span className="account-email">{user.email}</span>
+              <SyncBadge status={syncStatus} />
+            </div>
+            <button className="secondary-btn" onClick={() => signOut()}>
+              Log ud
+            </button>
+          </div>
+        ) : (
+          <p className="muted small">
+            {isSupabaseConfigured
+              ? 'Du bruger appen uden konto. Log ind for at synkronisere på tværs af enheder.'
+              : 'Alt gemmes kun på denne enhed. Eksportér en backup, før du skifter telefon eller rydder browserdata.'}
+          </p>
+        )}
 
         <div className="row">
           <button className="secondary-btn grow" onClick={exportData}>
@@ -64,10 +95,11 @@ export function BackupSheet({ onClose }: { onClose: () => void }) {
           }}
         />
         {message && <p className="muted small">{message}</p>}
-        <p className="muted small">
-          Alt gemmes kun på denne enhed. Eksportér en backup, før du skifter telefon
-          eller rydder browserdata.
-        </p>
+        {authStatus === 'local' && (
+          <p className="muted small">
+            Tip: sky-synk kan slås til ved at forbinde et Supabase-projekt — se README.
+          </p>
+        )}
       </div>
     </div>
   );

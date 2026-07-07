@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { AppProvider, useApp } from './state/AppContext';
+import { AuthProvider, useAuth } from './state/AuthContext';
 import { ExercisesHome } from './views/ExercisesHome';
 import { ExerciseDetail } from './views/ExerciseDetail';
 import { WeightView } from './views/WeightView';
 import { NutritionView } from './views/NutritionView';
+import { AuthView } from './views/AuthView';
 import { DumbbellIcon, FlameIcon, ScaleIcon } from './components/Icons';
 import './App.css';
 
@@ -72,10 +74,42 @@ function Shell() {
   );
 }
 
-export default function App() {
+function Root() {
+  const { status } = useAuth();
+  const [skipped, setSkipped] = useState(false);
+
+  if (status === 'loading') {
+    return (
+      <div className="app auth-app">
+        <div className="aurora" aria-hidden="true">
+          <div className="blob blob-1" />
+          <div className="blob blob-2" />
+          <div className="blob blob-3" />
+        </div>
+        <div className="splash">
+          <div className="auth-logo">
+            <DumbbellIcon size={30} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'signedOut' && !skipped) {
+    return <AuthView onSkip={() => setSkipped(true)} />;
+  }
+
   return (
     <AppProvider>
       <Shell />
     </AppProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Root />
+    </AuthProvider>
   );
 }

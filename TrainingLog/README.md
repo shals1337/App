@@ -1,9 +1,10 @@
 # Min Træning
 
-En simpel, mørk trænings-app (PWA) på dansk: følg de maskiner og øvelser du
+En mørk, premium trænings-app (PWA) på dansk: følg de maskiner og øvelser du
 bruger, hvilken vægt du løfter, og hvor meget du går op — plus din egen vægt
-og en kcal/protein-tæller. Ingen konto, ingen backend: alt gemmes på enheden
-(`localStorage`).
+og en kcal/protein-tæller. Virker 100 % lokalt (`localStorage`) uden konto, og
+kan valgfrit forbindes til en gratis Supabase-backend for **login og sky-synk**
+på tværs af enheder.
 
 ## Funktioner
 
@@ -32,6 +33,46 @@ npm run dev
 
 Åbn den viste URL. På telefonen: åbn samme URL og vælg "Føj til hjemmeskærm"
 (Safari) eller "Installér app" (Chrome).
+
+## Login & sky-synk (valgfrit)
+
+Uden opsætning kører appen lokalt uden login. For at slå konto + synk til:
+
+1. Opret et gratis projekt på [supabase.com](https://supabase.com).
+2. I Supabase → **SQL Editor**, kør:
+
+   ```sql
+   create table if not exists public.user_data (
+     user_id    uuid primary key references auth.users on delete cascade,
+     data       jsonb not null,
+     updated_at timestamptz not null default now()
+   );
+
+   alter table public.user_data enable row level security;
+
+   create policy "read own data"  on public.user_data
+     for select using (auth.uid() = user_id);
+   create policy "write own data" on public.user_data
+     for insert with check (auth.uid() = user_id);
+   create policy "update own data" on public.user_data
+     for update using (auth.uid() = user_id);
+   ```
+
+3. Supabase → **Settings → API**: kopiér *Project URL* og *anon public key*.
+4. Lav en `.env.local` (kopiér fra `.env.example`) og indsæt:
+
+   ```
+   VITE_SUPABASE_URL=https://dit-projekt.supabase.co
+   VITE_SUPABASE_ANON_KEY=din-anon-key
+   ```
+
+5. Kør/byg appen igen. Nu vises en login-skærm (email + adgangskode). Første
+   gang du logger ind flyttes dine lokale data automatisk op på kontoen; derefter
+   synkroniseres ændringer til skyen (last-write-wins pr. bruger). Du kan altid
+   vælge *"Fortsæt uden konto"* og bruge appen lokalt.
+
+   Tip: I Supabase → Authentication → Providers kan email-bekræftelse slås fra,
+   hvis du vil kunne logge ind med det samme uden at bekræfte via mail.
 
 ## Byg
 
