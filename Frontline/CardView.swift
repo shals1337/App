@@ -56,7 +56,14 @@ struct CardView: View {
             Text(candidate.bio)
                 .font(.callout)
                 .foregroundStyle(.white.opacity(0.92))
-                .lineLimit(3)
+                .lineLimit(2)
+
+            HStack(spacing: 6) {
+                LookingForTag(lookingFor: candidate.lookingFor)
+                ForEach(candidate.interests.prefix(2), id: \.self) { interest in
+                    InterestChip(text: interest)
+                }
+            }
         }
         .padding(20)
     }
@@ -78,6 +85,44 @@ struct CardView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .padding(.bottom, 120)
         }
+    }
+}
+
+/// A small interest tag. `onDark` styles it for the (dark) card; otherwise it
+/// uses the brand tint for light backgrounds like the profile.
+struct InterestChip: View {
+    let text: String
+    var onDark = true
+
+    var body: some View {
+        Text(text)
+            .font(.caption2.weight(.medium))
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(onDark ? AnyShapeStyle(.white.opacity(0.22))
+                               : AnyShapeStyle(Theme.brand.opacity(0.12)),
+                        in: Capsule())
+            .foregroundStyle(onDark ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.brand))
+    }
+}
+
+/// A pill showing what a member is looking for.
+struct LookingForTag: View {
+    let lookingFor: LookingFor
+    var onDark = true
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: lookingFor.symbol)
+            Text(lookingFor.label)
+        }
+        .font(.caption2.weight(.semibold))
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(onDark ? AnyShapeStyle(.white.opacity(0.22))
+                           : AnyShapeStyle(Theme.brand.opacity(0.12)),
+                    in: Capsule())
+        .foregroundStyle(onDark ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.brand))
     }
 }
 

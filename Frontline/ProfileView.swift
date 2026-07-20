@@ -31,12 +31,28 @@ struct ProfileView: View {
                                 .foregroundStyle(user.bio.isEmpty ? .secondary : .primary)
                         }
 
+                        if !user.interests.isEmpty {
+                            Section("Interesser") {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)],
+                                          alignment: .leading, spacing: 8) {
+                                    ForEach(user.interests, id: \.self) { interest in
+                                        InterestChip(text: interest, onDark: false)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+
                         Section("Detaljer") {
                             row("Erhverv", user.profession.label, symbol: user.profession.symbol, tint: user.profession.tint)
+                            row("Søger", user.lookingFor.label, symbol: user.lookingFor.symbol)
                             row("Lokation", user.city, symbol: "mappin.circle.fill")
                             row("Alder", "\(user.age)", symbol: "calendar")
                             row("Viser mig", user.seeking.map(\.label).joined(separator: ", "),
                                 symbol: "heart.fill")
+                            if !user.email.isEmpty {
+                                row("E-mail", user.email, symbol: "envelope.fill")
+                            }
                         }
 
                         Section {
@@ -250,6 +266,31 @@ private struct EditProfileView: View {
                     }
                 }
 
+                Section("Jeg søger") {
+                    Picker("Jeg søger", selection: $profile.lookingFor) {
+                        ForEach(LookingFor.allCases) { intent in
+                            Label(intent.label, systemImage: intent.symbol).tag(intent)
+                        }
+                    }
+                }
+
+                Section {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)],
+                              spacing: 10, alignment: .leading) {
+                        ForEach(InterestCatalog.all, id: \.self) { interest in
+                            InterestToggle(text: interest,
+                                           selected: profile.interests.contains(interest)) {
+                                toggleInterest(interest)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("Interesser")
+                } footer: {
+                    Text("Vælg op til 8. Valgt: \(profile.interests.count)")
+                }
+
                 Section("Om dig") {
                     TextField("Del noget ægte…", text: $profile.bio, axis: .vertical)
                         .lineLimit(3...6)
@@ -284,6 +325,14 @@ private struct EditProfileView: View {
         !profile.name.trimmingCharacters(in: .whitespaces).isEmpty
         && !profile.city.trimmingCharacters(in: .whitespaces).isEmpty
         && !profile.seeking.isEmpty
+    }
+
+    private func toggleInterest(_ interest: String) {
+        if let idx = profile.interests.firstIndex(of: interest) {
+            profile.interests.remove(at: idx)
+        } else if profile.interests.count < 8 {
+            profile.interests.append(interest)
+        }
     }
 
     private func binding(for gender: Gender) -> Binding<Bool> {

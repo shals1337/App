@@ -34,6 +34,14 @@ struct FiltersView: View {
                         in: 1...200, step: 1
                     )
                 }
+
+                Section {
+                    Toggle("Aktivér swipe-bevægelser", isOn: $draft.swipeEnabled)
+                } header: {
+                    Text("Interaktion")
+                } footer: {
+                    Text("Som standard bruger du knapperne til at like, sige nej og fremhæve. Du kan slå swipe til, hvis du foretrækker det.")
+                }
             }
             .navigationTitle("Filtre")
             .navigationBarTitleDisplayMode(.inline)

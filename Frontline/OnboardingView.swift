@@ -8,9 +8,10 @@ struct OnboardingView: View {
 
     @State private var step = 0
     @State private var draft = UserProfile.empty
+    @State private var password = ""      // never persisted (would go to auth backend)
     @State private var verifying = false
 
-    private let lastStep = 3
+    private let lastStep = 5
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,10 +21,12 @@ struct OnboardingView: View {
                 .padding(.horizontal)
 
             TabView(selection: $step) {
-                basicsStep.tag(0)
-                professionStep.tag(1)
-                preferencesStep.tag(2)
-                verifyStep.tag(3)
+                accountStep.tag(0)
+                basicsStep.tag(1)
+                professionStep.tag(2)
+                preferencesStep.tag(3)
+                interestsStep.tag(4)
+                verifyStep.tag(5)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut, value: step)
@@ -53,6 +56,24 @@ struct OnboardingView: View {
     }
 
     // MARK: - Steps
+
+    private var accountStep: some View {
+        StepScroll(title: "Opret din profil",
+                   subtitle: "Din konto holder dine matches og beskeder. Du kan altid slette den igen i appen.") {
+            LabeledField("E-mail") {
+                TextField("dig@eksempel.dk", text: $draft.email)
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.emailAddress)
+                    .autocorrectionDisabled()
+            }
+            LabeledField("Adgangskode") {
+                SecureField("Mindst 6 tegn", text: $password)
+            }
+            Text("Din adgangskode gemmes ikke på enheden i denne demo — i en rigtig udgave håndteres den af en sikker login-tjeneste.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
 
     private var basicsStep: some View {
         StepScroll(title: "Det basale",
@@ -103,10 +124,37 @@ struct OnboardingView: View {
                     }
                 }
             }
+            LabeledField("Jeg søger") {
+                Picker("Jeg søger", selection: $draft.lookingFor) {
+                    ForEach(LookingFor.allCases) { intent in
+                        Label(intent.label, systemImage: intent.symbol).tag(intent)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             LabeledField("Om dig") {
                 TextField("Del noget ægte…", text: $draft.bio, axis: .vertical)
                     .lineLimit(3...6)
             }
+        }
+    }
+
+    private var interestsStep: some View {
+        StepScroll(title: "Dine interesser",
+                   subtitle: "Vælg et par ting, du er til — de vises på din profil og hjælper med bedre matches.") {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 10)],
+                      spacing: 10, alignment: .leading) {
+                ForEach(InterestCatalog.all, id: \.self) { interest in
+                    InterestToggle(text: interest,
+                                   selected: draft.interests.contains(interest)) {
+                        toggleInterest(interest)
+                    }
+                }
+            }
+            Text("Valgt: \(draft.interests.count)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -183,11 +231,28 @@ struct OnboardingView: View {
         }
     }
 
+    private func toggleInterest(_ interest: String) {
+        if let idx = draft.interests.firstIndex(of: interest) {
+            draft.interests.remove(at: idx)
+        } else if draft.interests.count < 8 {
+            draft.interests.append(interest)
+        }
+    }
+
     private var canAdvance: Bool { validationMessage == nil }
 
     private var validationMessage: String? {
         switch step {
-        case 0:
+        case 0: // account
+            let email = draft.email.trimmingCharacters(in: .whitespaces)
+            if !email.contains("@") || !email.contains(".") {
+                return "Indtast en gyldig e-mail."
+            }
+            if password.count < 6 {
+                return "Adgangskoden skal være mindst 6 tegn."
+            }
+            return nil
+        case 1: // basics
             if draft.name.trimmingCharacters(in: .whitespaces).isEmpty {
                 return "Tilføj dit fornavn for at fortsætte."
             }
@@ -195,8 +260,10 @@ struct OnboardingView: View {
                 return "Tilføj din by for at fortsætte."
             }
             return nil
-        case 2:
+        case 3: // preferences
             return draft.seeking.isEmpty ? "Vælg mindst én, du vil se." : nil
+        case 4: // interests
+            return draft.interests.isEmpty ? "Vælg mindst én interesse." : nil
         default:
             return nil
         }
@@ -306,5 +373,31 @@ private struct SeekingRow: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// A selectable interest pill used in onboarding and profile editing.
+struct InterestToggle: View {
+    let text: String
+    let selected: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            Text(text)
+                .font(.subheadline.weight(.medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 8)
+                .background(selected ? AnyShapeStyle(Theme.brand)
+                                     : AnyShapeStyle(Color(.secondarySystemGroupedBackground)),
+                            in: Capsule())
+                .foregroundStyle(selected ? .white : .primary)
+                .overlay(Capsule().strokeBorder(selected ? Color.clear : Color(.separator), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: selected)
     }
 }

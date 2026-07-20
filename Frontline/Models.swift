@@ -84,6 +84,46 @@ enum Profession: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Relationship intent & interests
+
+/// What a member is looking for — shown on their profile and cards.
+enum LookingFor: String, Codable, CaseIterable, Identifiable {
+    case serious
+    case casual
+    case friends
+    case unsure
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .serious: return "Seriøst forhold"
+        case .casual: return "Noget afslappet"
+        case .friends: return "Nye venner"
+        case .unsure: return "Ved ikke endnu"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .serious: return "heart.fill"
+        case .casual: return "sparkles"
+        case .friends: return "person.2.fill"
+        case .unsure: return "questionmark.circle.fill"
+        }
+    }
+}
+
+/// The fixed catalogue members pick their interests from.
+enum InterestCatalog {
+    static let all: [String] = [
+        "Løb", "Vinterbadning", "Kaffe", "Madlavning", "Rejser", "Livemusik",
+        "Vandreture", "Fitness", "Yoga", "Fotografering", "Brætspil", "Hunde",
+        "Katte", "Film & serier", "Bøger", "Klatring", "Cykling", "Havearbejde",
+        "Kunst", "Frivilligt arbejde",
+    ]
+}
+
 // MARK: - User profile
 
 /// The signed-in member's own profile.
@@ -101,10 +141,20 @@ struct UserProfile: Codable, Equatable {
     /// Set once the member passes the (mock) selfie / photo check.
     var photoVerified: Bool = false
 
+    // Account (email is personal data; password is never stored on-device).
+    var email: String = ""
+
+    // Extra profile content.
+    var interests: [String] = []
+    var lookingFor: LookingFor = .unsure
+
     // Discovery preferences (used to filter the deck).
     var minAge: Int = 18
     var maxAge: Int = 60
     var maxDistanceKm: Int = 100
+
+    /// Swipe gestures are OFF by default; buttons are the primary interaction.
+    var swipeEnabled: Bool = false
 
     /// A member is "fully verified" only when both checks have passed.
     var isFullyVerified: Bool { isVerified && photoVerified }
@@ -124,13 +174,16 @@ struct UserProfile: Codable, Equatable {
     // keys, so decode them with sensible defaults instead of failing.
     enum CodingKeys: String, CodingKey {
         case name, age, gender, profession, city, bio, seeking
-        case isVerified, photoVerified, minAge, maxAge, maxDistanceKm
+        case isVerified, photoVerified, email, interests, lookingFor
+        case minAge, maxAge, maxDistanceKm, swipeEnabled
     }
 
     init(name: String, age: Int, gender: Gender, profession: Profession,
          city: String, bio: String, seeking: [Gender], isVerified: Bool,
-         photoVerified: Bool = false, minAge: Int = 18, maxAge: Int = 60,
-         maxDistanceKm: Int = 100) {
+         photoVerified: Bool = false, email: String = "",
+         interests: [String] = [], lookingFor: LookingFor = .unsure,
+         minAge: Int = 18, maxAge: Int = 60, maxDistanceKm: Int = 100,
+         swipeEnabled: Bool = false) {
         self.name = name
         self.age = age
         self.gender = gender
@@ -140,9 +193,13 @@ struct UserProfile: Codable, Equatable {
         self.seeking = seeking
         self.isVerified = isVerified
         self.photoVerified = photoVerified
+        self.email = email
+        self.interests = interests
+        self.lookingFor = lookingFor
         self.minAge = minAge
         self.maxAge = maxAge
         self.maxDistanceKm = maxDistanceKm
+        self.swipeEnabled = swipeEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -156,9 +213,13 @@ struct UserProfile: Codable, Equatable {
         seeking = try c.decode([Gender].self, forKey: .seeking)
         isVerified = try c.decode(Bool.self, forKey: .isVerified)
         photoVerified = try c.decodeIfPresent(Bool.self, forKey: .photoVerified) ?? false
+        email = try c.decodeIfPresent(String.self, forKey: .email) ?? ""
+        interests = try c.decodeIfPresent([String].self, forKey: .interests) ?? []
+        lookingFor = try c.decodeIfPresent(LookingFor.self, forKey: .lookingFor) ?? .unsure
         minAge = try c.decodeIfPresent(Int.self, forKey: .minAge) ?? 18
         maxAge = try c.decodeIfPresent(Int.self, forKey: .maxAge) ?? 60
         maxDistanceKm = try c.decodeIfPresent(Int.self, forKey: .maxDistanceKm) ?? 100
+        swipeEnabled = try c.decodeIfPresent(Bool.self, forKey: .swipeEnabled) ?? false
     }
 }
 
@@ -197,6 +258,8 @@ struct Candidate: Identifiable, Codable, Equatable {
     var likesYou: Bool
     /// Two hex-ish RGB seeds used to draw the card's gradient "photo".
     var gradientSeed: Int
+    var interests: [String]
+    var lookingFor: LookingFor
 
     init(
         id: UUID = UUID(),
@@ -208,7 +271,9 @@ struct Candidate: Identifiable, Codable, Equatable {
         distanceKm: Int,
         bio: String,
         likesYou: Bool,
-        gradientSeed: Int
+        gradientSeed: Int,
+        interests: [String] = [],
+        lookingFor: LookingFor = .unsure
     ) {
         self.id = id
         self.name = name
@@ -220,6 +285,8 @@ struct Candidate: Identifiable, Codable, Equatable {
         self.bio = bio
         self.likesYou = likesYou
         self.gradientSeed = gradientSeed
+        self.interests = interests
+        self.lookingFor = lookingFor
     }
 }
 
@@ -276,42 +343,52 @@ enum SampleData {
         Candidate(name: "Mette", age: 29, gender: .woman, profession: .nurse,
                   city: "København", distanceKm: 3,
                   bio: "Intensivsygeplejerske på nattevagt. Kaffesnob, vinterbader, elendig til brætspil men konkurrerer alligevel.",
-                  likesYou: true, gradientSeed: 1),
+                  likesYou: true, gradientSeed: 1,
+                  interests: ["Vinterbadning", "Kaffe", "Brætspil"], lookingFor: .serious),
         Candidate(name: "Jonas", age: 33, gender: .man, profession: .firefighter,
                   city: "Aarhus", distanceKm: 8,
                   bio: "Brandmand og tømrer på deltid. Hundefar til en meget dramatisk labrador.",
-                  likesYou: false, gradientSeed: 2),
+                  likesYou: false, gradientSeed: 2,
+                  interests: ["Hunde", "Fitness", "Madlavning"], lookingFor: .serious),
         Candidate(name: "Sofie", age: 31, gender: .woman, profession: .police,
                   city: "Odense", distanceKm: 12,
                   bio: "Patruljebetjent, der slapper af med lange løbeture og true crime-podcasts (jeg ved det godt).",
-                  likesYou: true, gradientSeed: 3),
+                  likesYou: true, gradientSeed: 3,
+                  interests: ["Løb", "Film & serier", "Rejser"], lookingFor: .casual),
         Candidate(name: "Anders", age: 36, gender: .man, profession: .doctor,
                   city: "København", distanceKm: 5,
                   bio: "Læge på skadestuen. Søger en, der forstår de skæve vagter og elsker en spontan roadtrip.",
-                  likesYou: false, gradientSeed: 4),
+                  likesYou: false, gradientSeed: 4,
+                  interests: ["Rejser", "Madlavning", "Cykling"], lookingFor: .serious),
         Candidate(name: "Laura", age: 27, gender: .woman, profession: .paramedic,
                   city: "Aalborg", distanceKm: 21,
                   bio: "Ambulanceredder, klatrer, plantehamster. Jeg laver en fremragende negroni.",
-                  likesYou: true, gradientSeed: 5),
+                  likesYou: true, gradientSeed: 5,
+                  interests: ["Klatring", "Havearbejde", "Livemusik"], lookingFor: .casual),
         Candidate(name: "Emil", age: 30, gender: .man, profession: .teacher,
                   city: "København", distanceKm: 4,
                   bio: "Lærer i 5. klasse. Vild med livemusik, dårlige ordspil og søndagens kanelsnurrer.",
-                  likesYou: false, gradientSeed: 6),
+                  likesYou: false, gradientSeed: 6,
+                  interests: ["Livemusik", "Bøger", "Kaffe"], lookingFor: .friends),
         Candidate(name: "Freja", age: 34, gender: .woman, profession: .midwife,
                   city: "Roskilde", distanceKm: 30,
                   bio: "Jordemoder. Rolig under pres, kaotisk i køkkenet. Skal vi gå en tur?",
-                  likesYou: true, gradientSeed: 7),
+                  likesYou: true, gradientSeed: 7,
+                  interests: ["Vandreture", "Yoga", "Madlavning"], lookingFor: .serious),
         Candidate(name: "Kasper", age: 32, gender: .man, profession: .military,
                   city: "Fredericia", distanceKm: 45,
                   bio: "Logistik i Forsvaret. Hjemmekok, vandrer, altid frisk på en ny rute eller en god pizza.",
-                  likesYou: false, gradientSeed: 8),
+                  likesYou: false, gradientSeed: 8,
+                  interests: ["Vandreture", "Madlavning", "Fitness"], lookingFor: .serious),
         Candidate(name: "Ida", age: 28, gender: .woman, profession: .socialWorker,
                   city: "København", distanceKm: 6,
                   bio: "Socialrådgiver med en svaghed for keramik og latterligt lange brunches.",
-                  likesYou: true, gradientSeed: 9),
+                  likesYou: true, gradientSeed: 9,
+                  interests: ["Kunst", "Kaffe", "Frivilligt arbejde"], lookingFor: .casual),
         Candidate(name: "Noah", age: 35, gender: .man, profession: .paramedic,
                   city: "Aarhus", distanceKm: 9,
                   bio: "Ambulanceredder og weekendcyklist. Spørg mig om de bedste kaffestop i Jylland.",
-                  likesYou: false, gradientSeed: 10),
+                  likesYou: false, gradientSeed: 10,
+                  interests: ["Cykling", "Kaffe", "Fotografering"], lookingFor: .friends),
     ]
 }

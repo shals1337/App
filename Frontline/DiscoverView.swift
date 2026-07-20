@@ -9,6 +9,8 @@ struct DiscoverView: View {
     @State private var paywall: PaywallReason?
     @State private var showFilters = false
 
+    private var swipeEnabled: Bool { state.user?.swipeEnabled == true }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -79,7 +81,9 @@ struct DiscoverView: View {
                         CardView(candidate: candidate, drag: drag)
                             .offset(drag)
                             .rotationEffect(.degrees(Double(drag.width / 18)))
-                            .gesture(swipeGesture(for: candidate))
+                            // Swipe is opt-in; buttons are the primary control.
+                            .gesture(swipeGesture(for: candidate),
+                                     including: swipeEnabled ? .gesture : .none)
                     } else {
                         CardView(candidate: candidate)
                             .scaleEffect(1 - CGFloat(index) * 0.04)
@@ -229,44 +233,66 @@ private struct EmptyDeck: View {
 
 /// Full-screen "I har matchet!" celebration with a spring entrance and confetti.
 private struct MatchCelebration: View {
+    @EnvironmentObject private var state: AppState
     let match: Match
     let dismiss: () -> Void
 
     @State private var appeared = false
 
+    private var shared: [String] {
+        guard let mine = state.user?.interests else { return [] }
+        let set = Set(mine)
+        return match.candidate.interests.filter { set.contains($0) }
+    }
+
     var body: some View {
         ZStack {
-            Color.black.opacity(0.8).ignoresSafeArea()
+            LinearGradient(colors: [Theme.brandDeep.opacity(0.96), .black.opacity(0.92)],
+                           startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
                 .onTapGesture { dismiss() }
 
-            VStack(spacing: 20) {
-                Text("I har matchet!")
-                    .font(.system(size: 36, weight: .heavy))
-                    .foregroundStyle(Theme.brandGradient)
+            VStack(spacing: 22) {
+                Text("I HAR MATCHET!")
+                    .font(.system(size: 34, weight: .heavy))
+                    .tracking(1.5)
+                    .foregroundStyle(.white)
                     .scaleEffect(appeared ? 1 : 0.5)
                     .opacity(appeared ? 1 : 0)
-                Text("Du og \(match.candidate.name) kan lide hinanden.")
-                    .foregroundStyle(.white.opacity(0.9))
-                    .opacity(appeared ? 1 : 0)
 
-                CardView(candidate: match.candidate)
-                    .frame(height: 300)
-                    .padding(.horizontal, 60)
-                    .scaleEffect(appeared ? 1 : 0.7)
-                    .rotationEffect(.degrees(appeared ? 0 : -6))
+                avatars
+                    .scaleEffect(appeared ? 1 : 0.4)
 
-                VStack(spacing: 10) {
+                VStack(spacing: 6) {
+                    Text("Du og \(match.candidate.name) kan lide hinanden.")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    if !shared.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                            Text("I deler: \(shared.prefix(3).joined(separator: ", "))")
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.85))
+                    }
+                }
+                .multilineTextAlignment(.center)
+                .opacity(appeared ? 1 : 0)
+
+                VStack(spacing: 12) {
                     Button(action: dismiss) {
-                        Text("Sig hej")
+                        Label("Sig hej", systemImage: "bubble.left.fill")
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(.white)
+                    .foregroundStyle(Theme.brandDeep)
 
-                    Button("Fortsæt med at swipe", action: dismiss)
-                        .foregroundStyle(.white.opacity(0.8))
+                    Button("Fortsæt", action: dismiss)
+                        .foregroundStyle(.white.opacity(0.85))
                 }
-                .padding(.horizontal, 60)
+                .padding(.horizontal, 50)
                 .opacity(appeared ? 1 : 0)
             }
             .padding()
@@ -276,7 +302,49 @@ private struct MatchCelebration: View {
                 .opacity(appeared ? 1 : 0)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.62)) { appeared = true }
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.6)) { appeared = true }
         }
+    }
+
+    private var avatars: some View {
+        ZStack {
+            HStack(spacing: -26) {
+                AvatarBubble(monogram: String((state.user?.name ?? "?").prefix(1)).uppercased(),
+                             fill: AnyShapeStyle(Theme.brandGradient), symbol: nil)
+                    .zIndex(1)
+                AvatarBubble(monogram: nil,
+                             fill: AnyShapeStyle(Theme.cardGradient(seed: match.candidate.gradientSeed)),
+                             symbol: match.candidate.profession.symbol)
+            }
+            Circle()
+                .fill(.white)
+                .frame(width: 46, height: 46)
+                .overlay(Image(systemName: "heart.fill").foregroundStyle(Theme.brand))
+                .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
+        }
+    }
+}
+
+/// A round avatar showing either a monogram or a profession symbol.
+private struct AvatarBubble: View {
+    let monogram: String?
+    let fill: AnyShapeStyle
+    let symbol: String?
+
+    var body: some View {
+        ZStack {
+            Circle().fill(fill)
+            if let monogram {
+                Text(monogram)
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+            } else if let symbol {
+                Image(systemName: symbol)
+                    .font(.system(size: 34))
+                    .foregroundStyle(.white)
+            }
+        }
+        .frame(width: 104, height: 104)
+        .overlay(Circle().strokeBorder(.white.opacity(0.85), lineWidth: 3))
     }
 }
