@@ -1,3 +1,16 @@
+# App
+
+This repository contains two independent SwiftUI iOS apps, each with its own
+Xcode project:
+
+- **[Frontline](Frontline/README.md)** — an exclusive dating app for verified
+  frontline & essential workers (nurses, doctors, police, firefighters, …).
+  Open `Frontline.xcodeproj`.
+- **TaskWheel** — a spin-the-wheel task picker (documented below). Open
+  `TaskWheel.xcodeproj`.
+
+---
+
 # TaskWheel
 
 A simple iOS app: spin a wheel and get a task to do. Built with SwiftUI.
