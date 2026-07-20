@@ -20,17 +20,43 @@ README are in English.
   orange→pink Tinder gradient. Swipe **right** to like, **left** to nope,
   **up** to super like — with LIKE / NEJ / SUPERLIKE stamps. Below the deck sit
   the classic round action buttons: **rewind**, **nope**, **super like**,
-  **like**. Cards are filtered to the genders you're seeking.
-- **Rewind** — undo your last swipe (and any match it created), just like
-  Tinder's back button.
-- **Instant matches** — like someone who already liked you (or super-like
-  anyone) and get a "Det er et match!" celebration.
-- **Matches & chat** — a list of your matches with a simple, persistent
-  one-on-one conversation view.
-- **Your profile** — a verified badge, editable details, and a
-  *log ud & slet data* option that wipes all local data.
-- **Persistent** — profile, matches, and messages are saved between launches
-  via `UserDefaults` (JSON).
+  **like**. A boost button and a filters button sit in the top bar.
+- **Subscription (Free / Plus / Gold)** — a full paywall with feature gates,
+  modelled on Tinder:
+  - **Free**: 15 likes/day, 1 super like/day, no rewind.
+  - **Plus**: unlimited likes, rewind, 5 super likes/day, no distance cap.
+  - **Gold**: everything in Plus + **see who likes you** + a monthly **boost**.
+  - Daily quotas reset each calendar day; hitting a limit raises the paywall on
+    the relevant pitch. Purchases are **simulated locally** — see below.
+- **"Kan lide dig" (Likes You)** — a dedicated tab; a grid of people who
+  already liked you, blurred behind a Gold upsell for non-Gold members and
+  tappable for an instant match once you're Gold.
+- **Two-step verification centre** — a **selfie/photo** check and a
+  **work-ID/profession** check, each via a photo upload and a simulated review,
+  producing verified seals shown on your profile.
+- **Discovery filters** — who to show, age range, and max distance, which
+  actually filter the deck.
+- **Rewind** — undo your last swipe (and any match it created), refunding the
+  consumed like. A Plus/Gold feature.
+- **Instant matches**, **matches list & chat**, **editable profile**, and an
+  *erase all data* option.
+- **Persistent** — profile, matches, messages, subscription tier and daily
+  quotas are saved between launches via `UserDefaults`.
+
+## What is real vs. simulated
+
+The app is fully usable end-to-end with **no backend**. Two things are
+deliberately simulated and are the seams where a production system plugs in:
+
+1. **Subscriptions** — `Tier`/`Entitlements` model the ladder and gate every
+   feature, and `AppState.subscribe(_:)` unlocks it, but the "purchase" is a
+   local timer. For release, back each tier with a **StoreKit 2** auto-renewable
+   product (App Store Connect) and call `subscribe(_:)` from a verified
+   `Transaction`.
+2. **Verification** — the selfie and work-ID uploads flip a flag after a short
+   fake review; the images are discarded, never stored or shown. For release,
+   send them to an **identity/liveness + document-check provider** and set the
+   flags from its verified callback.
 
 ## Requirements
 

@@ -96,8 +96,18 @@ struct UserProfile: Codable, Equatable {
     var bio: String
     /// Genders this member wants to be shown.
     var seeking: [Gender]
-    /// Set once the member passes the (mock) work-ID verification step.
+    /// Set once the member passes the (mock) work-ID / profession check.
     var isVerified: Bool
+    /// Set once the member passes the (mock) selfie / photo check.
+    var photoVerified: Bool = false
+
+    // Discovery preferences (used to filter the deck).
+    var minAge: Int = 18
+    var maxAge: Int = 60
+    var maxDistanceKm: Int = 100
+
+    /// A member is "fully verified" only when both checks have passed.
+    var isFullyVerified: Bool { isVerified && photoVerified }
 
     static let empty = UserProfile(
         name: "",
@@ -109,6 +119,47 @@ struct UserProfile: Codable, Equatable {
         seeking: [.man],
         isVerified: false
     )
+
+    // Resilient decoding: profiles saved by older builds are missing the newer
+    // keys, so decode them with sensible defaults instead of failing.
+    enum CodingKeys: String, CodingKey {
+        case name, age, gender, profession, city, bio, seeking
+        case isVerified, photoVerified, minAge, maxAge, maxDistanceKm
+    }
+
+    init(name: String, age: Int, gender: Gender, profession: Profession,
+         city: String, bio: String, seeking: [Gender], isVerified: Bool,
+         photoVerified: Bool = false, minAge: Int = 18, maxAge: Int = 60,
+         maxDistanceKm: Int = 100) {
+        self.name = name
+        self.age = age
+        self.gender = gender
+        self.profession = profession
+        self.city = city
+        self.bio = bio
+        self.seeking = seeking
+        self.isVerified = isVerified
+        self.photoVerified = photoVerified
+        self.minAge = minAge
+        self.maxAge = maxAge
+        self.maxDistanceKm = maxDistanceKm
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name)
+        age = try c.decode(Int.self, forKey: .age)
+        gender = try c.decode(Gender.self, forKey: .gender)
+        profession = try c.decode(Profession.self, forKey: .profession)
+        city = try c.decode(String.self, forKey: .city)
+        bio = try c.decode(String.self, forKey: .bio)
+        seeking = try c.decode([Gender].self, forKey: .seeking)
+        isVerified = try c.decode(Bool.self, forKey: .isVerified)
+        photoVerified = try c.decodeIfPresent(Bool.self, forKey: .photoVerified) ?? false
+        minAge = try c.decodeIfPresent(Int.self, forKey: .minAge) ?? 18
+        maxAge = try c.decodeIfPresent(Int.self, forKey: .maxAge) ?? 60
+        maxDistanceKm = try c.decodeIfPresent(Int.self, forKey: .maxDistanceKm) ?? 100
+    }
 }
 
 // MARK: - Candidate

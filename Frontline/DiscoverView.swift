@@ -1,10 +1,13 @@
 import SwiftUI
 
 /// The swipe deck. The top card is draggable; buttons mirror the gesture.
-/// Swipe right / left / up = like / nope / super like — just like Tinder.
+/// Swipe right / left / up = like / nope / super like — just like Tinder,
+/// with daily quotas and premium gates enforced through `AppState`.
 struct DiscoverView: View {
     @EnvironmentObject private var state: AppState
     @State private var drag: CGSize = .zero
+    @State private var paywall: PaywallReason?
+    @State private var showFilters = false
 
     var body: some View {
         NavigationStack {
@@ -23,30 +26,50 @@ struct DiscoverView: View {
             .navigationBarHidden(true)
             .overlay {
                 if let match = state.newMatch {
-                    MatchCelebration(match: match) {
-                        state.newMatch = nil
-                    }
+                    MatchCelebration(match: match) { state.newMatch = nil }
                 }
+            }
+            .sheet(item: $paywall) { PaywallView(reason: $0) }
+            .sheet(isPresented: $showFilters) {
+                if let user = state.user { FiltersView(profile: user) }
             }
         }
     }
 
     private var brandBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "flame.fill")
-                .foregroundStyle(Theme.brandGradient)
-            Text("frontline")
-                .font(.title2.weight(.heavy))
-                .foregroundStyle(Theme.brandGradient)
+        HStack {
+            Button {
+                if state.entitlements.boostsPerMonth > 0 { state.activateBoost() }
+                else { paywall = .boost }
+            } label: {
+                Image(systemName: state.isBoosted ? "bolt.fill" : "bolt")
+                    .font(.title3)
+                    .foregroundStyle(state.isBoosted ? Tier.gold.accent : .secondary)
+            }
+
+            Spacer()
+
+            HStack(spacing: 7) {
+                Image(systemName: "flame.fill")
+                Text("frontline").font(.title2.weight(.heavy))
+            }
+            .foregroundStyle(Theme.brandGradient)
+
+            Spacer()
+
+            Button { showFilters = true } label: {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 18)
         .padding(.vertical, 10)
     }
 
     private var deck: some View {
         VStack(spacing: 0) {
             ZStack {
-                // Show up to three cards; only the top one is interactive.
                 ForEach(Array(state.deck.prefix(3).enumerated()).reversed(), id: \.element.id) { index, candidate in
                     if index == 0 {
                         CardView(candidate: candidate, drag: drag)
@@ -64,33 +87,78 @@ struct DiscoverView: View {
             .padding(.top, 4)
 
             actionButtons
-                .padding(.vertical, 16)
+                .padding(.top, 14)
+
+            quotaLine
+                .padding(.top, 6)
+                .padding(.bottom, 12)
         }
     }
 
     private var actionButtons: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 16) {
             CircleButton(symbol: "arrow.uturn.backward", tint: Theme.rewind, size: 48) {
-                withAnimation(.spring) { state.rewind() }
+                attemptRewind()
             }
-            .disabled(!state.canRewind)
-            .opacity(state.canRewind ? 1 : 0.4)
+            .disabled(state.hasRewindEntitlement && !state.canRewind)
+            .opacity(state.hasRewindEntitlement && !state.canRewind ? 0.4 : 1)
 
-            CircleButton(symbol: "xmark", tint: Theme.nope, size: 60) {
+            CircleButton(symbol: "xmark", tint: Theme.nope, size: 58) {
                 guard let c = state.topCandidate else { return }
                 fling(CGSize(width: -600, height: 0)) { state.pass(c) }
             }
 
             CircleButton(symbol: "star.fill", tint: Theme.superLike, size: 48) {
                 guard let c = state.topCandidate else { return }
-                fling(CGSize(width: 0, height: -700)) { state.like(c, superLike: true) }
+                attemptSuperLike(c)
             }
 
-            CircleButton(symbol: "heart.fill", tint: Theme.like, size: 60) {
+            CircleButton(symbol: "heart.fill", tint: Theme.like, size: 58) {
                 guard let c = state.topCandidate else { return }
-                fling(CGSize(width: 600, height: 0)) { state.like(c) }
+                attemptLike(c)
             }
         }
+    }
+
+    /// A small line showing remaining likes (free tier) or the current plan.
+    @ViewBuilder private var quotaLine: some View {
+        if let remaining = state.likesRemaining {
+            Button { paywall = .outOfLikes } label: {
+                Text("\(remaining) likes tilbage i dag · Opgrader for ubegrænset")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            Label("\(state.tier.shortLabel) · ubegrænsede likes", systemImage: "infinity")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Actions with quota / entitlement gates
+
+    private func attemptLike(_ candidate: Candidate) {
+        guard state.canLike else {
+            paywall = .outOfLikes
+            withAnimation(.spring) { drag = .zero }
+            return
+        }
+        fling(CGSize(width: 600, height: drag.height)) { state.like(candidate) }
+    }
+
+    private func attemptSuperLike(_ candidate: Candidate) {
+        guard state.canSuperLike else {
+            paywall = .outOfSuperLikes
+            withAnimation(.spring) { drag = .zero }
+            return
+        }
+        fling(CGSize(width: 0, height: -700)) { state.like(candidate, superLike: true) }
+    }
+
+    private func attemptRewind() {
+        guard state.hasRewindEntitlement else { paywall = .rewind; return }
+        guard state.canRewind else { return }
+        withAnimation(.spring) { state.rewind() }
     }
 
     // MARK: - Gesture
@@ -101,14 +169,11 @@ struct DiscoverView: View {
             .onEnded { value in
                 let h = value.translation.width
                 let v = value.translation.height
-                let sideThreshold: CGFloat = 110
-                let upThreshold: CGFloat = 130
-
-                if v < -upThreshold && abs(v) > abs(h) {
-                    fling(CGSize(width: 0, height: -700)) { state.like(candidate, superLike: true) }
-                } else if h > sideThreshold {
-                    fling(CGSize(width: 600, height: v)) { state.like(candidate) }
-                } else if h < -sideThreshold {
+                if v < -130 && abs(v) > abs(h) {
+                    attemptSuperLike(candidate)
+                } else if h > 110 {
+                    attemptLike(candidate)
+                } else if h < -110 {
                     fling(CGSize(width: -600, height: v)) { state.pass(candidate) }
                 } else {
                     withAnimation(.spring) { drag = .zero }
@@ -151,7 +216,7 @@ private struct EmptyDeck: View {
         ContentUnavailableView {
             Label("Du er helt fanget op", systemImage: "sparkles")
         } description: {
-            Text("Ingen flere medlemmer i nærheden lige nu. Kig forbi igen — nye frontliners kommer til hver dag.")
+            Text("Ingen flere medlemmer i nærheden lige nu. Prøv at udvide dine filtre, eller kig forbi igen senere.")
         }
         Spacer()
     }

@@ -4,6 +4,9 @@ struct ProfileView: View {
     @EnvironmentObject private var state: AppState
     @State private var editing = false
     @State private var showEraseAlert = false
+    @State private var showVerification = false
+    @State private var showFilters = false
+    @State private var paywall: PaywallReason?
 
     var body: some View {
         NavigationStack {
@@ -15,6 +18,9 @@ struct ProfileView: View {
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.clear)
                         }
+
+                        subscriptionSection
+                        verificationSection(user)
 
                         Section("Om") {
                             Text(user.bio.isEmpty ? "Ingen bio endnu." : user.bio)
@@ -31,6 +37,11 @@ struct ProfileView: View {
 
                         Section {
                             Button("Rediger profil") { editing = true }
+                            Button {
+                                showFilters = true
+                            } label: {
+                                Label("Filtre for opdagelse", systemImage: "slider.horizontal.3")
+                            }
                             Button("Log ud & slet data", role: .destructive) {
                                 showEraseAlert = true
                             }
@@ -44,12 +55,76 @@ struct ProfileView: View {
                     EditProfileView(profile: user) { state.updateProfile($0) }
                 }
             }
+            .sheet(isPresented: $showVerification) { VerificationView() }
+            .sheet(isPresented: $showFilters) {
+                if let user = state.user { FiltersView(profile: user) }
+            }
+            .sheet(item: $paywall) { PaywallView(reason: $0) }
             .alert("Slet alt?", isPresented: $showEraseAlert) {
                 Button("Slet", role: .destructive) { state.signOutAndErase() }
                 Button("Annuller", role: .cancel) {}
             } message: {
                 Text("Din profil, dine matches og beskeder slettes permanent fra denne enhed.")
             }
+        }
+    }
+
+    // MARK: - Subscription
+
+    private var subscriptionSection: some View {
+        Section("Abonnement") {
+            HStack {
+                Image(systemName: state.tier == .gold ? "crown.fill" : (state.tier == .plus ? "bolt.fill" : "person.fill"))
+                    .foregroundStyle(state.tier.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(state.tier.label).font(.headline)
+                    Text(state.tier.tagline)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Button {
+                paywall = .general
+            } label: {
+                Label(state.tier == .free ? "Opgrader" : "Skift abonnement",
+                      systemImage: "sparkles")
+            }
+            if state.entitlements.boostsPerMonth > 0 {
+                Button {
+                    state.activateBoost()
+                } label: {
+                    Label(state.isBoosted ? "Boost aktivt" : "Aktivér boost (30 min.)",
+                          systemImage: "bolt.fill")
+                        .foregroundStyle(state.isBoosted ? Color.secondary : Tier.gold.accent)
+                }
+                .disabled(state.isBoosted)
+            }
+        }
+    }
+
+    // MARK: - Verification
+
+    private func verificationSection(_ user: UserProfile) -> some View {
+        Section("Verificering") {
+            verifyRow("Erhverv", done: user.isVerified)
+            verifyRow("Foto", done: user.photoVerified)
+            Button {
+                showVerification = true
+            } label: {
+                Label(user.isFullyVerified ? "Se verificering" : "Bekræft din identitet",
+                      systemImage: "checkmark.shield.fill")
+            }
+        }
+    }
+
+    private func verifyRow(_ title: String, done: Bool) -> some View {
+        HStack {
+            Label(title, systemImage: done ? "checkmark.seal.fill" : "seal")
+                .foregroundStyle(done ? Color.green : .primary)
+            Spacer()
+            Text(done ? "Verificeret" : "Mangler")
+                .font(.subheadline)
+                .foregroundStyle(done ? Color.green : .secondary)
         }
     }
 
@@ -65,11 +140,20 @@ struct ProfileView: View {
             }
             HStack(spacing: 6) {
                 Text("\(user.name), \(user.age)").font(.title2.bold())
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundStyle(user.profession.tint)
+                if user.isFullyVerified {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(Theme.superLike)
+                }
             }
             ProfessionBadge(profession: user.profession)
-            Label("Verificeret frontline-medlem", systemImage: "checkmark.shield.fill")
+            if state.tier != .free {
+                Label(state.tier.label, systemImage: state.tier == .gold ? "crown.fill" : "bolt.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(state.tier.accent)
+            }
+            Label(user.isFullyVerified ? "Fuldt verificeret frontline-medlem"
+                                       : "Verificering ikke færdig",
+                  systemImage: user.isFullyVerified ? "checkmark.shield.fill" : "shield.lefthalf.filled")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
