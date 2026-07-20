@@ -21,8 +21,8 @@ README are in English.
   **right** to like, **left** to nope, **up** to highlight — with LIKE / NEJ /
   FREMHÆV stamps. Below the deck sit round action buttons: **rewind**, **nope**,
   **highlight (Fremhæv)**, **like**. A Turbo button and a filters button sit in
-  the top bar. Liking also works entirely from buttons, so swiping is not the
-  only mechanic.
+  the top bar. **Swipe is on by default**; a member can switch to buttons-only
+  in Filters (also useful in higher-risk patent markets — see LEGAL.md).
 - **Subscription (Gratis / Premium / Elite)** — a full paywall with feature
   gates:
   - **Gratis**: 15 likes/day, 1 highlight/day, no rewind.
@@ -99,9 +99,11 @@ for the full checklist. In short:
 - **Not copying Tinder** — the app avoids Tinder's flame mark, its orange→pink
   trade-dress gradient, and its trademarked names ("Super Like", "Boost",
   "Gold"/"Plus", "It's a Match"), using its own palette and wording, and the
-  terms state it is unaffiliated. The **swipe-UI patent** held by Match Group is
-  a real, separate risk that a patent attorney must assess — swiping is kept
-  optional alongside button controls, which is a mitigation, not a guarantee.
+  terms state it is unaffiliated. On the **swipe-UI patent**: those are US
+  patents (Tinder owns them; Bumble/Badoo settled), and the EU generally doesn't
+  enforce pure software-UI patents — so swipe ships on by default, with a
+  buttons-only fallback for higher-risk markets. A patent attorney should still
+  confirm for your target markets (freedom-to-operate). See LEGAL.md.
 
 ## Requirements
 

@@ -41,13 +41,25 @@ have a licence, and keep records.
 
 ### Still your responsibility
 
-- **The swipe patent.** Match Group holds patents on the swipe-card matching UI
-  (e.g. US 9,733,811) and has litigated them (notably against Bumble). Frontline
-  keeps a swipe interaction **but also offers full button-based** like / nope /
-  highlight, so swiping is not the only mechanic. This does **not** guarantee
-  non-infringement. Options to de-risk: get a freedom-to-operate opinion; make
-  the card/button UI the default and swipe optional or off; or design around the
-  specific claims. **Talk to a patent attorney.**
+- **The swipe patent — why competitors can and how to handle it.** Match Group
+  holds patents on the swipe-card matching UI (e.g. US 9,733,811). Why do others
+  swipe? **Tinder** is Match Group, so it owns them. **Badoo/Bumble** were sued
+  by Match Group (2018) and **settled/cross-licensed** (2020) — they didn't get
+  it for free. A new app has neither, so treat this as a real risk **in the US**.
+
+  Two things make it manageable:
+  1. **Jurisdiction.** These are **US** patents. The EU generally does **not**
+     grant/enforce pure software-UI method patents ("programs for computers …
+     as such" and "presentations of information" are excluded, EPC Art. 52), and
+     Match Group's swipe patents have been challenged. So for a **Denmark/EU**
+     launch the risk is substantially lower than in the US.
+  2. **Choice, not lock-in.** Frontline offers a full **button-based** mode
+     (like / nope / highlight) alongside swipe, so you can ship buttons-only in
+     higher-risk markets without redesigning.
+
+  Swipe is enabled by default (as users expect). Before a **US** launch, get a
+  **freedom-to-operate opinion** from a patent attorney, or consider licensing
+  or shipping buttons-only there. For EU-only, still have a lawyer confirm.
 - **The name "Frontline".** Common word, but run a trademark clearance search in
   your markets (and the App Store) before committing to it.
 - **App Store rules.** Apple requires a privacy policy, working account

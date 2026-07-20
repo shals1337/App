@@ -226,8 +226,9 @@ struct UserProfile: Codable, Equatable {
     var filterProfessions: [Profession] = []
     var filterSchedules: [WorkSchedule] = []
 
-    /// Swipe gestures are OFF by default; buttons are the primary interaction.
-    var swipeEnabled: Bool = false
+    /// Swipe gestures are ON by default (like other dating apps); buttons remain
+    /// available so the member can switch to buttons-only if they prefer.
+    var swipeEnabled: Bool = true
 
     /// A member is "fully verified" only when both checks have passed.
     var isFullyVerified: Bool { isVerified && photoVerified }
@@ -260,7 +261,7 @@ struct UserProfile: Codable, Equatable {
          interests: [String] = [], lookingFor: LookingFor = .unsure,
          workSchedule: WorkSchedule = .day, minAge: Int = 18, maxAge: Int = 60,
          maxDistanceKm: Int = 100, filterProfessions: [Profession] = [],
-         filterSchedules: [WorkSchedule] = [], swipeEnabled: Bool = false) {
+         filterSchedules: [WorkSchedule] = [], swipeEnabled: Bool = true) {
         self.name = name
         self.age = age
         self.gender = gender
@@ -306,7 +307,7 @@ struct UserProfile: Codable, Equatable {
         maxDistanceKm = try c.decodeIfPresent(Int.self, forKey: .maxDistanceKm) ?? 100
         filterProfessions = try c.decodeIfPresent([Profession].self, forKey: .filterProfessions) ?? []
         filterSchedules = try c.decodeIfPresent([WorkSchedule].self, forKey: .filterSchedules) ?? []
-        swipeEnabled = try c.decodeIfPresent(Bool.self, forKey: .swipeEnabled) ?? false
+        swipeEnabled = try c.decodeIfPresent(Bool.self, forKey: .swipeEnabled) ?? true
     }
 }
 

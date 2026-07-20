@@ -79,7 +79,7 @@ struct FiltersView: View {
                 } header: {
                     Text("Interaktion")
                 } footer: {
-                    Text("Som standard bruger du knapperne til at like, sige nej og fremhæve. Du kan slå swipe til, hvis du foretrækker det.")
+                    Text("Swipe er slået til. Du kan slå det fra og kun bruge knapperne (like, nej, fremhæv), hvis du foretrækker det.")
                 }
             }
             .sheet(item: $paywall) { PaywallView(reason: $0) }
