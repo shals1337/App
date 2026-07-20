@@ -54,7 +54,8 @@ enum Tier: String, Codable, CaseIterable, Identifiable {
             return ["Begrænset antal likes om dagen", "1 fremhævelse om dagen"]
         case .plus:
             return ["Ubegrænsede likes", "Fortryd sidste kort",
-                    "5 fremhævelser om dagen", "Ingen begrænsning på afstand"]
+                    "5 fremhævelser om dagen",
+                    "Avancerede filtre: fag og arbejdstider"]
         case .gold:
             return ["Se hvem der kan lide dig", "1 Turbo om måneden",
                     "Alt i Premium"]
@@ -78,21 +79,24 @@ struct Entitlements {
     let canRewind: Bool
     let canSeeLikesYou: Bool
     let boostsPerMonth: Int
+    /// Advanced discovery filters (profession + work schedule). Age & distance
+    /// are always free.
+    let canUseAdvancedFilters: Bool
 
     static func of(_ tier: Tier) -> Entitlements {
         switch tier {
         case .free:
             return Entitlements(dailyLikeLimit: 15, superLikesPerDay: 1,
                                 canRewind: false, canSeeLikesYou: false,
-                                boostsPerMonth: 0)
+                                boostsPerMonth: 0, canUseAdvancedFilters: false)
         case .plus:
             return Entitlements(dailyLikeLimit: .max, superLikesPerDay: 5,
                                 canRewind: true, canSeeLikesYou: false,
-                                boostsPerMonth: 0)
+                                boostsPerMonth: 0, canUseAdvancedFilters: true)
         case .gold:
             return Entitlements(dailyLikeLimit: .max, superLikesPerDay: 5,
                                 canRewind: true, canSeeLikesYou: true,
-                                boostsPerMonth: 1)
+                                boostsPerMonth: 1, canUseAdvancedFilters: true)
         }
     }
 }

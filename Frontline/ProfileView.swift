@@ -24,6 +24,8 @@ struct ProfileView: View {
 
                         subscriptionSection
                         verificationSection(user)
+                        securitySection
+                        adminSection
                         privacySection
 
                         Section("Om") {
@@ -128,6 +130,49 @@ struct ProfileView: View {
         }
     }
 
+    // MARK: - Security
+
+    private var securitySection: some View {
+        Section {
+            Toggle(isOn: Binding(
+                get: { state.appLockEnabled },
+                set: { state.setAppLock($0) }
+            )) {
+                Label("Lås appen med Face ID / kode", systemImage: "lock.shield.fill")
+            }
+        } header: {
+            Text("Sikkerhed")
+        } footer: {
+            Text("Kræv Face ID, Touch ID eller din kode, hver gang appen åbnes. Kodeord og verifikationsbilleder gemmes aldrig i appen.")
+        }
+    }
+
+    // MARK: - Admin (manual verification review)
+
+    private var adminSection: some View {
+        Section {
+            Toggle(isOn: $state.isAdmin) {
+                Label("Admin-tilstand", systemImage: "person.badge.key.fill")
+            }
+            if state.isAdmin {
+                NavigationLink {
+                    AdminView()
+                } label: {
+                    HStack {
+                        Label("Gennemgå verificeringer", systemImage: "checkmark.seal.fill")
+                        Spacer()
+                        Text("\(state.adminQueue.count)")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        } header: {
+            Text("Administrator")
+        } footer: {
+            Text("En administrator gennemgår indsendte arbejds-ID'er og selfies manuelt og godkender dem. (Demo: du kan slå det til for at se køen.)")
+        }
+    }
+
     // MARK: - Privacy & data (GDPR)
 
     private var privacySection: some View {
@@ -162,26 +207,30 @@ struct ProfileView: View {
     // MARK: - Verification
 
     private func verificationSection(_ user: UserProfile) -> some View {
-        Section("Verificering") {
-            verifyRow("Erhverv", done: user.isVerified)
-            verifyRow("Foto", done: user.photoVerified)
+        Section {
+            verifyRow("Erhverv", done: user.isVerified, pending: user.professionPending)
+            verifyRow("Foto", done: user.photoVerified, pending: user.photoPending)
             Button {
                 showVerification = true
             } label: {
                 Label(user.isFullyVerified ? "Se verificering" : "Bekræft din identitet",
                       systemImage: "checkmark.shield.fill")
             }
+        } header: {
+            Text("Verificering")
+        } footer: {
+            Text("Indsendte arbejds-ID'er og selfies godkendes manuelt af en administrator.")
         }
     }
 
-    private func verifyRow(_ title: String, done: Bool) -> some View {
+    private func verifyRow(_ title: String, done: Bool, pending: Bool) -> some View {
         HStack {
-            Label(title, systemImage: done ? "checkmark.seal.fill" : "seal")
-                .foregroundStyle(done ? Color.green : .primary)
+            Label(title, systemImage: done ? "checkmark.seal.fill" : (pending ? "clock.fill" : "seal"))
+                .foregroundStyle(done ? Color.green : (pending ? Color.orange : .primary))
             Spacer()
-            Text(done ? "Verificeret" : "Mangler")
+            Text(done ? "Verificeret" : (pending ? "Afventer" : "Mangler"))
                 .font(.subheadline)
-                .foregroundStyle(done ? Color.green : .secondary)
+                .foregroundStyle(done ? Color.green : (pending ? Color.orange : .secondary))
         }
     }
 
@@ -270,6 +319,14 @@ private struct EditProfileView: View {
                     Picker("Jeg søger", selection: $profile.lookingFor) {
                         ForEach(LookingFor.allCases) { intent in
                             Label(intent.label, systemImage: intent.symbol).tag(intent)
+                        }
+                    }
+                }
+
+                Section("Mine arbejdstider") {
+                    Picker("Arbejdstider", selection: $profile.workSchedule) {
+                        ForEach(WorkSchedule.allCases) { schedule in
+                            Label(schedule.label, systemImage: schedule.symbol).tag(schedule)
                         }
                     }
                 }

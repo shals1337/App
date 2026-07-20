@@ -25,6 +25,7 @@
 		BB0000000000000000000012 /* FiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000012 /* FiltersView.swift */; };
 		BB0000000000000000000013 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000013 /* LegalView.swift */; };
 		BB0000000000000000000014 /* Animations.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000014 /* Animations.swift */; };
+		BB0000000000000000000015 /* AdminView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000015 /* AdminView.swift */; };
 		BB0000000000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000010 /* Assets.xcassets */; };
 		BB0000000000000000000011 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000011 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -48,6 +49,7 @@
 		AA0000000000000000000012 /* FiltersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000013 /* LegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000014 /* Animations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Animations.swift; sourceTree = "<group>"; };
+		AA0000000000000000000015 /* AdminView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA0000000000000000000011 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		AA0000000000000000000020 /* Frontline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Frontline.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +91,7 @@
 				AA0000000000000000000009 /* MatchesView.swift */,
 				AA000000000000000000000A /* ChatView.swift */,
 				AA000000000000000000000B /* ProfileView.swift */,
+				AA0000000000000000000015 /* AdminView.swift */,
 				AA000000000000000000000D /* PaywallView.swift */,
 				AA000000000000000000000E /* VerificationView.swift */,
 				AA0000000000000000000012 /* FiltersView.swift */,
@@ -203,6 +206,7 @@
 				BB0000000000000000000012 /* FiltersView.swift in Sources */,
 				BB0000000000000000000013 /* LegalView.swift in Sources */,
 				BB0000000000000000000014 /* Animations.swift in Sources */,
+				BB0000000000000000000015 /* AdminView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,6 +340,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Frontline/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Bruges til at låse appen op og beskytte dine beskeder og data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -365,6 +370,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Frontline/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Bruges til at låse appen op og beskytte dine beskeder og data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -37,8 +37,15 @@ README are in English.
 - **Two-step verification centre** — a **selfie/photo** check and a
   **work-ID/profession** check, each via a photo upload and a simulated review,
   producing verified seals shown on your profile.
-- **Discovery filters** — who to show, age range, and max distance, which
-  actually filter the deck.
+- **Discovery filters** — **free**: who to show, age range and distance.
+  **Premium**: also filter by **profession** and **work schedule** (e.g. find
+  someone else on night shifts). Advanced filters are gated behind the paywall.
+- **Manual verification review** — submissions (work-ID + selfie) are **not**
+  self-approved; they enter an **admin review queue** where an administrator
+  approves or rejects each one. Toggle *Admin-tilstand* in the profile to see
+  the queue.
+- **App lock** — optional Face ID / Touch ID / passcode gate on launch and when
+  returning from the background (`LocalAuthentication`).
 - **Rewind** — undo your last swipe (and any match it created), refunding the
   consumed like. A Premium/Elite feature.
 - **Lively chat** — **read receipts** ("Sendt" → "Set"), an animated **typing
@@ -61,10 +68,20 @@ deliberately simulated and are the seams where a production system plugs in:
    local timer. For release, back each tier with a **StoreKit 2** auto-renewable
    product (App Store Connect) and call `subscribe(_:)` from a verified
    `Transaction`.
-2. **Verification** — the selfie and work-ID uploads flip a flag after a short
-   fake review; the images are discarded, never stored or shown. For release,
-   send them to an **identity/liveness + document-check provider** and set the
-   flags from its verified callback.
+2. **Verification** — uploads enter a **manual admin review queue** and are
+   approved/rejected by an administrator (no self-approval); the images are
+   discarded, never stored or shown. For release, back the admin tool with a
+   server (RBAC, MFA, audit logs) and an **identity/liveness + document-check
+   provider**. The in-app "admin mode" is a client-side demo only.
+
+### Security
+
+See **[SECURITY.md](SECURITY.md)**. Short version: **no app is "100% secure"** —
+this build adds a Face ID/passcode lock, stores no password or verification
+images, keeps data on-device, and uses manual verification review, but a real
+launch still needs TLS + pinning, server-side auth with hashed passwords, MFA,
+encryption at rest, an access-controlled admin tool, and an independent
+penetration test.
 
 ## Compliance (GDPR) & IP
 

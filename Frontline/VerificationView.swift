@@ -21,27 +21,29 @@ struct VerificationView: View {
 
                     VerificationCard(
                         title: "Foto-verificering",
-                        subtitle: "Tag en selfie, så vi kan bekræfte, at du er dig. Dit billede behandles kun til verificering, gemmes ikke og vises aldrig på din profil.",
+                        subtitle: "Tag en selfie, så en administrator kan bekræfte, at du er dig. Dit billede behandles kun til verificering, gemmes ikke og vises aldrig på din profil.",
                         systemImage: "person.crop.circle.badge.checkmark",
                         done: state.user?.photoVerified == true,
+                        pending: state.user?.photoPending == true,
                         actionTitle: "Vælg selfie",
                         needsConsent: state.consent.biometric == false,
                         onGrantConsent: { state.grantBiometricConsent() },
-                        onVerified: { state.verifyPhoto() }
+                        onSubmit: { state.submitPhotoForReview() }
                     )
 
                     VerificationCard(
                         title: "Erhvervs-verificering",
-                        subtitle: "Upload dit arbejds-ID eller personalekort. En medarbejder bekræfter det inden for 24 timer.",
+                        subtitle: "Upload dit arbejds-ID eller personalekort. En administrator gennemgår det manuelt og godkender.",
                         systemImage: "checkmark.seal",
                         done: state.user?.isVerified == true,
+                        pending: state.user?.professionPending == true,
                         actionTitle: "Upload arbejds-ID",
                         needsConsent: false,
                         onGrantConsent: nil,
-                        onVerified: { state.verifyProfession() }
+                        onSubmit: { state.submitProfessionForReview() }
                     )
 
-                    Text("Sådan holder vi Frontline ægte: kun verificerede, essentielle fagfolk kommer ind.")
+                    Text("Sådan holder vi Frontline ægte: en administrator gennemgår hver anmodning manuelt, så kun verificerede, essentielle fagfolk kommer ind.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -86,15 +88,16 @@ private struct VerificationCard: View {
     let subtitle: String
     let systemImage: String
     let done: Bool
+    let pending: Bool
     let actionTitle: String
     /// When true, the member must give explicit (biometric) consent before the
     /// picker appears.
     let needsConsent: Bool
     let onGrantConsent: (() -> Void)?
-    let onVerified: () -> Void
+    let onSubmit: () -> Void
 
     @State private var item: PhotosPickerItem?
-    @State private var reviewing = false
+    @State private var uploading = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -108,6 +111,10 @@ private struct VerificationCard: View {
                     Text("Verificeret")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.green)
+                } else if pending {
+                    Text("Afventer")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.orange)
                 }
             }
             Text(subtitle)
@@ -118,7 +125,11 @@ private struct VerificationCard: View {
                 Label("Godkendt", systemImage: "checkmark.circle.fill")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.green)
-            } else if reviewing {
+            } else if pending {
+                Label("Afventer godkendelse af en administrator", systemImage: "clock.fill")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.orange)
+            } else if uploading {
                 HStack(spacing: 8) {
                     ProgressView()
                     Text("Sender til gennemgang…")
@@ -152,13 +163,14 @@ private struct VerificationCard: View {
         .padding()
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
         .onChange(of: item) { _, newValue in
-            guard newValue != nil, !done else { return }
-            reviewing = true
-            // Simulate the review; the image itself is intentionally discarded.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-                reviewing = false
+            guard newValue != nil, !done, !pending else { return }
+            uploading = true
+            // Simulate the upload; the image itself is intentionally discarded,
+            // then it enters the admin review queue (pending).
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                uploading = false
                 item = nil
-                onVerified()
+                onSubmit()
             }
         }
     }

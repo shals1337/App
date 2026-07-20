@@ -24,6 +24,18 @@ final class AppState: ObservableObject {
     /// The match whose partner is currently "typing" (drives the chat indicator).
     @Published var typingMatchID: UUID?
 
+    // Admin (manual verification review).
+    @Published var isAdmin = false
+    @Published var mockApplicants: [AdminApplicant] = [
+        AdminApplicant(name: "Camilla", profession: .nurse, kind: .profession, gradientSeed: 3),
+        AdminApplicant(name: "Mikkel", profession: .police, kind: .photo, gradientSeed: 4),
+        AdminApplicant(name: "Sara", profession: .paramedic, kind: .profession, gradientSeed: 5),
+    ]
+
+    // Security — optional Face ID / passcode app lock.
+    @Published private(set) var appLockEnabled = false
+    @Published var isUnlocked = true
+
     private let defaults = UserDefaults.standard
     private enum Keys {
         static let user = "frontline.user"
@@ -35,6 +47,8 @@ final class AppState: ObservableObject {
         static let quotaDay = "frontline.quotaDay"
         static let boostUntil = "frontline.boostUntil"
         static let consent = "frontline.consent"
+        static let isAdmin = "frontline.isAdmin"
+        static let appLock = "frontline.appLock"
     }
 
     /// Candidate ids the member has already swiped, so they never reappear.
@@ -134,9 +148,11 @@ final class AppState: ObservableObject {
     // MARK: - Onboarding
 
     func completeOnboarding(_ profile: UserProfile) {
-        var verified = profile
-        verified.isVerified = true          // profession confirmed in onboarding
-        user = verified
+        var p = profile
+        // Not auto-verified: the work-ID goes to an admin for manual review.
+        p.isVerified = false
+        p.professionPending = true
+        user = p
         rebuildDeck()
         save()
     }
@@ -147,19 +163,79 @@ final class AppState: ObservableObject {
         save()
     }
 
-    // MARK: - Verification
+    // MARK: - Verification (submitted, then reviewed by an admin)
 
-    /// Completes the (simulated) selfie / photo check.
-    func verifyPhoto() {
-        user?.photoVerified = true
+    /// Submits the selfie for manual review — it does NOT self-approve.
+    func submitPhotoForReview() {
+        user?.photoVerified = false
+        user?.photoPending = true
         save()
     }
 
-    /// Re-confirms the (simulated) profession / work-ID check.
-    func verifyProfession() {
-        user?.isVerified = true
+    /// Submits the work-ID for manual review — it does NOT self-approve.
+    func submitProfessionForReview() {
+        user?.isVerified = false
+        user?.professionPending = true
         save()
     }
+
+    // MARK: - Admin review queue
+
+    /// Pending requests an admin sees: the member's own submissions first, then
+    /// other (sample) applicants.
+    var adminQueue: [AdminApplicant] {
+        var items: [AdminApplicant] = []
+        if let user {
+            let name = user.name.isEmpty ? "Dig" : user.name
+            if user.professionPending {
+                items.append(AdminApplicant(name: name, profession: user.profession,
+                                            kind: .profession, isCurrentUser: true, gradientSeed: 1))
+            }
+            if user.photoPending {
+                items.append(AdminApplicant(name: name, profession: user.profession,
+                                            kind: .photo, isCurrentUser: true, gradientSeed: 2))
+            }
+        }
+        return items + mockApplicants
+    }
+
+    func approve(_ applicant: AdminApplicant) {
+        if applicant.isCurrentUser {
+            switch applicant.kind {
+            case .profession: user?.isVerified = true; user?.professionPending = false
+            case .photo: user?.photoVerified = true; user?.photoPending = false
+            }
+        } else {
+            mockApplicants.removeAll { $0.id == applicant.id }
+        }
+        save()
+    }
+
+    func reject(_ applicant: AdminApplicant) {
+        if applicant.isCurrentUser {
+            switch applicant.kind {
+            case .profession: user?.professionPending = false
+            case .photo: user?.photoPending = false
+            }
+        } else {
+            mockApplicants.removeAll { $0.id == applicant.id }
+        }
+        save()
+    }
+
+    // MARK: - Security (app lock)
+
+    func setAppLock(_ enabled: Bool) {
+        appLockEnabled = enabled
+        isUnlocked = !enabled ? true : isUnlocked
+        save()
+    }
+
+    /// Re-lock when the app leaves the foreground.
+    func lockIfNeeded() {
+        if appLockEnabled { isUnlocked = false }
+    }
+    func markUnlocked() { isUnlocked = true }
 
     // MARK: - Subscription
 
@@ -310,8 +386,12 @@ final class AppState: ObservableObject {
         boostActiveUntil = nil
         typingMatchID = nil
         consent = PrivacyConsent()
+        isAdmin = false
+        appLockEnabled = false
+        isUnlocked = true
         [Keys.user, Keys.matches, Keys.seenIDs, Keys.tier,
-         Keys.likesUsed, Keys.superUsed, Keys.quotaDay, Keys.boostUntil, Keys.consent]
+         Keys.likesUsed, Keys.superUsed, Keys.quotaDay, Keys.boostUntil,
+         Keys.consent, Keys.isAdmin, Keys.appLock]
             .forEach { defaults.removeObject(forKey: $0) }
     }
 
@@ -320,10 +400,20 @@ final class AppState: ObservableObject {
     /// Whether a candidate matches the member's discovery preferences.
     private func passesPreferences(_ candidate: Candidate) -> Bool {
         guard let user else { return false }
-        return user.seeking.contains(candidate.gender)
+        var ok = user.seeking.contains(candidate.gender)
             && candidate.age >= user.minAge
             && candidate.age <= user.maxAge
             && candidate.distanceKm <= user.maxDistanceKm
+        // Advanced filters only bite for paying members.
+        if entitlements.canUseAdvancedFilters {
+            if !user.filterProfessions.isEmpty {
+                ok = ok && user.filterProfessions.contains(candidate.profession)
+            }
+            if !user.filterSchedules.isEmpty {
+                ok = ok && user.filterSchedules.contains(candidate.workSchedule)
+            }
+        }
+        return ok
     }
 
     private func rebuildDeck() {
@@ -376,6 +466,8 @@ final class AppState: ObservableObject {
         if let data = try? encoder.encode(consent) {
             defaults.set(data, forKey: Keys.consent)
         }
+        defaults.set(isAdmin, forKey: Keys.isAdmin)
+        defaults.set(appLockEnabled, forKey: Keys.appLock)
     }
 
     private func load() {
@@ -405,6 +497,9 @@ final class AppState: ObservableObject {
            let decoded = try? decoder.decode(PrivacyConsent.self, from: data) {
             consent = decoded
         }
+        isAdmin = defaults.bool(forKey: Keys.isAdmin)
+        appLockEnabled = defaults.bool(forKey: Keys.appLock)
+        isUnlocked = !appLockEnabled   // start locked when the lock is on
 
         refreshQuotaIfNeeded()
         rebuildDeck()
