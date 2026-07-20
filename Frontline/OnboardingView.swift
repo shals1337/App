@@ -44,7 +44,7 @@ struct OnboardingView: View {
                 Text("Frontline")
                     .font(.title2.bold())
             }
-            Text("Dating for the people who show up")
+            Text("Dating for dem, der møder op")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -55,31 +55,31 @@ struct OnboardingView: View {
     // MARK: - Steps
 
     private var basicsStep: some View {
-        StepScroll(title: "The basics",
-                   subtitle: "This is how you'll appear to other members.") {
-            LabeledField("First name") {
-                TextField("e.g. Mette", text: $draft.name)
+        StepScroll(title: "Det basale",
+                   subtitle: "Sådan vises du for andre medlemmer.") {
+            LabeledField("Fornavn") {
+                TextField("f.eks. Mette", text: $draft.name)
                     .textInputAutocapitalization(.words)
             }
-            LabeledField("Age") {
+            LabeledField("Alder") {
                 Stepper("\(draft.age)", value: $draft.age, in: 18...99)
             }
-            LabeledField("I am a") {
-                Picker("Gender", selection: $draft.gender) {
+            LabeledField("Jeg er") {
+                Picker("Køn", selection: $draft.gender) {
                     ForEach(Gender.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
             }
-            LabeledField("City") {
-                TextField("e.g. København", text: $draft.city)
+            LabeledField("By") {
+                TextField("f.eks. København", text: $draft.city)
                     .textInputAutocapitalization(.words)
             }
         }
     }
 
     private var professionStep: some View {
-        StepScroll(title: "Your profession",
-                   subtitle: "Frontline is only for essential and care workers. Pick the one that fits you best.") {
+        StepScroll(title: "Dit erhverv",
+                   subtitle: "Frontline er kun for essentielle fagfolk og omsorgspersoner. Vælg det, der passer bedst.") {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(Profession.allCases) { profession in
                     ProfessionChip(profession: profession,
@@ -91,9 +91,9 @@ struct OnboardingView: View {
     }
 
     private var preferencesStep: some View {
-        StepScroll(title: "Who you'd like to meet",
-                   subtitle: "You can change this any time.") {
-            LabeledField("Show me") {
+        StepScroll(title: "Hvem vil du møde",
+                   subtitle: "Du kan altid ændre det.") {
+            LabeledField("Vis mig") {
                 VStack(spacing: 8) {
                     ForEach(Gender.allCases) { gender in
                         SeekingRow(gender: gender,
@@ -103,16 +103,16 @@ struct OnboardingView: View {
                     }
                 }
             }
-            LabeledField("About you") {
-                TextField("Share something real…", text: $draft.bio, axis: .vertical)
+            LabeledField("Om dig") {
+                TextField("Del noget ægte…", text: $draft.bio, axis: .vertical)
                     .lineLimit(3...6)
             }
         }
     }
 
     private var verifyStep: some View {
-        StepScroll(title: "Verify you belong",
-                   subtitle: "Every member confirms their profession, so the community stays real. In this demo we simulate the work-ID check.") {
+        StepScroll(title: "Bekræft at du hører til",
+                   subtitle: "Alle medlemmer bekræfter deres erhverv, så fællesskabet forbliver ægte. I denne demo simulerer vi tjekket af dit arbejds-ID.") {
             VStack(spacing: 20) {
                 ZStack {
                     Circle()
@@ -127,9 +127,9 @@ struct OnboardingView: View {
                     .font(.headline)
 
                 VStack(spacing: 10) {
-                    verifyBullet("Upload a photo of your work ID or badge")
-                    verifyBullet("A reviewer confirms it within 24 hours")
-                    verifyBullet("Your document is never shown on your profile")
+                    verifyBullet("Upload et billede af dit arbejds-ID eller skilt")
+                    verifyBullet("En medarbejder bekræfter det inden for 24 timer")
+                    verifyBullet("Dit dokument vises aldrig på din profil")
                 }
             }
             .frame(maxWidth: .infinity)
@@ -158,11 +158,11 @@ struct OnboardingView: View {
             }
             HStack {
                 if step > 0 {
-                    Button("Back") { withAnimation { step -= 1 } }
+                    Button("Tilbage") { withAnimation { step -= 1 } }
                         .buttonStyle(.bordered)
                 }
                 Button(action: advance) {
-                    Text(step == lastStep ? (verifying ? "Verifying…" : "Verify & enter") : "Continue")
+                    Text(step == lastStep ? (verifying ? "Bekræfter…" : "Bekræft & gå ind") : "Fortsæt")
                         .frame(maxWidth: .infinity)
                         .fontWeight(.semibold)
                 }
@@ -189,14 +189,14 @@ struct OnboardingView: View {
         switch step {
         case 0:
             if draft.name.trimmingCharacters(in: .whitespaces).isEmpty {
-                return "Add your first name to continue."
+                return "Tilføj dit fornavn for at fortsætte."
             }
             if draft.city.trimmingCharacters(in: .whitespaces).isEmpty {
-                return "Add your city to continue."
+                return "Tilføj din by for at fortsætte."
             }
             return nil
         case 2:
-            return draft.seeking.isEmpty ? "Pick at least one option for who to show." : nil
+            return draft.seeking.isEmpty ? "Vælg mindst én, du vil se." : nil
         default:
             return nil
         }

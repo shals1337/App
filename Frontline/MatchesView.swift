@@ -8,9 +8,9 @@ struct MatchesView: View {
             Group {
                 if state.matches.isEmpty {
                     ContentUnavailableView {
-                        Label("No matches yet", systemImage: "heart.slash")
+                        Label("Ingen matches endnu", systemImage: "heart.slash")
                     } description: {
-                        Text("Head to Discover and start liking people. When someone likes you back, they'll show up here.")
+                        Text("Gå til Udforsk og begynd at like folk. Når nogen liker dig tilbage, dukker de op her.")
                     }
                 } else {
                     List {
@@ -61,7 +61,7 @@ private struct MatchRow: View {
     }
 
     private var lastLine: String {
-        guard let last = match.messages.last else { return "Say hello 👋" }
-        return (last.fromMe ? "You: " : "") + last.text
+        guard let last = match.messages.last else { return "Sig hej 👋" }
+        return (last.fromMe ? "Dig: " : "") + last.text
     }
 }

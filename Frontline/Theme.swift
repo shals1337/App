@@ -2,17 +2,26 @@ import SwiftUI
 
 /// Central place for the app's colours and reusable gradients.
 enum Theme {
-    static let brand = Color(red: 0.91, green: 0.24, blue: 0.40)
-    static let brandDeep = Color(red: 0.62, green: 0.13, blue: 0.42)
+    /// Tinder-style warm gradient endpoints (orange → pink/red).
+    static let flameStart = Color(red: 1.00, green: 0.47, blue: 0.33) // #FF7854
+    static let flameEnd = Color(red: 0.99, green: 0.15, blue: 0.48) // #FD267A
+    static let brand = flameEnd
+    static let brandDeep = Color(red: 0.85, green: 0.10, blue: 0.42)
 
     /// The signature warm gradient used on the logo and primary buttons.
     static var brandGradient: LinearGradient {
         LinearGradient(
-            colors: [brand, brandDeep],
+            colors: [flameStart, flameEnd],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
+
+    // Action colours matching the Tinder button row.
+    static let nope = Color(red: 0.98, green: 0.30, blue: 0.42)
+    static let like = Color(red: 0.10, green: 0.85, blue: 0.62)
+    static let superLike = Color(red: 0.25, green: 0.70, blue: 1.00)
+    static let rewind = Color(red: 1.00, green: 0.78, blue: 0.20)
 
     /// Deterministic gradient used to stand in for a candidate's photo.
     static func cardGradient(seed: Int) -> LinearGradient {

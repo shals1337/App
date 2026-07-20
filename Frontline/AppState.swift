@@ -22,6 +22,14 @@ final class AppState: ObservableObject {
     /// Candidate ids the member has already swiped, so they never reappear.
     private var seenIDs: Set<UUID> = []
 
+    /// A single undoable swipe, powering the Tinder-style rewind button.
+    private struct Swipe {
+        let candidate: Candidate
+        let createdMatchID: UUID?
+    }
+    private var lastSwipes: [Swipe] = []
+    var canRewind: Bool { !lastSwipes.isEmpty }
+
     init() {
         load()
     }
@@ -52,20 +60,38 @@ final class AppState: ObservableObject {
     func pass(_ candidate: Candidate) {
         seenIDs.insert(candidate.id)
         deck.removeAll { $0.id == candidate.id }
+        lastSwipes.append(Swipe(candidate: candidate, createdMatchID: nil))
         save()
     }
 
     /// Likes a candidate; if they already liked the member it becomes a match.
-    func like(_ candidate: Candidate) {
+    /// A super like always creates a match (the classic "they see it first").
+    func like(_ candidate: Candidate, superLike: Bool = false) {
         seenIDs.insert(candidate.id)
         deck.removeAll { $0.id == candidate.id }
-        if candidate.likesYou {
+        var createdMatchID: UUID?
+        if candidate.likesYou || superLike {
             let match = Match(candidate: candidate,
                               messages: [Message(text: openingLine(for: candidate),
                                                  fromMe: false)])
             matches.insert(match, at: 0)
             newMatch = match
+            createdMatchID = match.id
         }
+        lastSwipes.append(Swipe(candidate: candidate, createdMatchID: createdMatchID))
+        save()
+    }
+
+    /// Undoes the most recent swipe: returns the candidate to the top of the
+    /// deck and removes any match it created.
+    func rewind() {
+        guard let swipe = lastSwipes.popLast() else { return }
+        seenIDs.remove(swipe.candidate.id)
+        if let matchID = swipe.createdMatchID {
+            matches.removeAll { $0.id == matchID }
+            if newMatch?.id == matchID { newMatch = nil }
+        }
+        deck.insert(swipe.candidate, at: 0)
         save()
     }
 
@@ -87,6 +113,7 @@ final class AppState: ObservableObject {
         deck = []
         matches = []
         seenIDs = []
+        lastSwipes = []
         newMatch = nil
         defaults.removeObject(forKey: Keys.user)
         defaults.removeObject(forKey: Keys.matches)
@@ -110,10 +137,10 @@ final class AppState: ObservableObject {
 
     private func openingLine(for candidate: Candidate) -> String {
         let lines = [
-            "Hey! Great to match with a fellow frontliner 😊",
-            "Hi! Your bio made me smile — how's your week going?",
-            "Hey there! Long shift or day off today?",
-            "Hi! We matched — what's your go-to way to unwind after work?",
+            "Hej! Fedt at matche med en anden frontliner 😊",
+            "Hej! Din profil fik mig til at smile — hvordan går din uge?",
+            "Hej! Lang vagt eller fridag i dag?",
+            "Hej! Vi matchede — hvordan slapper du bedst af efter arbejde?",
         ]
         return lines[abs(candidate.gradientSeed) % lines.count]
     }

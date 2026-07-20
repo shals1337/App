@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// The swipe deck. The top card is draggable; buttons mirror the gesture.
+/// Swipe right / left / up = like / nope / super like — just like Tinder.
 struct DiscoverView: View {
     @EnvironmentObject private var state: AppState
     @State private var drag: CGSize = .zero
@@ -10,14 +11,16 @@ struct DiscoverView: View {
             ZStack {
                 Color(.systemGroupedBackground).ignoresSafeArea()
 
-                if state.deck.isEmpty {
-                    EmptyDeck()
-                } else {
-                    deck
+                VStack(spacing: 0) {
+                    brandBar
+                    if state.deck.isEmpty {
+                        EmptyDeck()
+                    } else {
+                        deck
+                    }
                 }
             }
-            .navigationTitle("Discover")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
             .overlay {
                 if let match = state.newMatch {
                     MatchCelebration(match: match) {
@@ -28,13 +31,25 @@ struct DiscoverView: View {
         }
     }
 
+    private var brandBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "flame.fill")
+                .foregroundStyle(Theme.brandGradient)
+            Text("frontline")
+                .font(.title2.weight(.heavy))
+                .foregroundStyle(Theme.brandGradient)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+    }
+
     private var deck: some View {
-        VStack {
+        VStack(spacing: 0) {
             ZStack {
                 // Show up to three cards; only the top one is interactive.
                 ForEach(Array(state.deck.prefix(3).enumerated()).reversed(), id: \.element.id) { index, candidate in
                     if index == 0 {
-                        CardView(candidate: candidate, dragWidth: drag.width)
+                        CardView(candidate: candidate, drag: drag)
                             .offset(drag)
                             .rotationEffect(.degrees(Double(drag.width / 18)))
                             .gesture(swipeGesture(for: candidate))
@@ -45,21 +60,35 @@ struct DiscoverView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
+            .padding(.horizontal, 14)
+            .padding(.top, 4)
 
             actionButtons
-                .padding(.vertical, 20)
+                .padding(.vertical, 16)
         }
     }
 
     private var actionButtons: some View {
-        HStack(spacing: 40) {
-            CircleButton(symbol: "xmark", tint: .red) {
-                if let c = state.topCandidate { animateSwipe(-1); state.pass(c); resetDrag() }
+        HStack(spacing: 18) {
+            CircleButton(symbol: "arrow.uturn.backward", tint: Theme.rewind, size: 48) {
+                withAnimation(.spring) { state.rewind() }
             }
-            CircleButton(symbol: "heart.fill", tint: .green, large: true) {
-                if let c = state.topCandidate { animateSwipe(1); state.like(c); resetDrag() }
+            .disabled(!state.canRewind)
+            .opacity(state.canRewind ? 1 : 0.4)
+
+            CircleButton(symbol: "xmark", tint: Theme.nope, size: 60) {
+                guard let c = state.topCandidate else { return }
+                fling(CGSize(width: -600, height: 0)) { state.pass(c) }
+            }
+
+            CircleButton(symbol: "star.fill", tint: Theme.superLike, size: 48) {
+                guard let c = state.topCandidate else { return }
+                fling(CGSize(width: 0, height: -700)) { state.like(c, superLike: true) }
+            }
+
+            CircleButton(symbol: "heart.fill", tint: Theme.like, size: 60) {
+                guard let c = state.topCandidate else { return }
+                fling(CGSize(width: 600, height: 0)) { state.like(c) }
             }
         }
     }
@@ -70,71 +99,77 @@ struct DiscoverView: View {
         DragGesture()
             .onChanged { drag = $0.translation }
             .onEnded { value in
-                let threshold: CGFloat = 110
-                if value.translation.width > threshold {
-                    withAnimation(.easeOut(duration: 0.2)) { drag.width = 600 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                        state.like(candidate); resetDrag()
-                    }
-                } else if value.translation.width < -threshold {
-                    withAnimation(.easeOut(duration: 0.2)) { drag.width = -600 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                        state.pass(candidate); resetDrag()
-                    }
+                let h = value.translation.width
+                let v = value.translation.height
+                let sideThreshold: CGFloat = 110
+                let upThreshold: CGFloat = 130
+
+                if v < -upThreshold && abs(v) > abs(h) {
+                    fling(CGSize(width: 0, height: -700)) { state.like(candidate, superLike: true) }
+                } else if h > sideThreshold {
+                    fling(CGSize(width: 600, height: v)) { state.like(candidate) }
+                } else if h < -sideThreshold {
+                    fling(CGSize(width: -600, height: v)) { state.pass(candidate) }
                 } else {
                     withAnimation(.spring) { drag = .zero }
                 }
             }
     }
 
-    private func animateSwipe(_ direction: CGFloat) {
-        withAnimation(.easeOut(duration: 0.18)) { drag.width = 600 * direction }
+    /// Animates the top card off-screen, then commits the decision.
+    private func fling(_ target: CGSize, commit: @escaping () -> Void) {
+        withAnimation(.easeOut(duration: 0.22)) { drag = target }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            commit()
+            drag = .zero
+        }
     }
-
-    private func resetDrag() { drag = .zero }
 }
 
 private struct CircleButton: View {
     let symbol: String
     let tint: Color
-    var large = false
+    let size: CGFloat
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: large ? 30 : 24, weight: .bold))
+                .font(.system(size: size * 0.42, weight: .bold))
                 .foregroundStyle(tint)
-                .frame(width: large ? 72 : 60, height: large ? 72 : 60)
+                .frame(width: size, height: size)
                 .background(Color(.secondarySystemGroupedBackground), in: Circle())
-                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+                .overlay(Circle().strokeBorder(tint.opacity(0.18), lineWidth: 1))
+                .shadow(color: .black.opacity(0.10), radius: 8, y: 4)
         }
     }
 }
 
 private struct EmptyDeck: View {
     var body: some View {
+        Spacer()
         ContentUnavailableView {
-            Label("You're all caught up", systemImage: "sparkles")
+            Label("Du er helt fanget op", systemImage: "sparkles")
         } description: {
-            Text("No more members near you right now. Check back soon — new frontliners join every day.")
+            Text("Ingen flere medlemmer i nærheden lige nu. Kig forbi igen — nye frontliners kommer til hver dag.")
         }
+        Spacer()
     }
 }
 
-/// Full-screen "It's a match!" celebration.
+/// Full-screen "Det er et match!" celebration.
 private struct MatchCelebration: View {
     let match: Match
     let dismiss: () -> Void
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.75).ignoresSafeArea()
+            Color.black.opacity(0.78).ignoresSafeArea()
             VStack(spacing: 20) {
-                Text("It's a match!")
-                    .font(.system(size: 36, weight: .heavy))
+                Text("Det er et match!")
+                    .font(.system(size: 34, weight: .heavy))
                     .foregroundStyle(Theme.brandGradient)
-                Text("You and \(match.candidate.name) liked each other.")
+                Text("Du og \(match.candidate.name) kan lide hinanden.")
                     .foregroundStyle(.white.opacity(0.9))
 
                 CardView(candidate: match.candidate)
@@ -142,14 +177,14 @@ private struct MatchCelebration: View {
                     .padding(.horizontal, 60)
 
                 Button(action: dismiss) {
-                    Text("Say hello")
+                    Text("Sig hej")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.horizontal, 60)
 
-                Button("Keep swiping", action: dismiss)
+                Button("Fortsæt med at swipe", action: dismiss)
                     .foregroundStyle(.white.opacity(0.8))
             }
             .padding()

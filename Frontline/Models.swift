@@ -12,9 +12,9 @@ enum Gender: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .woman: return "Woman"
-        case .man: return "Man"
-        case .nonbinary: return "Non-binary"
+        case .woman: return "Kvinde"
+        case .man: return "Mand"
+        case .nonbinary: return "Non-binær"
         }
     }
 }
@@ -41,15 +41,15 @@ enum Profession: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .nurse: return "Nurse"
-        case .doctor: return "Doctor"
-        case .paramedic: return "Paramedic"
-        case .police: return "Police officer"
-        case .firefighter: return "Firefighter"
-        case .military: return "Military"
-        case .teacher: return "Teacher"
-        case .socialWorker: return "Social worker"
-        case .midwife: return "Midwife"
+        case .nurse: return "Sygeplejerske"
+        case .doctor: return "Læge"
+        case .paramedic: return "Ambulanceredder"
+        case .police: return "Politibetjent"
+        case .firefighter: return "Brandmand"
+        case .military: return "Militær"
+        case .teacher: return "Lærer"
+        case .socialWorker: return "Socialrådgiver"
+        case .midwife: return "Jordemoder"
         }
     }
 
@@ -191,43 +191,43 @@ enum SampleData {
     static let candidates: [Candidate] = [
         Candidate(name: "Mette", age: 29, gender: .woman, profession: .nurse,
                   city: "København", distanceKm: 3,
-                  bio: "ICU nurse on nights. Coffee snob, sea-swimmer, terrible at board games but competitive anyway.",
+                  bio: "Intensivsygeplejerske på nattevagt. Kaffesnob, vinterbader, elendig til brætspil men konkurrerer alligevel.",
                   likesYou: true, gradientSeed: 1),
         Candidate(name: "Jonas", age: 33, gender: .man, profession: .firefighter,
                   city: "Aarhus", distanceKm: 8,
-                  bio: "Firefighter and part-time carpenter. Dog dad to a very dramatic labrador.",
+                  bio: "Brandmand og tømrer på deltid. Hundefar til en meget dramatisk labrador.",
                   likesYou: false, gradientSeed: 2),
         Candidate(name: "Sofie", age: 31, gender: .woman, profession: .police,
                   city: "Odense", distanceKm: 12,
-                  bio: "Patrol officer who unwinds with long runs and true-crime podcasts (I know, I know).",
+                  bio: "Patruljebetjent, der slapper af med lange løbeture og true crime-podcasts (jeg ved det godt).",
                   likesYou: true, gradientSeed: 3),
         Candidate(name: "Anders", age: 36, gender: .man, profession: .doctor,
                   city: "København", distanceKm: 5,
-                  bio: "ER doctor. Looking for someone who gets the odd hours and loves a spontaneous road trip.",
+                  bio: "Læge på skadestuen. Søger en, der forstår de skæve vagter og elsker en spontan roadtrip.",
                   likesYou: false, gradientSeed: 4),
         Candidate(name: "Laura", age: 27, gender: .woman, profession: .paramedic,
                   city: "Aalborg", distanceKm: 21,
-                  bio: "Paramedic, climber, plant hoarder. I make an excellent negroni.",
+                  bio: "Ambulanceredder, klatrer, plantehamster. Jeg laver en fremragende negroni.",
                   likesYou: true, gradientSeed: 5),
         Candidate(name: "Emil", age: 30, gender: .man, profession: .teacher,
                   city: "København", distanceKm: 4,
-                  bio: "5th-grade teacher. Big on live music, bad puns, and Sunday cinnamon rolls.",
+                  bio: "Lærer i 5. klasse. Vild med livemusik, dårlige ordspil og søndagens kanelsnurrer.",
                   likesYou: false, gradientSeed: 6),
         Candidate(name: "Freja", age: 34, gender: .woman, profession: .midwife,
                   city: "Roskilde", distanceKm: 30,
-                  bio: "Midwife. Calm under pressure, chaotic in the kitchen. Let's go for a walk.",
+                  bio: "Jordemoder. Rolig under pres, kaotisk i køkkenet. Skal vi gå en tur?",
                   likesYou: true, gradientSeed: 7),
         Candidate(name: "Kasper", age: 32, gender: .man, profession: .military,
                   city: "Fredericia", distanceKm: 45,
-                  bio: "Army logistics. Home cook, hiker, always up for a new trail or a good pizza.",
+                  bio: "Logistik i Forsvaret. Hjemmekok, vandrer, altid frisk på en ny rute eller en god pizza.",
                   likesYou: false, gradientSeed: 8),
         Candidate(name: "Ida", age: 28, gender: .woman, profession: .socialWorker,
                   city: "København", distanceKm: 6,
-                  bio: "Social worker with a soft spot for pottery and ridiculously long brunches.",
+                  bio: "Socialrådgiver med en svaghed for keramik og latterligt lange brunches.",
                   likesYou: true, gradientSeed: 9),
         Candidate(name: "Noah", age: 35, gender: .man, profession: .paramedic,
                   city: "Aarhus", distanceKm: 9,
-                  bio: "Paramedic and weekend cyclist. Ask me about the best coffee stops in Jutland.",
+                  bio: "Ambulanceredder og weekendcyklist. Spørg mig om de bedste kaffestop i Jylland.",
                   likesYou: false, gradientSeed: 10),
     ]
 }

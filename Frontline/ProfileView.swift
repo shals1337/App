@@ -16,39 +16,39 @@ struct ProfileView: View {
                                 .listRowBackground(Color.clear)
                         }
 
-                        Section("About") {
-                            Text(user.bio.isEmpty ? "No bio yet." : user.bio)
+                        Section("Om") {
+                            Text(user.bio.isEmpty ? "Ingen bio endnu." : user.bio)
                                 .foregroundStyle(user.bio.isEmpty ? .secondary : .primary)
                         }
 
-                        Section("Details") {
-                            row("Profession", user.profession.label, symbol: user.profession.symbol, tint: user.profession.tint)
-                            row("Location", user.city, symbol: "mappin.circle.fill")
-                            row("Age", "\(user.age)", symbol: "calendar")
-                            row("Showing me", user.seeking.map(\.label).joined(separator: ", "),
+                        Section("Detaljer") {
+                            row("Erhverv", user.profession.label, symbol: user.profession.symbol, tint: user.profession.tint)
+                            row("Lokation", user.city, symbol: "mappin.circle.fill")
+                            row("Alder", "\(user.age)", symbol: "calendar")
+                            row("Viser mig", user.seeking.map(\.label).joined(separator: ", "),
                                 symbol: "heart.fill")
                         }
 
                         Section {
-                            Button("Edit profile") { editing = true }
-                            Button("Sign out & erase data", role: .destructive) {
+                            Button("Rediger profil") { editing = true }
+                            Button("Log ud & slet data", role: .destructive) {
                                 showEraseAlert = true
                             }
                         }
                     }
                 }
             }
-            .navigationTitle("Profile")
+            .navigationTitle("Profil")
             .sheet(isPresented: $editing) {
                 if let user = state.user {
                     EditProfileView(profile: user) { state.updateProfile($0) }
                 }
             }
-            .alert("Erase everything?", isPresented: $showEraseAlert) {
-                Button("Erase", role: .destructive) { state.signOutAndErase() }
-                Button("Cancel", role: .cancel) {}
+            .alert("Slet alt?", isPresented: $showEraseAlert) {
+                Button("Slet", role: .destructive) { state.signOutAndErase() }
+                Button("Annuller", role: .cancel) {}
             } message: {
-                Text("Your profile, matches, and messages will be permanently deleted from this device.")
+                Text("Din profil, dine matches og beskeder slettes permanent fra denne enhed.")
             }
         }
     }
@@ -69,7 +69,7 @@ struct ProfileView: View {
                     .foregroundStyle(user.profession.tint)
             }
             ProfessionBadge(profession: user.profession)
-            Label("Verified frontline member", systemImage: "checkmark.shield.fill")
+            Label("Verificeret frontline-medlem", systemImage: "checkmark.shield.fill")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -104,40 +104,40 @@ private struct EditProfileView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Basics") {
-                    TextField("First name", text: $profile.name)
-                    Stepper("Age: \(profile.age)", value: $profile.age, in: 18...99)
-                    Picker("I am a", selection: $profile.gender) {
+                Section("Det basale") {
+                    TextField("Fornavn", text: $profile.name)
+                    Stepper("Alder: \(profile.age)", value: $profile.age, in: 18...99)
+                    Picker("Jeg er", selection: $profile.gender) {
                         ForEach(Gender.allCases) { Text($0.label).tag($0) }
                     }
-                    TextField("City", text: $profile.city)
+                    TextField("By", text: $profile.city)
                 }
 
-                Section("Profession") {
-                    Picker("Profession", selection: $profile.profession) {
+                Section("Erhverv") {
+                    Picker("Erhverv", selection: $profile.profession) {
                         ForEach(Profession.allCases) { Label($0.label, systemImage: $0.symbol).tag($0) }
                     }
                 }
 
-                Section("Show me") {
+                Section("Vis mig") {
                     ForEach(Gender.allCases) { gender in
                         Toggle(gender.label, isOn: binding(for: gender))
                     }
                 }
 
-                Section("About you") {
-                    TextField("Share something real…", text: $profile.bio, axis: .vertical)
+                Section("Om dig") {
+                    TextField("Del noget ægte…", text: $profile.bio, axis: .vertical)
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle("Edit profile")
+            .navigationTitle("Rediger profil")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Annuller") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Gem") {
                         onSave(sanitized)
                         dismiss()
                     }

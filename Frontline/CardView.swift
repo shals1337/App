@@ -3,8 +3,8 @@ import SwiftUI
 /// A single swipeable profile card.
 struct CardView: View {
     let candidate: Candidate
-    /// Horizontal drag offset, used to reveal the LIKE / NOPE stamps.
-    var dragWidth: CGFloat = 0
+    /// Drag offset, used to reveal the LIKE / NOPE / SUPER LIKE stamps.
+    var drag: CGSize = .zero
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -44,7 +44,7 @@ struct CardView: View {
             }
             .foregroundStyle(.white)
 
-            Label("\(candidate.city) · \(candidate.distanceKm) km away",
+            Label("\(candidate.city) · \(candidate.distanceKm) km væk",
                   systemImage: "mappin.circle.fill")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.9))
@@ -59,15 +59,20 @@ struct CardView: View {
 
     private var stamps: some View {
         ZStack {
-            Stamp(text: "LIKE", color: .green, rotation: -18)
-                .opacity(Double(max(0, dragWidth) / 90))
+            Stamp(text: "LIKE", color: Theme.like, rotation: -18)
+                .opacity(Double(max(0, drag.width) / 90))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding(28)
 
-            Stamp(text: "NOPE", color: .red, rotation: 18)
-                .opacity(Double(max(0, -dragWidth) / 90))
+            Stamp(text: "NEJ", color: Theme.nope, rotation: 18)
+                .opacity(Double(max(0, -drag.width) / 90))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .padding(28)
+
+            Stamp(text: "SUPERLIKE", color: Theme.superLike, rotation: -8)
+                .opacity(Double(max(0, -drag.height) / 90))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 120)
         }
     }
 }

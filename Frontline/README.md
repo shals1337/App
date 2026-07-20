@@ -8,20 +8,27 @@ SwiftUI, no backend required (everything is stored locally on device).
 > The idea: membership is gated to vetted professions, and every member
 > confirms their job through a work-ID check, so the community stays real.
 
+**The user-facing UI is in Danish**; the source code, comments, and this
+README are in English.
+
 ## Features
 
 - **Profession-gated onboarding** — pick your vetted profession, set who you'd
   like to meet, and pass a (simulated) work-ID verification step before you can
   enter the app.
-- **Swipe to discover** — a draggable card deck of verified members with
-  LIKE / NOPE stamps, plus tap buttons. Cards are filtered to the genders you're
-  seeking.
-- **Instant matches** — like someone who already liked you and get an
-  "It's a match!" celebration.
+- **Tinder-style swipe deck** — a draggable card stack with the warm
+  orange→pink Tinder gradient. Swipe **right** to like, **left** to nope,
+  **up** to super like — with LIKE / NEJ / SUPERLIKE stamps. Below the deck sit
+  the classic round action buttons: **rewind**, **nope**, **super like**,
+  **like**. Cards are filtered to the genders you're seeking.
+- **Rewind** — undo your last swipe (and any match it created), just like
+  Tinder's back button.
+- **Instant matches** — like someone who already liked you (or super-like
+  anyone) and get a "Det er et match!" celebration.
 - **Matches & chat** — a list of your matches with a simple, persistent
   one-on-one conversation view.
 - **Your profile** — a verified badge, editable details, and a
-  *sign out & erase* option that wipes all local data.
+  *log ud & slet data* option that wipes all local data.
 - **Persistent** — profile, matches, and messages are saved between launches
   via `UserDefaults` (JSON).
 

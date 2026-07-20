@@ -34,7 +34,7 @@ struct ChatView: View {
                 }
                 composer
             } else {
-                ContentUnavailableView("Conversation unavailable", systemImage: "bubble.left")
+                ContentUnavailableView("Samtalen er utilgængelig", systemImage: "bubble.left")
             }
         }
         .navigationTitle(match?.candidate.name ?? "Chat")
@@ -43,7 +43,7 @@ struct ChatView: View {
 
     private var composer: some View {
         HStack(spacing: 10) {
-            TextField("Message…", text: $draft, axis: .vertical)
+            TextField("Besked…", text: $draft, axis: .vertical)
                 .lineLimit(1...4)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
@@ -77,7 +77,7 @@ private struct MatchHeader: View {
                     .font(.title2)
                     .foregroundStyle(.white)
             }
-            Text("You matched with \(candidate.name)")
+            Text("Du matchede med \(candidate.name)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             ProfessionBadge(profession: candidate.profession)
