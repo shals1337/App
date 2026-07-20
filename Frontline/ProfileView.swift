@@ -159,9 +159,9 @@ struct ProfileView: View {
                     AdminView()
                 } label: {
                     HStack {
-                        Label("Gennemgå verificeringer", systemImage: "checkmark.seal.fill")
+                        Label("Gennemgang", systemImage: "checkmark.seal.fill")
                         Spacer()
-                        Text("\(state.adminQueue.count)")
+                        Text("\(state.adminQueue.count + state.openReports.count)")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -169,7 +169,7 @@ struct ProfileView: View {
         } header: {
             Text("Administrator")
         } footer: {
-            Text("En administrator gennemgår indsendte arbejds-ID'er og selfies manuelt og godkender dem. (Demo: du kan slå det til for at se køen.)")
+            Text("En administrator godkender arbejds-ID'er/selfies og gennemgår kun anmeldte samtaler. Private beskeder scannes ikke. (Demo: slå til for at se køerne.)")
         }
     }
 

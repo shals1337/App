@@ -104,3 +104,26 @@ have a licence, and keep records.
 - A **DPIA** (data protection impact assessment) — dating + special-category +
   biometric processing very likely requires one.
 - A route to **exercise rights** and to **contact the DPA** (Datatilsynet in DK).
+
+## 3. Message privacy & the EU "Chat Control" proposal
+
+**Do not build bulk chat scanning.** "Chat Control" (the EU CSA Regulation) is a
+**proposal, not law** — it has been repeatedly stalled/blocked in the Council and
+is heavily contested precisely because mass scanning of private messages
+conflicts with fundamental rights. Even if some version passes, it targets
+**CSAM/grooming detection**, not a general right for a company to read users'
+private chats.
+
+Reading private messages in general would breach the **ePrivacy Directive**
+(confidentiality of communications) and the **GDPR**. So Frontline:
+
+- Treats messages as **private** and does **no** bulk scanning/monitoring.
+- Lets users **report** a conversation; only **reported** chats enter the
+  moderation queue (`AdminView`), reviewed under a legitimate-interest (safety)
+  basis, minimised and disclosed in the privacy policy.
+- Provides **block** so a user can cut contact immediately.
+
+If a lawful obligation (e.g. a valid legal order, or a future enacted law with a
+narrow, court-tested scope) ever requires detection, implement it **narrowly**
+with legal advice, a DPIA, transparency and strict limits — never as blanket
+surveillance.

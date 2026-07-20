@@ -4,13 +4,18 @@ import SwiftUI
 /// indicator. Replies are simulated locally (no backend); your messages persist.
 struct ChatView: View {
     @EnvironmentObject private var state: AppState
+    @Environment(\.dismiss) private var dismiss
     let matchID: UUID
     @State private var draft = ""
+    @State private var showReport = false
+    @State private var showBlock = false
+    @State private var reportSent = false
 
     private var match: Match? {
         state.matches.first { $0.id == matchID }
     }
     private var isTyping: Bool { state.typingMatchID == matchID }
+    private var name: String { match?.candidate.name ?? "" }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,6 +59,44 @@ struct ChatView: View {
         }
         .navigationTitle(match?.candidate.name ?? "Chat")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button { showReport = true } label: {
+                        Label("Anmeld samtale", systemImage: "flag")
+                    }
+                    Button(role: .destructive) { showBlock = true } label: {
+                        Label("Bloker \(name)", systemImage: "hand.raised")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .confirmationDialog("Anmeld samtale", isPresented: $showReport, titleVisibility: .visible) {
+            ForEach(ReportReason.allCases) { reason in
+                Button(reason.label) {
+                    if let match { state.report(match, reason: reason); reportSent = true }
+                }
+            }
+            Button("Annuller", role: .cancel) {}
+        } message: {
+            Text("Hvorfor vil du anmelde denne samtale? En moderator gennemgår kun anmeldte samtaler.")
+        }
+        .alert("Bloker \(name)?", isPresented: $showBlock) {
+            Button("Bloker", role: .destructive) {
+                state.block(matchID: matchID)
+                dismiss()
+            }
+            Button("Annuller", role: .cancel) {}
+        } message: {
+            Text("I kan ikke længere se hinanden eller skrive sammen.")
+        }
+        .alert("Tak for din anmeldelse", isPresented: $reportSent) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("En moderator gennemgår samtalen. Du kan også blokere personen.")
+        }
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {

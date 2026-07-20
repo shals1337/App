@@ -46,6 +46,11 @@ README are in English.
   the queue.
 - **App lock** — optional Face ID / Touch ID / passcode gate on launch and when
   returning from the background (`LocalAuthentication`).
+- **Safety: block & report** — a member can report a conversation (with a
+  reason) or block someone from the chat. **Only reported** conversations enter
+  the admin **moderation queue** — there is **no** bulk scanning of private
+  messages (see the note on "Chat Control" in LEGAL.md). Blocking removes the
+  match and hides the person from discovery.
 - **Rewind** — undo your last swipe (and any match it created), refunding the
   consumed like. A Premium/Elite feature.
 - **Lively chat** — **read receipts** ("Sendt" → "Set"), an animated **typing

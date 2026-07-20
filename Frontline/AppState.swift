@@ -24,6 +24,10 @@ final class AppState: ObservableObject {
     /// The match whose partner is currently "typing" (drives the chat indicator).
     @Published var typingMatchID: UUID?
 
+    // Safety: user reports and blocked members.
+    @Published private(set) var reports: [Report] = []
+    private var blockedIDs: Set<UUID> = []
+
     // Admin (manual verification review).
     @Published var isAdmin = false
     @Published var mockApplicants: [AdminApplicant] = [
@@ -49,6 +53,8 @@ final class AppState: ObservableObject {
         static let consent = "frontline.consent"
         static let isAdmin = "frontline.isAdmin"
         static let appLock = "frontline.appLock"
+        static let reports = "frontline.reports"
+        static let blocked = "frontline.blocked"
     }
 
     /// Candidate ids the member has already swiped, so they never reappear.
@@ -223,6 +229,47 @@ final class AppState: ObservableObject {
         save()
     }
 
+    // MARK: - Safety (report, block, moderation)
+
+    /// Files a report about a conversation. This is the ONLY thing that makes a
+    /// chat reviewable — there is no bulk scanning of private messages.
+    func report(_ match: Match, reason: ReportReason) {
+        reports.insert(Report(matchID: match.id, matchName: match.candidate.name,
+                              reason: reason), at: 0)
+        save()
+    }
+
+    /// Blocks a member: removes the match, hides them from discovery, and
+    /// resolves any open reports about them.
+    func block(matchID: UUID) {
+        blockedIDs.insert(matchID)
+        seenIDs.insert(matchID)
+        matches.removeAll { $0.id == matchID }
+        deck.removeAll { $0.id == matchID }
+        for i in reports.indices where reports[i].matchID == matchID {
+            reports[i].resolved = true
+        }
+        if typingMatchID == matchID { typingMatchID = nil }
+        rebuildDeck()
+        save()
+    }
+
+    /// Dismisses a report without blocking (moderator decided no action).
+    func dismissReport(_ report: Report) {
+        if let i = reports.firstIndex(where: { $0.id == report.id }) {
+            reports[i].resolved = true
+        }
+        save()
+    }
+
+    /// Open (unresolved) reports for the moderation queue.
+    var openReports: [Report] { reports.filter { !$0.resolved } }
+
+    /// The conversation referenced by a report, for read-only moderator review.
+    func match(for report: Report) -> Match? {
+        matches.first { $0.id == report.matchID }
+    }
+
     // MARK: - Security (app lock)
 
     func setAppLock(_ enabled: Bool) {
@@ -310,6 +357,7 @@ final class AppState: ObservableObject {
             candidate.likesYou
             && !matchedIDs.contains(candidate.id)
             && !seenIDs.contains(candidate.id)
+            && !blockedIDs.contains(candidate.id)
             && passesPreferences(candidate)
         }
     }
@@ -389,9 +437,11 @@ final class AppState: ObservableObject {
         isAdmin = false
         appLockEnabled = false
         isUnlocked = true
+        reports = []
+        blockedIDs = []
         [Keys.user, Keys.matches, Keys.seenIDs, Keys.tier,
          Keys.likesUsed, Keys.superUsed, Keys.quotaDay, Keys.boostUntil,
-         Keys.consent, Keys.isAdmin, Keys.appLock]
+         Keys.consent, Keys.isAdmin, Keys.appLock, Keys.reports, Keys.blocked]
             .forEach { defaults.removeObject(forKey: $0) }
     }
 
@@ -422,6 +472,7 @@ final class AppState: ObservableObject {
         deck = SampleData.candidates.filter { candidate in
             !seenIDs.contains(candidate.id)
             && !matchedIDs.contains(candidate.id)
+            && !blockedIDs.contains(candidate.id)
             && passesPreferences(candidate)
         }
     }
@@ -468,6 +519,10 @@ final class AppState: ObservableObject {
         }
         defaults.set(isAdmin, forKey: Keys.isAdmin)
         defaults.set(appLockEnabled, forKey: Keys.appLock)
+        if let data = try? encoder.encode(reports) {
+            defaults.set(data, forKey: Keys.reports)
+        }
+        defaults.set(blockedIDs.map(\.uuidString), forKey: Keys.blocked)
     }
 
     private func load() {
@@ -500,6 +555,13 @@ final class AppState: ObservableObject {
         isAdmin = defaults.bool(forKey: Keys.isAdmin)
         appLockEnabled = defaults.bool(forKey: Keys.appLock)
         isUnlocked = !appLockEnabled   // start locked when the lock is on
+        if let data = defaults.data(forKey: Keys.reports),
+           let decoded = try? decoder.decode([Report].self, from: data) {
+            reports = decoded
+        }
+        if let ids = defaults.stringArray(forKey: Keys.blocked) {
+            blockedIDs = Set(ids.compactMap(UUID.init))
+        }
 
         refreshQuotaIfNeeded()
         rebuildDeck()

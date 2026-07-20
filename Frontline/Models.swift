@@ -381,6 +381,50 @@ struct Candidate: Identifiable, Codable, Equatable {
     }
 }
 
+// MARK: - Safety: reports & moderation
+
+/// Why a member reported a conversation.
+enum ReportReason: String, Codable, CaseIterable, Identifiable {
+    case spam
+    case harassment
+    case inappropriate
+    case fake
+    case other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .spam: return "Spam eller reklame"
+        case .harassment: return "Chikane eller trusler"
+        case .inappropriate: return "Upassende indhold"
+        case .fake: return "Falsk profil"
+        case .other: return "Andet"
+        }
+    }
+}
+
+/// A user-initiated report. Only reported conversations may be reviewed by a
+/// moderator — there is no bulk scanning of private messages.
+struct Report: Identifiable, Codable, Equatable, Hashable {
+    let id: UUID
+    var matchID: UUID
+    var matchName: String
+    var reason: ReportReason
+    var date: Date
+    var resolved: Bool
+
+    init(id: UUID = UUID(), matchID: UUID, matchName: String,
+         reason: ReportReason, date: Date = Date(), resolved: Bool = false) {
+        self.id = id
+        self.matchID = matchID
+        self.matchName = matchName
+        self.reason = reason
+        self.date = date
+        self.resolved = resolved
+    }
+}
+
 // MARK: - Chat
 
 struct Message: Identifiable, Codable, Equatable {

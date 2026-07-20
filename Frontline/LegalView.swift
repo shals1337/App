@@ -47,15 +47,22 @@ enum LegalDocs {
     og til at trække samtykke tilbage. Brug "Eksportér mine data" og "Slet konto" \
     i appen, eller kontakt os. Du kan klage til Datatilsynet.
 
-    7. Deling
+    7. Beskeder og moderation
+    Dine beskeder er private. Vi foretager IKKE generel scanning eller \
+    overvågning af private chats. En samtale gennemgås kun, hvis du eller en \
+    anden bruger anmelder den, eller hvis vi er retligt forpligtet til det — og \
+    kun i det omfang, det er nødvendigt for at beskytte brugerne. Retsgrundlag: \
+    legitim interesse i sikkerhed samt evt. retlig forpligtelse.
+
+    8. Deling
     I en rigtig udgivelse deles data med databehandlere (hosting, \
     identitetsverificering). Der indgås databehandleraftaler, og overførsler \
     uden for EU/EØS sker kun med gyldigt overførselsgrundlag.
 
-    8. Alder
+    9. Alder
     Tjenesten er kun for personer på 18 år og derover.
 
-    9. Geografi og lovvalg
+    10. Geografi og lovvalg
     Tjenesten udbydes kun i Danmark. Behandlingen er underlagt databeskyttelses-\
     forordningen (GDPR) og dansk databeskyttelseslovgivning, og du kan klage til \
     Datatilsynet (datatilsynet.dk).
