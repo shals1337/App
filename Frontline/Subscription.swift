@@ -13,19 +13,20 @@ enum Tier: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    // Display names are deliberately NOT Tinder's "Plus"/"Gold" marks.
     var label: String {
         switch self {
         case .free: return "Gratis"
-        case .plus: return "Frontline Plus"
-        case .gold: return "Frontline Gold"
+        case .plus: return "Frontline Premium"
+        case .gold: return "Frontline Elite"
         }
     }
 
     var shortLabel: String {
         switch self {
         case .free: return "Gratis"
-        case .plus: return "Plus"
-        case .gold: return "Gold"
+        case .plus: return "Premium"
+        case .gold: return "Elite"
         }
     }
 
@@ -41,8 +42,8 @@ enum Tier: String, Codable, CaseIterable, Identifiable {
     var tagline: String {
         switch self {
         case .free: return "Kom i gang og find dine første matches."
-        case .plus: return "Ubegrænsede likes, fortryd og flere superlikes."
-        case .gold: return "Se hvem der kan lide dig — og alt i Plus."
+        case .plus: return "Ubegrænsede likes, fortryd og flere fremhævelser."
+        case .gold: return "Se hvem der kan lide dig — og alt i Premium."
         }
     }
 
@@ -50,13 +51,13 @@ enum Tier: String, Codable, CaseIterable, Identifiable {
     var perks: [String] {
         switch self {
         case .free:
-            return ["Begrænset antal likes om dagen", "1 superlike om dagen"]
+            return ["Begrænset antal likes om dagen", "1 fremhævelse om dagen"]
         case .plus:
-            return ["Ubegrænsede likes", "Fortryd sidste swipe",
-                    "5 superlikes om dagen", "Ingen begrænsning på afstand"]
+            return ["Ubegrænsede likes", "Fortryd sidste kort",
+                    "5 fremhævelser om dagen", "Ingen begrænsning på afstand"]
         case .gold:
-            return ["Se hvem der kan lide dig", "1 boost om måneden",
-                    "Alt i Plus"]
+            return ["Se hvem der kan lide dig", "1 Turbo om måneden",
+                    "Alt i Premium"]
         }
     }
 
@@ -119,10 +120,10 @@ enum PaywallReason: Identifiable {
     var headline: String {
         switch self {
         case .outOfLikes: return "Du er løbet tør for likes"
-        case .outOfSuperLikes: return "Ikke flere superlikes i dag"
-        case .rewind: return "Fortryd dit sidste swipe"
+        case .outOfSuperLikes: return "Ikke flere fremhævelser i dag"
+        case .rewind: return "Fortryd dit sidste kort"
         case .seeLikesYou: return "Se hvem der kan lide dig"
-        case .boost: return "Kom øverst med et boost"
+        case .boost: return "Kom øverst med Turbo"
         case .general: return "Få mere ud af Frontline"
         }
     }

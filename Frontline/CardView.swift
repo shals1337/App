@@ -69,7 +69,7 @@ struct CardView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                 .padding(28)
 
-            Stamp(text: "SUPERLIKE", color: Theme.superLike, rotation: -8)
+            Stamp(text: "FREMHÆV", color: Theme.superLike, rotation: -8)
                 .opacity(Double(max(0, -drag.height) / 90))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .padding(.bottom, 120)

@@ -21,10 +21,12 @@ struct VerificationView: View {
 
                     VerificationCard(
                         title: "Foto-verificering",
-                        subtitle: "Tag en selfie, så vi kan bekræfte, at du er dig. Dit billede vises aldrig på din profil.",
+                        subtitle: "Tag en selfie, så vi kan bekræfte, at du er dig. Dit billede behandles kun til verificering, gemmes ikke og vises aldrig på din profil.",
                         systemImage: "person.crop.circle.badge.checkmark",
                         done: state.user?.photoVerified == true,
                         actionTitle: "Vælg selfie",
+                        needsConsent: state.consent.biometric == false,
+                        onGrantConsent: { state.grantBiometricConsent() },
                         onVerified: { state.verifyPhoto() }
                     )
 
@@ -34,6 +36,8 @@ struct VerificationView: View {
                         systemImage: "checkmark.seal",
                         done: state.user?.isVerified == true,
                         actionTitle: "Upload arbejds-ID",
+                        needsConsent: false,
+                        onGrantConsent: nil,
                         onVerified: { state.verifyProfession() }
                     )
 
@@ -83,6 +87,10 @@ private struct VerificationCard: View {
     let systemImage: String
     let done: Bool
     let actionTitle: String
+    /// When true, the member must give explicit (biometric) consent before the
+    /// picker appears.
+    let needsConsent: Bool
+    let onGrantConsent: (() -> Void)?
     let onVerified: () -> Void
 
     @State private var item: PhotosPickerItem?
@@ -117,6 +125,19 @@ private struct VerificationCard: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+            } else if needsConsent {
+                Button {
+                    onGrantConsent?()
+                } label: {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "square")
+                        Text("Jeg giver udtrykkeligt samtykke til, at mit selfie (biometriske data) behandles til verificering.")
+                            .multilineTextAlignment(.leading)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.primary)
+                }
+                .buttonStyle(.plain)
             } else {
                 PhotosPicker(selection: $item, matching: .images) {
                     Label(actionTitle, systemImage: "square.and.arrow.up")

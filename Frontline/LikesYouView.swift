@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The Gold "Kan lide dig" grid — members who already liked you. Non-Gold
-/// members see them blurred behind an upgrade prompt (classic Tinder Gold).
+/// The Elite "Kan lide dig" grid — members who already liked you. Members
+/// without Elite see them blurred behind an upgrade prompt.
 struct LikesYouView: View {
     @EnvironmentObject private var state: AppState
     @State private var paywall: PaywallReason?
@@ -57,7 +57,7 @@ struct LikesYouView: View {
                     Text("Se hvem der kan lide dig")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
-                    Text("Opgrader til Gold og match med det samme.")
+                    Text("Opgrader til Elite og match med det samme.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

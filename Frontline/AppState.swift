@@ -18,6 +18,9 @@ final class AppState: ObservableObject {
     @Published private(set) var superLikesUsedToday = 0
     @Published private(set) var boostActiveUntil: Date?
 
+    // GDPR consent.
+    @Published private(set) var consent = PrivacyConsent()
+
     private let defaults = UserDefaults.standard
     private enum Keys {
         static let user = "frontline.user"
@@ -28,6 +31,7 @@ final class AppState: ObservableObject {
         static let superUsed = "frontline.superUsed"
         static let quotaDay = "frontline.quotaDay"
         static let boostUntil = "frontline.boostUntil"
+        static let consent = "frontline.consent"
     }
 
     /// Candidate ids the member has already swiped, so they never reappear.
@@ -50,6 +54,61 @@ final class AppState: ObservableObject {
     }
 
     var isOnboarded: Bool { user != nil }
+
+    /// Whether the member has given every consent required to use the app.
+    var hasRequiredConsent: Bool {
+        consent.over18
+        && consent.acceptedPolicyVersion == LegalDocs.policyVersion
+        && consent.acceptedTermsVersion == LegalDocs.termsVersion
+        && consent.specialCategory
+    }
+
+    // MARK: - Consent (GDPR)
+
+    func recordConsent(over18: Bool, specialCategory: Bool) {
+        consent.over18 = over18
+        consent.specialCategory = specialCategory
+        consent.acceptedPolicyVersion = LegalDocs.policyVersion
+        consent.acceptedTermsVersion = LegalDocs.termsVersion
+        consent.updatedAt = Date()
+        save()
+    }
+
+    /// Explicit consent to process the verification selfie (biometric data).
+    func grantBiometricConsent() {
+        consent.biometric = true
+        save()
+    }
+
+    /// Withdraws special-category consent; also stops showing those profiles.
+    func withdrawSpecialConsent() {
+        consent.specialCategory = false
+        consent.updatedAt = Date()
+        rebuildDeck()
+        save()
+    }
+
+    /// Right to data portability: writes a JSON export to a temp file and
+    /// returns its URL for a share sheet.
+    func exportData() -> URL? {
+        struct Export: Encodable {
+            let exportedAt: Date
+            let profile: UserProfile?
+            let subscriptionTier: String
+            let matches: [Match]
+            let consent: PrivacyConsent
+        }
+        let payload = Export(exportedAt: Date(), profile: user,
+                             subscriptionTier: tier.rawValue,
+                             matches: matches, consent: consent)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(payload) else { return nil }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("frontline-mine-data.json")
+        do { try data.write(to: url); return url } catch { return nil }
+    }
 
     // MARK: - Entitlements & quotas
 
@@ -199,8 +258,9 @@ final class AppState: ObservableObject {
         likesUsedToday = 0
         superLikesUsedToday = 0
         boostActiveUntil = nil
+        consent = PrivacyConsent()
         [Keys.user, Keys.matches, Keys.seenIDs, Keys.tier,
-         Keys.likesUsed, Keys.superUsed, Keys.quotaDay, Keys.boostUntil]
+         Keys.likesUsed, Keys.superUsed, Keys.quotaDay, Keys.boostUntil, Keys.consent]
             .forEach { defaults.removeObject(forKey: $0) }
     }
 
@@ -262,6 +322,9 @@ final class AppState: ObservableObject {
         defaults.set(superLikesUsedToday, forKey: Keys.superUsed)
         defaults.set(quotaDay.timeIntervalSince1970, forKey: Keys.quotaDay)
         defaults.set(boostActiveUntil?.timeIntervalSince1970 ?? 0, forKey: Keys.boostUntil)
+        if let data = try? encoder.encode(consent) {
+            defaults.set(data, forKey: Keys.consent)
+        }
     }
 
     private func load() {
@@ -287,6 +350,10 @@ final class AppState: ObservableObject {
         }
         let boost = defaults.double(forKey: Keys.boostUntil)
         boostActiveUntil = boost > 0 ? Date(timeIntervalSince1970: boost) : nil
+        if let data = defaults.data(forKey: Keys.consent),
+           let decoded = try? decoder.decode(PrivacyConsent.self, from: data) {
+            consent = decoded
+        }
 
         refreshQuotaIfNeeded()
         rebuildDeck()

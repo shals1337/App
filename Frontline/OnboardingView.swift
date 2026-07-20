@@ -38,7 +38,7 @@ struct OnboardingView: View {
     private var header: some View {
         VStack(spacing: 6) {
             HStack(spacing: 8) {
-                Image(systemName: "heart.fill")
+                Image(systemName: "checkmark.shield.fill")
                     .font(.title2)
                     .foregroundStyle(Theme.brandGradient)
                 Text("Frontline")

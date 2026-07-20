@@ -42,7 +42,7 @@ struct DiscoverView: View {
                 if state.entitlements.boostsPerMonth > 0 { state.activateBoost() }
                 else { paywall = .boost }
             } label: {
-                Image(systemName: state.isBoosted ? "bolt.fill" : "bolt")
+                Image(systemName: state.isBoosted ? "arrow.up.circle.fill" : "arrow.up.circle")
                     .font(.title3)
                     .foregroundStyle(state.isBoosted ? Tier.gold.accent : .secondary)
             }
@@ -50,8 +50,8 @@ struct DiscoverView: View {
             Spacer()
 
             HStack(spacing: 7) {
-                Image(systemName: "flame.fill")
-                Text("frontline").font(.title2.weight(.heavy))
+                Image(systemName: "checkmark.shield.fill")
+                Text("Frontline").font(.title2.weight(.heavy))
             }
             .foregroundStyle(Theme.brandGradient)
 
@@ -231,7 +231,7 @@ private struct MatchCelebration: View {
         ZStack {
             Color.black.opacity(0.78).ignoresSafeArea()
             VStack(spacing: 20) {
-                Text("Det er et match!")
+                Text("I har matchet!")
                     .font(.system(size: 34, weight: .heavy))
                     .foregroundStyle(Theme.brandGradient)
                 Text("Du og \(match.candidate.name) kan lide hinanden.")

@@ -16,21 +16,24 @@ README are in English.
 - **Profession-gated onboarding** — pick your vetted profession, set who you'd
   like to meet, and pass a (simulated) work-ID verification step before you can
   enter the app.
-- **Tinder-style swipe deck** — a draggable card stack with the warm
-  orange→pink Tinder gradient. Swipe **right** to like, **left** to nope,
-  **up** to super like — with LIKE / NEJ / SUPERLIKE stamps. Below the deck sit
-  the classic round action buttons: **rewind**, **nope**, **super like**,
-  **like**. A boost button and a filters button sit in the top bar.
-- **Subscription (Free / Plus / Gold)** — a full paywall with feature gates,
-  modelled on Tinder:
-  - **Free**: 15 likes/day, 1 super like/day, no rewind.
-  - **Plus**: unlimited likes, rewind, 5 super likes/day, no distance cap.
-  - **Gold**: everything in Plus + **see who likes you** + a monthly **boost**.
+- **Swipe deck** — a draggable card stack in the app's own **blue→teal** brand
+  palette (deliberately not Tinder's colours — see *Compliance* below). Swipe
+  **right** to like, **left** to nope, **up** to highlight — with LIKE / NEJ /
+  FREMHÆV stamps. Below the deck sit round action buttons: **rewind**, **nope**,
+  **highlight (Fremhæv)**, **like**. A Turbo button and a filters button sit in
+  the top bar. Liking also works entirely from buttons, so swiping is not the
+  only mechanic.
+- **Subscription (Gratis / Premium / Elite)** — a full paywall with feature
+  gates:
+  - **Gratis**: 15 likes/day, 1 highlight/day, no rewind.
+  - **Premium**: unlimited likes, rewind, 5 highlights/day, no distance cap.
+  - **Elite**: everything in Premium + **see who likes you** + a monthly
+    **Turbo**.
   - Daily quotas reset each calendar day; hitting a limit raises the paywall on
     the relevant pitch. Purchases are **simulated locally** — see below.
 - **"Kan lide dig" (Likes You)** — a dedicated tab; a grid of people who
-  already liked you, blurred behind a Gold upsell for non-Gold members and
-  tappable for an instant match once you're Gold.
+  already liked you, blurred behind an Elite upsell and tappable for an instant
+  match once you're Elite.
 - **Two-step verification centre** — a **selfie/photo** check and a
   **work-ID/profession** check, each via a photo upload and a simulated review,
   producing verified seals shown on your profile.
@@ -57,6 +60,26 @@ deliberately simulated and are the seams where a production system plugs in:
    fake review; the images are discarded, never stored or shown. For release,
    send them to an **identity/liveness + document-check provider** and set the
    flags from its verified callback.
+
+## Compliance (GDPR) & IP
+
+This build takes both concerns seriously — but **none of it is legal advice**,
+and it must be reviewed by a lawyer before launch. See **[LEGAL.md](LEGAL.md)**
+for the full checklist. In short:
+
+- **Privacy / GDPR** — a consent gate (18+, policy/terms, and *explicit*
+  special-category consent for orientation/profession), separate explicit
+  **biometric consent** before the verification selfie, in-app **data export**
+  (portability), **erase all data** (erasure), **withdraw consent**, versioned
+  policy/terms, and local-only storage with no third-party analytics. The
+  in-app policy and terms in `LegalView.swift` are **templates** with
+  placeholders to fill in.
+- **Not copying Tinder** — the app avoids Tinder's flame mark, its orange→pink
+  trade-dress gradient, and its trademarked names ("Super Like", "Boost",
+  "Gold"/"Plus", "It's a Match"), using its own palette and wording, and the
+  terms state it is unaffiliated. The **swipe-UI patent** held by Match Group is
+  a real, separate risk that a patent attorney must assess — swiping is kept
+  optional alongside button controls, which is a mitigation, not a guarantee.
 
 ## Requirements
 

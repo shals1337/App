@@ -34,7 +34,7 @@ struct PaywallView: View {
 
     private var hero: some View {
         VStack(spacing: 10) {
-            Image(systemName: "flame.fill")
+            Image(systemName: "checkmark.shield.fill")
                 .font(.system(size: 44))
                 .foregroundStyle(Theme.brandGradient)
             Text(reason.headline)

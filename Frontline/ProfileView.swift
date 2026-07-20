@@ -7,6 +7,9 @@ struct ProfileView: View {
     @State private var showVerification = false
     @State private var showFilters = false
     @State private var paywall: PaywallReason?
+    @State private var showPolicy = false
+    @State private var showTerms = false
+    @State private var exportURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -21,6 +24,7 @@ struct ProfileView: View {
 
                         subscriptionSection
                         verificationSection(user)
+                        privacySection
 
                         Section("Om") {
                             Text(user.bio.isEmpty ? "Ingen bio endnu." : user.bio)
@@ -56,6 +60,12 @@ struct ProfileView: View {
                 }
             }
             .sheet(isPresented: $showVerification) { VerificationView() }
+            .sheet(isPresented: $showPolicy) {
+                LegalTextView(title: "Privatlivspolitik", text: LegalDocs.privacy)
+            }
+            .sheet(isPresented: $showTerms) {
+                LegalTextView(title: "Betingelser", text: LegalDocs.terms)
+            }
             .sheet(isPresented: $showFilters) {
                 if let user = state.user { FiltersView(profile: user) }
             }
@@ -93,11 +103,42 @@ struct ProfileView: View {
                 Button {
                     state.activateBoost()
                 } label: {
-                    Label(state.isBoosted ? "Boost aktivt" : "Aktivér boost (30 min.)",
-                          systemImage: "bolt.fill")
+                    Label(state.isBoosted ? "Turbo aktivt" : "Aktivér Turbo (30 min.)",
+                          systemImage: "arrow.up.circle.fill")
                         .foregroundStyle(state.isBoosted ? Color.secondary : Tier.gold.accent)
                 }
                 .disabled(state.isBoosted)
+            }
+        }
+    }
+
+    // MARK: - Privacy & data (GDPR)
+
+    private var privacySection: some View {
+        Section("Privatliv & data") {
+            Button { showPolicy = true } label: {
+                Label("Privatlivspolitik", systemImage: "hand.raised.fill")
+            }
+            Button { showTerms = true } label: {
+                Label("Handelsbetingelser", systemImage: "doc.text.fill")
+            }
+            if let url = exportURL {
+                ShareLink(item: url) {
+                    Label("Del min data-fil", systemImage: "square.and.arrow.up")
+                }
+            } else {
+                Button {
+                    exportURL = state.exportData()
+                } label: {
+                    Label("Eksportér mine data", systemImage: "arrow.down.doc.fill")
+                }
+            }
+            if state.consent.specialCategory {
+                Button(role: .destructive) {
+                    state.withdrawSpecialConsent()
+                } label: {
+                    Label("Træk samtykke tilbage", systemImage: "xmark.shield.fill")
+                }
             }
         }
     }

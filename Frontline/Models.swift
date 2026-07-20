@@ -162,6 +162,24 @@ struct UserProfile: Codable, Equatable {
     }
 }
 
+// MARK: - Privacy consent (GDPR)
+
+/// Record of the consents a member has given. Under the GDPR, "seeking" gender
+/// (an indication of sexual orientation) and the verification selfie
+/// (biometric data) are **special categories** (Art. 9) and require *explicit*
+/// consent — tracked separately here — on top of accepting the policy/terms.
+struct PrivacyConsent: Codable, Equatable {
+    var over18 = false
+    var acceptedPolicyVersion: String?
+    var acceptedTermsVersion: String?
+    /// Explicit consent to process special-category data (orientation via
+    /// "seeking", plus profession).
+    var specialCategory = false
+    /// Explicit consent to process the verification selfie (biometric).
+    var biometric = false
+    var updatedAt: Date?
+}
+
 // MARK: - Candidate
 
 /// Another member shown in the discover deck.

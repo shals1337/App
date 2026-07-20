@@ -1,27 +1,32 @@
 import SwiftUI
 
 /// Central place for the app's colours and reusable gradients.
+///
+/// The palette is a deliberately distinct "trust / verified" blue→teal — it is
+/// NOT Tinder's orange→pink brand gradient, and the app avoids Tinder's flame
+/// mark and trademarked feature names (see LEGAL.md).
 enum Theme {
-    /// Tinder-style warm gradient endpoints (orange → pink/red).
-    static let flameStart = Color(red: 1.00, green: 0.47, blue: 0.33) // #FF7854
-    static let flameEnd = Color(red: 0.99, green: 0.15, blue: 0.48) // #FD267A
-    static let brand = flameEnd
-    static let brandDeep = Color(red: 0.85, green: 0.10, blue: 0.42)
+    /// Brand gradient endpoints (blue → teal).
+    static let brandA = Color(red: 0.16, green: 0.36, blue: 0.90) // #2A5CE6
+    static let brandB = Color(red: 0.05, green: 0.68, blue: 0.62) // #0DAE9E
+    static let brand = Color(red: 0.16, green: 0.40, blue: 0.86)
+    static let brandDeep = Color(red: 0.10, green: 0.24, blue: 0.66)
 
-    /// The signature warm gradient used on the logo and primary buttons.
+    /// The signature gradient used on the logo and primary buttons.
     static var brandGradient: LinearGradient {
         LinearGradient(
-            colors: [flameStart, flameEnd],
+            colors: [brandA, brandB],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
     }
 
-    // Action colours matching the Tinder button row.
+    // Action-button colours. Like/nope are generic; the "highlight" (our name
+    // for a priority like — not Tinder's "Super Like") uses a distinct violet.
     static let nope = Color(red: 0.98, green: 0.30, blue: 0.42)
-    static let like = Color(red: 0.10, green: 0.85, blue: 0.62)
-    static let superLike = Color(red: 0.25, green: 0.70, blue: 1.00)
-    static let rewind = Color(red: 1.00, green: 0.78, blue: 0.20)
+    static let like = Color(red: 0.10, green: 0.78, blue: 0.55)
+    static let superLike = Color(red: 0.52, green: 0.36, blue: 0.94)
+    static let rewind = Color(red: 0.55, green: 0.58, blue: 0.65)
 
     /// Deterministic gradient used to stand in for a candidate's photo.
     static func cardGradient(seed: Int) -> LinearGradient {

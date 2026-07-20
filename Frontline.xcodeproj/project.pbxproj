@@ -23,6 +23,7 @@
 		BB000000000000000000000E /* VerificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000E /* VerificationView.swift */; };
 		BB000000000000000000000F /* LikesYouView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000000000000000000000F /* LikesYouView.swift */; };
 		BB0000000000000000000012 /* FiltersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000012 /* FiltersView.swift */; };
+		BB0000000000000000000013 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000013 /* LegalView.swift */; };
 		BB0000000000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000010 /* Assets.xcassets */; };
 		BB0000000000000000000011 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000011 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -44,6 +45,7 @@
 		AA000000000000000000000E /* VerificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerificationView.swift; sourceTree = "<group>"; };
 		AA000000000000000000000F /* LikesYouView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LikesYouView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000012 /* FiltersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FiltersView.swift; sourceTree = "<group>"; };
+		AA0000000000000000000013 /* LegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalView.swift; sourceTree = "<group>"; };
 		AA0000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA0000000000000000000011 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		AA0000000000000000000020 /* Frontline.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Frontline.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +89,7 @@
 				AA000000000000000000000D /* PaywallView.swift */,
 				AA000000000000000000000E /* VerificationView.swift */,
 				AA0000000000000000000012 /* FiltersView.swift */,
+				AA0000000000000000000013 /* LegalView.swift */,
 				AA0000000000000000000010 /* Assets.xcassets */,
 				CC0000000000000000000004 /* Preview Content */,
 			);
@@ -195,6 +198,7 @@
 				BB000000000000000000000D /* PaywallView.swift in Sources */,
 				BB000000000000000000000E /* VerificationView.swift in Sources */,
 				BB0000000000000000000012 /* FiltersView.swift in Sources */,
+				BB0000000000000000000013 /* LegalView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

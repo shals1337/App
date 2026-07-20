@@ -6,7 +6,7 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             DiscoverView()
-                .tabItem { Label("Udforsk", systemImage: "flame.fill") }
+                .tabItem { Label("Udforsk", systemImage: "rectangle.stack.fill") }
 
             LikesYouView()
                 .tabItem { Label("Kan lide dig", systemImage: "star.fill") }

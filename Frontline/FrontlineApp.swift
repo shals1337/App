@@ -19,12 +19,15 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if state.isOnboarded {
+            if !state.hasRequiredConsent {
+                ConsentGateView()
+            } else if state.isOnboarded {
                 MainTabView()
             } else {
                 OnboardingView()
             }
         }
         .animation(.easeInOut, value: state.isOnboarded)
+        .animation(.easeInOut, value: state.hasRequiredConsent)
     }
 }
