@@ -21,6 +21,24 @@ and why:
 | **"It's a Match!"** (trademark) | Match celebration copy | Changed to **"I har matchet!"** |
 | Association | — | Terms state Frontline is **not affiliated with Tinder/Match Group** |
 
+### Copyright — original assets only
+
+Copyright protects *creative expression* (code, images, text, sounds). Frontline
+is built to avoid copying anyone's:
+
+- **No third-party images or fonts.** There are no photos, no bundled artwork
+  and no licensed fonts. Profile "photos" are code-drawn gradients with a
+  monogram; icons are **SF Symbols**, which Apple licenses for use in app UI
+  (not as your own logo/trademark). The confetti and typing animations are
+  drawn in code.
+- **Original text.** All copy, sample names, bios and the policy/terms drafts
+  were written for this project — none is copied from Tinder or any other app.
+- **Original colours and layout.** The palette, gradients and screen layouts
+  are our own, not traced from another product.
+
+If you later add real photos, fonts, sounds, or copy, make sure you own them or
+have a licence, and keep records.
+
 ### Still your responsibility
 
 - **The swipe patent.** Match Group holds patents on the swipe-card matching UI

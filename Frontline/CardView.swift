@@ -10,14 +10,14 @@ struct CardView: View {
         ZStack(alignment: .bottomLeading) {
             Theme.cardGradient(seed: candidate.gradientSeed)
 
-            // A soft silhouette stands in for a photo.
-            Image(systemName: "person.fill")
-                .font(.system(size: 180))
-                .foregroundStyle(.white.opacity(0.18))
-                .offset(y: -30)
+            // A large translucent monogram stands in for a photo.
+            Text(monogram)
+                .font(.system(size: 150, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.20))
+                .offset(y: -24)
 
             // Readability scrim behind the text.
-            LinearGradient(colors: [.clear, .black.opacity(0.65)],
+            LinearGradient(colors: [.clear, .black.opacity(0.68)],
                            startPoint: .center, endPoint: .bottom)
 
             info
@@ -30,6 +30,10 @@ struct CardView: View {
                 .strokeBorder(.white.opacity(0.12), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.18), radius: 16, y: 8)
+    }
+
+    private var monogram: String {
+        String(candidate.name.prefix(1)).uppercased()
     }
 
     private var info: some View {

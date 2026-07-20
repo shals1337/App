@@ -24,11 +24,15 @@ struct DiscoverView: View {
                 }
             }
             .navigationBarHidden(true)
+            .sensoryFeedback(.selection, trigger: state.deck.count)
+            .sensoryFeedback(.success, trigger: state.newMatch?.id)
             .overlay {
                 if let match = state.newMatch {
                     MatchCelebration(match: match) { state.newMatch = nil }
+                        .transition(.opacity)
                 }
             }
+            .animation(.easeInOut(duration: 0.25), value: state.newMatch?.id)
             .sheet(item: $paywall) { PaywallView(reason: $0) }
             .sheet(isPresented: $showFilters) {
                 if let user = state.user { FiltersView(profile: user) }
@@ -207,6 +211,7 @@ private struct CircleButton: View {
                 .overlay(Circle().strokeBorder(tint.opacity(0.18), lineWidth: 1))
                 .shadow(color: .black.opacity(0.10), radius: 8, y: 4)
         }
+        .buttonStyle(PressableButtonStyle())
     }
 }
 
@@ -222,38 +227,56 @@ private struct EmptyDeck: View {
     }
 }
 
-/// Full-screen "Det er et match!" celebration.
+/// Full-screen "I har matchet!" celebration with a spring entrance and confetti.
 private struct MatchCelebration: View {
     let match: Match
     let dismiss: () -> Void
 
+    @State private var appeared = false
+
     var body: some View {
         ZStack {
-            Color.black.opacity(0.78).ignoresSafeArea()
+            Color.black.opacity(0.8).ignoresSafeArea()
+                .onTapGesture { dismiss() }
+
             VStack(spacing: 20) {
                 Text("I har matchet!")
-                    .font(.system(size: 34, weight: .heavy))
+                    .font(.system(size: 36, weight: .heavy))
                     .foregroundStyle(Theme.brandGradient)
+                    .scaleEffect(appeared ? 1 : 0.5)
+                    .opacity(appeared ? 1 : 0)
                 Text("Du og \(match.candidate.name) kan lide hinanden.")
                     .foregroundStyle(.white.opacity(0.9))
+                    .opacity(appeared ? 1 : 0)
 
                 CardView(candidate: match.candidate)
-                    .frame(height: 320)
+                    .frame(height: 300)
                     .padding(.horizontal, 60)
+                    .scaleEffect(appeared ? 1 : 0.7)
+                    .rotationEffect(.degrees(appeared ? 0 : -6))
 
-                Button(action: dismiss) {
-                    Text("Sig hej")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
+                VStack(spacing: 10) {
+                    Button(action: dismiss) {
+                        Text("Sig hej")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Fortsæt med at swipe", action: dismiss)
+                        .foregroundStyle(.white.opacity(0.8))
                 }
-                .buttonStyle(.borderedProminent)
                 .padding(.horizontal, 60)
-
-                Button("Fortsæt med at swipe", action: dismiss)
-                    .foregroundStyle(.white.opacity(0.8))
+                .opacity(appeared ? 1 : 0)
             }
             .padding()
+
+            ConfettiView()
+                .ignoresSafeArea()
+                .opacity(appeared ? 1 : 0)
         }
-        .transition(.opacity)
+        .onAppear {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.62)) { appeared = true }
+        }
     }
 }

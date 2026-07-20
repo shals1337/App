@@ -21,6 +21,9 @@ final class AppState: ObservableObject {
     // GDPR consent.
     @Published private(set) var consent = PrivacyConsent()
 
+    /// The match whose partner is currently "typing" (drives the chat indicator).
+    @Published var typingMatchID: UUID?
+
     private let defaults = UserDefaults.standard
     private enum Keys {
         static let user = "frontline.user"
@@ -241,8 +244,55 @@ final class AppState: ObservableObject {
         guard let index = matches.firstIndex(where: { $0.id == matchID }) else { return }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        matches[index].messages.append(Message(text: trimmed, fromMe: true))
+        let message = Message(text: trimmed, fromMe: true)
+        matches[index].messages.append(message)
         save()
+        simulateConversation(matchID: matchID, myMessageID: message.id)
+    }
+
+    /// Simulates the other side reading your message and replying, so read
+    /// receipts and the typing indicator feel alive without a backend.
+    private func simulateConversation(matchID: UUID, myMessageID: UUID) {
+        // 1. Mark the message "seen" after a beat.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { [weak self] in
+            guard let self,
+                  let m = self.matches.firstIndex(where: { $0.id == matchID }),
+                  let i = self.matches[m].messages.firstIndex(where: { $0.id == myMessageID })
+            else { return }
+            withAnimation(.easeInOut) { self.matches[m].messages[i].seen = true }
+            self.save()
+
+            // 2. Show the typing indicator.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                withAnimation { self.typingMatchID = matchID }
+
+                // 3. Land a reply and clear typing.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                    guard let mm = self.matches.firstIndex(where: { $0.id == matchID }) else {
+                        self.typingMatchID = nil; return
+                    }
+                    withAnimation(.spring) {
+                        self.typingMatchID = nil
+                        self.matches[mm].messages.append(
+                            Message(text: self.reply(for: self.matches[mm]), fromMe: false)
+                        )
+                    }
+                    self.save()
+                }
+            }
+        }
+    }
+
+    private func reply(for match: Match) -> String {
+        let replies = [
+            "Haha, det lyder som en plan 😄",
+            "Enig! Hvornår passer det dig bedst?",
+            "Godt at høre 😊 Jeg har fri i weekenden.",
+            "Ja tak! Kender du et godt sted?",
+            "Det kunne jeg godt tænke mig ☕️",
+        ]
+        // Vary by how far the conversation has come.
+        return replies[match.messages.count % replies.count]
     }
 
     // MARK: - Reset
@@ -258,6 +308,7 @@ final class AppState: ObservableObject {
         likesUsedToday = 0
         superLikesUsedToday = 0
         boostActiveUntil = nil
+        typingMatchID = nil
         consent = PrivacyConsent()
         [Keys.user, Keys.matches, Keys.seenIDs, Keys.tier,
          Keys.likesUsed, Keys.superUsed, Keys.quotaDay, Keys.boostUntil, Keys.consent]

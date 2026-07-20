@@ -284,6 +284,9 @@ struct ProfessionChip: View {
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(selected ? Color.clear : Color(.separator), lineWidth: 1)
         )
+        .scaleEffect(selected ? 1.04 : 1)
+        .shadow(color: selected ? profession.tint.opacity(0.4) : .clear, radius: 10, y: 4)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selected)
     }
 }
 

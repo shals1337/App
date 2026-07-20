@@ -40,8 +40,13 @@ README are in English.
 - **Discovery filters** — who to show, age range, and max distance, which
   actually filter the deck.
 - **Rewind** — undo your last swipe (and any match it created), refunding the
-  consumed like. A Plus/Gold feature.
-- **Instant matches**, **matches list & chat**, **editable profile**, and an
+  consumed like. A Premium/Elite feature.
+- **Lively chat** — **read receipts** ("Sendt" → "Set"), an animated **typing
+  indicator**, and simulated replies so conversations feel alive.
+- **Polished motion** — a spring-in match celebration with code-drawn
+  **confetti**, pressable action buttons, animated message bubbles, and haptic
+  feedback (`.sensoryFeedback`). All animations are drawn in code — no assets.
+- **Instant matches**, **matches list**, **editable profile**, and an
   *erase all data* option.
 - **Persistent** — profile, matches, messages, subscription tier and daily
   quotas are saved between launches via `UserDefaults`.

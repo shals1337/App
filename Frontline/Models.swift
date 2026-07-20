@@ -230,12 +230,27 @@ struct Message: Identifiable, Codable, Equatable {
     var text: String
     var fromMe: Bool
     var date: Date
+    /// For messages I sent: whether the other person has seen it (read receipt).
+    var seen: Bool = false
 
-    init(id: UUID = UUID(), text: String, fromMe: Bool, date: Date = Date()) {
+    init(id: UUID = UUID(), text: String, fromMe: Bool, date: Date = Date(), seen: Bool = false) {
         self.id = id
         self.text = text
         self.fromMe = fromMe
         self.date = date
+        self.seen = seen
+    }
+
+    // Resilient decoding for messages saved before `seen` existed.
+    enum CodingKeys: String, CodingKey { case id, text, fromMe, date, seen }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        text = try c.decode(String.self, forKey: .text)
+        fromMe = try c.decode(Bool.self, forKey: .fromMe)
+        date = try c.decode(Date.self, forKey: .date)
+        seen = try c.decodeIfPresent(Bool.self, forKey: .seen) ?? false
     }
 }
 
