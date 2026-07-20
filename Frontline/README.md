@@ -85,6 +85,11 @@ penetration test.
 
 ## Compliance (GDPR) & IP
 
+**Target market: Denmark only** — Danish UI, DKK pricing, Danish law and
+Datatilsynet; the terms state the service is offered only in Denmark. Staying in
+one EU market simplifies compliance and makes the (US) swipe patents a non-issue
+in practice.
+
 This build takes both concerns seriously — but **none of it is legal advice**,
 and it must be reviewed by a lawyer before launch. See **[LEGAL.md](LEGAL.md)**
 for the full checklist. In short:

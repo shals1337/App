@@ -5,6 +5,14 @@ review everything below before you launch, collect real user data, or take
 payment. The in-app privacy policy and terms (`LegalView.swift`) are **templates**
 with placeholders (`[Selskabsnavn ApS, CVR …]`, contact email) you must fill in.
 
+## 0. Target market: Denmark only
+
+This app targets **Denmark (EU) only** — Danish-language UI, DKK pricing, Danish
+law and the Danish DPA (**Datatilsynet**). Keeping to one EU market simplifies
+compliance and, importantly, the swipe-patent question (see below). If you ever
+expand outside the EU (especially to the **US**), re-open every point here with
+a lawyer, because the risk profile changes.
+
 ## 1. Avoiding conflict with Tinder / Match Group
 
 Tinder and its parent Match Group hold trademarks and patents. This project was
@@ -57,9 +65,12 @@ have a licence, and keep records.
      (like / nope / highlight) alongside swipe, so you can ship buttons-only in
      higher-risk markets without redesigning.
 
-  Swipe is enabled by default (as users expect). Before a **US** launch, get a
-  **freedom-to-operate opinion** from a patent attorney, or consider licensing
-  or shipping buttons-only there. For EU-only, still have a lawyer confirm.
+  **For this Denmark-only app, swipe is a low concern** and is enabled by
+  default. The US patents don't reach a DK/EU-only service, and EU software-UI
+  patentability is weak. Keep the buttons-only fallback anyway (accessibility +
+  future-proofing). Only if you later launch in the **US** must you get a
+  **freedom-to-operate opinion** or ship buttons-only there. A quick confirmation
+  from a Danish IP lawyer is still worth it.
 - **The name "Frontline".** Common word, but run a trademark clearance search in
   your markets (and the App Store) before committing to it.
 - **App Store rules.** Apple requires a privacy policy, working account

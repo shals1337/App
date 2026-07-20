@@ -55,6 +55,11 @@ enum LegalDocs {
     8. Alder
     Tjenesten er kun for personer på 18 år og derover.
 
+    9. Geografi og lovvalg
+    Tjenesten udbydes kun i Danmark. Behandlingen er underlagt databeskyttelses-\
+    forordningen (GDPR) og dansk databeskyttelseslovgivning, og du kan klage til \
+    Datatilsynet (datatilsynet.dk).
+
     Dette er en SKABELON og udgør ikke juridisk rådgivning.
     """
 
@@ -65,7 +70,8 @@ enum LegalDocs {
 
     1. Om tjenesten
     Frontline er en datingtjeneste for verificerede fagpersoner i udvalgte \
-    erhverv. Du skal være mindst 18 år.
+    erhverv. Du skal være mindst 18 år. Tjenesten udbydes kun i Danmark og er \
+    rettet mod personer bosat i Danmark.
 
     2. Din adfærd
     Du indestår for, at dine oplysninger er korrekte, og at du kun opretter én \
@@ -87,6 +93,10 @@ enum LegalDocs {
     6. Uafhængighed
     Frontline er ikke tilknyttet, sponsoreret af eller forbundet med Tinder, \
     Match Group eller andre datingtjenester.
+
+    7. Lovvalg og værneting
+    Disse betingelser er underlagt dansk ret. Tvister afgøres ved de danske \
+    domstole. Dine ufravigelige rettigheder som forbruger berøres ikke.
 
     Dette er en SKABELON og udgør ikke juridisk rådgivning.
     """
