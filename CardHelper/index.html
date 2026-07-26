@@ -91,6 +91,7 @@
   <button class="tab active" data-tab="poker">Poker odds</button>
   <button class="tab" data-tab="bj">Blackjack strategi</button>
   <button class="tab" data-tab="count">Kort-tælling</button>
+  <button class="tab" data-tab="live">Live coach</button>
   <button class="tab" data-tab="guide">Hånd-guide</button>
 </div>
 
@@ -218,6 +219,54 @@
     </div>
   </section>
 
+  <!-- ================= LIVE COACH ================= -->
+  <section id="tab-live" class="hidden">
+    <div class="panel">
+      <h2>Live coach</h2>
+      <p class="muted">Tast kortene ind mens de deles. Coachen holder tællingen og viser det korrekte træk fra basic-strategy-tabellen. Du styrer den selv — den læser ikke skærmen og spiller ikke for dig.</p>
+      <div class="row">
+        <label class="muted">Antal spil (decks):
+          <select id="lvDecks">
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option selected>6</option><option>7</option><option>8</option>
+          </select>
+        </label>
+        <button class="btn" id="lvNewShoe">Nyt shoe</button>
+      </div>
+
+      <div class="stat" style="margin-top:14px;gap:24px">
+        <div>Running count<br><b id="lvRunning" style="font-size:1.8rem">0</b></div>
+        <div>True count<br><b id="lvTrue" style="font-size:1.8rem">0.0</b></div>
+        <div>Decks tilbage<br><b id="lvDecksLeft" style="font-size:1.3rem">6.0</b></div>
+        <div>Kort set<br><b id="lvSeen" style="font-size:1.3rem">0</b></div>
+      </div>
+      <div id="lvHint" class="muted" style="margin-top:8px"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Registrér kort du ser</h3>
+      <p class="muted">Tryk på hvert kort der bliver delt — dine, dealerens og de andres. Tallet under viser Hi-Lo-værdien.</p>
+      <div class="row" id="lvCountPad" style="gap:6px"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="ghost btn" id="lvUndo">Fortryd sidste</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Hvad skal jeg gøre?</h3>
+      <p class="muted">Byg din hånd og vælg dealerens opkort — så viser den det korrekte træk. (Disse tælles ikke automatisk; registrér kortene ovenfor.)</p>
+      <div class="muted" style="margin-top:6px">Din hånd</div>
+      <div class="slotgroup" id="lvPlayerCards"></div>
+      <div class="row" id="lvPlayerPad" style="gap:5px;margin-top:4px"></div>
+      <button class="ghost btn" id="lvClearHand" style="margin-top:8px">Ryd hånd</button>
+
+      <div class="muted" style="margin-top:14px">Dealer opkort</div>
+      <div class="row" id="lvDealerPad" style="gap:5px;margin-top:4px"></div>
+
+      <div id="lvAdvice" style="margin-top:14px"></div>
+    </div>
+  </section>
+
   <!-- ================= GUIDE ================= -->
   <section id="tab-guide" class="hidden">
     <div class="panel">
@@ -276,7 +325,7 @@ document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
-    ['poker','bj','count','guide'].forEach(id=>{
+    ['poker','bj','count','live','guide'].forEach(id=>{
       document.getElementById('tab-'+id).classList.toggle('hidden', id!==t.dataset.tab);
     });
   });
@@ -629,6 +678,127 @@ document.getElementById('cCheck').addEventListener('click',()=>{
     fb.innerHTML=`Ikke helt. Rigtig running count = <b>${countState.running}</b> (du sagde ${isNaN(guess)?'—':guess}). True count ≈ <b>${trueCount.toFixed(1)}</b>.`;
   }
 });
+
+/* ===================== Live coach ===================== */
+const BJRANKS=[{v:2,l:'2'},{v:3,l:'3'},{v:4,l:'4'},{v:5,l:'5'},{v:6,l:'6'},
+  {v:7,l:'7'},{v:8,l:'8'},{v:9,l:'9'},{v:10,l:'10'},{v:11,l:'J'},{v:12,l:'Q'},{v:13,l:'K'},{v:14,l:'A'}];
+const bjLabel=v=>BJRANKS.find(r=>r.v===v).l;
+
+let lv={decks:6,running:0,seen:0,history:[]};
+let lvHand=[], lvDealer=null;
+
+function lvUpdate(){
+  const rc=lv.running;
+  document.getElementById('lvRunning').textContent=(rc>0?'+':'')+rc;
+  const decksLeft=Math.max((lv.decks*52-lv.seen)/52,0.001);
+  const tc=rc/decksLeft;
+  document.getElementById('lvTrue').textContent=(tc>=0?'+':'')+tc.toFixed(1);
+  document.getElementById('lvDecksLeft').textContent=decksLeft.toFixed(1);
+  document.getElementById('lvSeen').textContent=lv.seen;
+  let hint;
+  if(tc>=2) hint='Høj true count — flere høje kort tilbage, fordelagtigt for spilleren.';
+  else if(tc<=-2) hint='Lav true count — mange høje kort er brugt, ufordelagtigt.';
+  else hint='Nogenlunde neutral sko.';
+  document.getElementById('lvHint').textContent=hint;
+  lvRenderAdvice();
+}
+
+// counting pad
+(function(){
+  const pad=document.getElementById('lvCountPad');
+  BJRANKS.forEach(r=>{
+    const hv=hiloValue(r.v);
+    const b=document.createElement('button');
+    b.className='ghost btn';
+    b.style.cssText='min-width:44px;padding:8px 6px;line-height:1.1';
+    b.innerHTML=`${r.l}<br><span class="muted" style="font-size:.68rem">${hv>0?'+'+hv:hv}</span>`;
+    b.addEventListener('click',()=>{lv.running+=hv;lv.seen++;lv.history.push(hv);lvUpdate();});
+    pad.appendChild(b);
+  });
+})();
+document.getElementById('lvUndo').addEventListener('click',()=>{
+  if(!lv.history.length)return;
+  const hv=lv.history.pop();lv.running-=hv;lv.seen--;lvUpdate();
+});
+document.getElementById('lvNewShoe').addEventListener('click',()=>{
+  lv.decks=+document.getElementById('lvDecks').value;
+  lv.running=0;lv.seen=0;lv.history=[];lvUpdate();
+});
+document.getElementById('lvDecks').addEventListener('change',()=>{
+  lv.decks=+document.getElementById('lvDecks').value;lvUpdate();
+});
+
+// advisor pads
+(function(){
+  const ppad=document.getElementById('lvPlayerPad');
+  BJRANKS.forEach(r=>{
+    const b=document.createElement('button');b.className='ghost btn';
+    b.style.cssText='min-width:40px;padding:8px 6px';b.textContent=r.l;
+    b.addEventListener('click',()=>{if(lvHand.length<6){lvHand.push(r.v);lvRenderHand();lvRenderAdvice();}});
+    ppad.appendChild(b);
+  });
+  const dpad=document.getElementById('lvDealerPad');
+  BJRANKS.forEach(r=>{
+    const b=document.createElement('button');b.className='ghost btn';
+    b.style.cssText='min-width:40px;padding:8px 6px';b.textContent=r.l;
+    b.addEventListener('click',()=>{
+      lvDealer=r.v;
+      dpad.querySelectorAll('button').forEach(x=>{x.style.background='';x.style.color='';});
+      b.style.background='var(--accent)';b.style.color='#062015';
+      lvRenderAdvice();
+    });
+    dpad.appendChild(b);
+  });
+})();
+document.getElementById('lvClearHand').addEventListener('click',()=>{
+  lvHand=[];lvRenderHand();lvRenderAdvice();
+});
+
+function lvRenderHand(){
+  const el=document.getElementById('lvPlayerCards');
+  el.innerHTML=lvHand.length?lvHand.map(v=>`<div class="card mini"><span class="r">${bjLabel(v)}</span></div>`).join('')
+    :'<span class="muted">—</span>';
+}
+function bjVal(v){return v===14?11:Math.min(v,10);}
+function lvHandTotal(vals){
+  let total=0,aces=0;
+  vals.forEach(v=>{if(v===14){total+=11;aces++;}else total+=Math.min(v,10);});
+  let soft=aces;
+  while(total>21&&soft>0){total-=10;soft--;}
+  return {total,soft:soft>0};
+}
+function recommend(vals,up){
+  const upV=up===14?11:Math.min(up,10);
+  if(vals.length===2 && bjVal(vals[0])===bjVal(vals[1])){
+    const pr=(vals[0]===14)?11:bjVal(vals[0]);
+    return {act:pairAction(pr,upV),kind:'Par '+bjLabel(vals[0])};
+  }
+  const t=lvHandTotal(vals);
+  if(t.total>21) return {act:'S',kind:'Bust ('+t.total+')'};
+  if(t.soft && t.total>=13) return {act:softAction(t.total,upV),kind:'Blød '+t.total};
+  return {act:hardAction(t.total,upV),kind:'Hård '+t.total};
+}
+function lvRenderAdvice(){
+  const box=document.getElementById('lvAdvice');
+  if(!box)return;
+  if(lvHand.length<2||lvDealer==null){
+    box.innerHTML='<span class="muted">Vælg mindst to kort på hånden og et dealer-opkort.</span>';return;
+  }
+  const rec=recommend(lvHand,lvDealer);
+  const nice={H:'HIT',S:'STAND',D:'DOUBLE (ellers hit)',Ds:'DOUBLE (ellers stand)',P:'SPLIT'};
+  let html=`<div class="feedback ok" style="font-size:1.15rem"><b>${nice[rec.act]}</b>`+
+    `<span style="font-weight:400"> — ${rec.kind}, dealer ${bjLabel(lvDealer)}</span></div>`;
+  if(lvDealer===14){
+    const decksLeft=Math.max((lv.decks*52-lv.seen)/52,0.001);
+    const tc=lv.running/decksLeft;
+    const take=tc>=3;
+    html+=`<div class="feedback ${take?'ok':'no'}" style="margin-top:8px">`+
+      `Insurance: ${take?'JA':'nej'} (tommelfinger: kun ved true count ≥ +3 — nu ${(tc>=0?'+':'')+tc.toFixed(1)})</div>`;
+  }
+  box.innerHTML=html;
+}
+lvRenderHand();
+lvUpdate();
 
 /* ===================== Hand guide ===================== */
 const GUIDE=[

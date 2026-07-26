@@ -16,6 +16,10 @@ computer.
 - **Kort-tælling** — Hi-Lo tælle-træner. Vælg 1–8 decks og hastighed; kort
   flashes, og du holder tællingen i hovedet. Appen tjekker din running count og
   viser true count.
+- **Live coach** — Du taster kortene ind mens de deles; coachen holder running
+  count / true count / decks tilbage og viser det korrekte træk fra
+  basic-strategy-tabellen (inkl. insurance ved høj true count). Du betjener den
+  selv — den læser ikke skærmen og spiller ikke for dig.
 - **Hånd-guide** — Poker hånd-rangering og starthånd-tips.
 
 ## Sådan bruger du den
@@ -32,6 +36,7 @@ ikke der.
 
 ## Hvad appen bevidst *ikke* gør
 
-Den læser ikke skærmen fra en pokerklient og giver ikke råd i realtid mens du
-spiller mod andre — det ville være at snyde de andre spillere. Værktøjerne her
-er til at gøre *dig* til en bedre spiller gennem træning.
+Den læser ikke skærmen fra en spilklient, og der er ingen skjult eller
+detektions-undvigende funktion. Live coach-fanen er et opslagsværktøj du selv
+taster på — ikke en bot der aflæser skærmen eller spiller for dig. Værktøjerne
+her er til at gøre *dig* til en bedre spiller gennem træning.
