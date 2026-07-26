@@ -245,7 +245,8 @@
 
     <div class="panel">
       <h3>Registrér kort du ser</h3>
-      <p class="muted">Tryk på hvert kort der bliver delt — dine, dealerens og de andres. Tallet under viser Hi-Lo-værdien.</p>
+      <p class="muted">Tryk på hvert kort der bliver delt — dine, dealerens og de andres. Tallet under viser Hi-Lo-værdien.<br>
+      <b>Tastatur:</b> 2–9 = tallet · 0 eller T = 10 · J / Q / K / A = billedkort · Backspace = fortryd.</p>
       <div class="row" id="lvCountPad" style="gap:6px"></div>
       <div class="row" style="margin-top:10px">
         <button class="ghost btn" id="lvUndo">Fortryd sidste</button>
@@ -703,6 +704,15 @@ function lvUpdate(){
   lvRenderAdvice();
 }
 
+// register one seen card into the running count
+function lvRegisterCount(v){
+  const hv=hiloValue(v);
+  lv.running+=hv;lv.seen++;lv.history.push(hv);lvUpdate();
+}
+function lvUndoCount(){
+  if(!lv.history.length)return;
+  const hv=lv.history.pop();lv.running-=hv;lv.seen--;lvUpdate();
+}
 // counting pad
 (function(){
   const pad=document.getElementById('lvCountPad');
@@ -712,14 +722,21 @@ function lvUpdate(){
     b.className='ghost btn';
     b.style.cssText='min-width:44px;padding:8px 6px;line-height:1.1';
     b.innerHTML=`${r.l}<br><span class="muted" style="font-size:.68rem">${hv>0?'+'+hv:hv}</span>`;
-    b.addEventListener('click',()=>{lv.running+=hv;lv.seen++;lv.history.push(hv);lvUpdate();});
+    b.addEventListener('click',()=>lvRegisterCount(r.v));
     pad.appendChild(b);
   });
 })();
-document.getElementById('lvUndo').addEventListener('click',()=>{
-  if(!lv.history.length)return;
-  const hv=lv.history.pop();lv.running-=hv;lv.seen--;lvUpdate();
+// keyboard shortcuts (only while the Live coach tab is open)
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('tab-live').classList.contains('hidden'))return;
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='select'||tag==='textarea')return;
+  const map={'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'0':10,'t':10,'j':11,'q':12,'k':13,'a':14};
+  const key=e.key.toLowerCase();
+  if(key in map){lvRegisterCount(map[key]);e.preventDefault();}
+  else if(e.key==='Backspace'){lvUndoCount();e.preventDefault();}
 });
+document.getElementById('lvUndo').addEventListener('click',lvUndoCount);
 document.getElementById('lvNewShoe').addEventListener('click',()=>{
   lv.decks=+document.getElementById('lvDecks').value;
   lv.running=0;lv.seen=0;lv.history=[];lvUpdate();
