@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poker & Blackjack Helper</title>
+<style>
+  :root{
+    --bg:#0e1512; --panel:#16211c; --panel2:#1d2c25; --line:#2b4034;
+    --text:#e8f0ec; --muted:#9db3a8; --accent:#3fbf7f; --accent2:#f0c85a;
+    --red:#e5675f; --good:#3fbf7f; --bad:#e5675f; --warn:#f0c85a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#183226,#0e1512);color:var(--text);min-height:100vh}
+  header{padding:20px 16px 8px;text-align:center}
+  header h1{margin:0;font-size:1.5rem;letter-spacing:.3px}
+  header p{margin:4px 0 0;color:var(--muted);font-size:.85rem}
+  .tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:14px 10px}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px 14px;border-radius:999px;cursor:pointer;font-size:.9rem;transition:.15s}
+  .tab:hover{color:var(--text)}
+  .tab.active{background:var(--accent);color:#062015;border-color:var(--accent);font-weight:600}
+  main{max-width:760px;margin:0 auto;padding:8px 14px 60px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+  h2{margin:.2em 0 .6em;font-size:1.1rem}
+  h3{margin:1em 0 .4em;font-size:.95rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .muted{color:var(--muted);font-size:.85rem}
+  button.btn{background:var(--accent);color:#062015;border:none;border-radius:10px;padding:11px 16px;
+    font-size:.95rem;font-weight:600;cursor:pointer}
+  button.btn:disabled{opacity:.5;cursor:default}
+  button.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  select,input[type=number]{background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;font-size:.95rem}
+  .hidden{display:none !important}
+
+  /* Cards */
+  .card{width:46px;height:64px;border-radius:7px;background:#fff;color:#111;display:inline-flex;
+    flex-direction:column;align-items:center;justify-content:center;font-weight:700;cursor:pointer;
+    border:1px solid #ccc;user-select:none;line-height:1}
+  .card .r{font-size:1.05rem}
+  .card .s{font-size:1rem}
+  .card.red{color:#c62828}
+  .card.empty{background:transparent;color:var(--muted);border:1px dashed var(--line)}
+  .card.sm{width:38px;height:52px}
+  .card.mini{width:30px;height:42px}
+  .slotgroup{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+
+  /* Modal card picker */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;
+    justify-content:center;padding:24px 12px;overflow:auto;z-index:50}
+  .picker{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;max-width:420px;width:100%}
+  .pickrow{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px}
+  .pickrow .card{width:100%;height:44px}
+  .card.used{opacity:.22;pointer-events:none}
+
+  /* Result bars */
+  .bar{height:26px;border-radius:6px;background:var(--panel2);overflow:hidden;position:relative;margin:4px 0}
+  .bar > span{position:absolute;left:8px;top:0;line-height:26px;font-size:.82rem;font-weight:600;z-index:2}
+  .fill{height:100%}
+  .fill.win{background:var(--good)} .fill.tie{background:var(--warn)} .fill.lose{background:var(--bad)}
+
+  /* Strategy chart */
+  table.chart{border-collapse:collapse;width:100%;font-size:.72rem;text-align:center}
+  table.chart th,table.chart td{border:1px solid var(--line);padding:3px 2px;min-width:22px}
+  table.chart th{background:var(--panel2);color:var(--muted)}
+  .cH{background:#3a5a4a}.cS{background:#7a3f3f}.cD{background:#8a7326;color:#111}
+  .cP{background:#355a86}.cR{background:#555}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:.8rem}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block}
+
+  .big{font-size:2rem;font-weight:800;letter-spacing:1px}
+  .stat{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+  .stat div b{font-size:1.3rem}
+  .count-display{font-size:3rem;font-weight:800;text-align:center;margin:10px 0}
+  .feedback{padding:10px 12px;border-radius:10px;margin-top:10px;font-weight:600}
+  .feedback.ok{background:rgba(63,191,127,.15);color:var(--good);border:1px solid var(--good)}
+  .feedback.no{background:rgba(229,103,95,.15);color:var(--bad);border:1px solid var(--bad)}
+  .note{font-size:.78rem;color:var(--muted);border-left:3px solid var(--line);padding:6px 10px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>♠ Poker &amp; Blackjack Helper ♥</h1>
+  <p>Træningsværktøjer — odds, strategi og korttælling. Alt kører lokalt i din browser.</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-tab="poker">Poker odds</button>
+  <button class="tab" data-tab="bj">Blackjack strategi</button>
+  <button class="tab" data-tab="count">Kort-tælling</button>
+  <button class="tab" data-tab="guide">Hånd-guide</button>
+</div>
+
+<main>
+  <!-- ================= POKER ================= -->
+  <section id="tab-poker">
+    <div class="panel">
+      <h2>Texas Hold'em odds-beregner</h2>
+      <p class="muted">Vælg din hånd og evt. fælleskort, sæt antal modstandere, og beregn din vinderchance (Monte Carlo-simulering).</p>
+
+      <h3>Din hånd</h3>
+      <div class="slotgroup" id="heroSlots"></div>
+
+      <h3>Fælleskort (flop / turn / river)</h3>
+      <div class="slotgroup" id="boardSlots"></div>
+
+      <div class="row" style="margin-top:12px">
+        <label class="muted">Modstandere:
+          <select id="oppCount">
+            <option>1</option><option selected>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option><option>7</option><option>8</option>
+          </select>
+        </label>
+        <button class="btn" id="runSim">Beregn odds</button>
+        <button class="ghost btn" id="clearPoker">Ryd</button>
+      </div>
+
+      <div id="pokerResult" class="hidden" style="margin-top:16px">
+        <div class="bar"><span id="winLbl"></span><div class="fill win" id="winFill"></div></div>
+        <div class="bar"><span id="tieLbl"></span><div class="fill tie" id="tieFill"></div></div>
+        <div class="bar"><span id="loseLbl"></span><div class="fill lose" id="loseFill"></div></div>
+        <p class="muted" id="simMeta"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BLACKJACK ================= -->
+  <section id="tab-bj" class="hidden">
+    <div class="panel">
+      <h2>Basic strategy-kort</h2>
+      <p class="muted">Optimal spil for 4–8 kortspil, dealer står på soft 17, double efter split tilladt. Rækker = din hånd, kolonner = dealers opkort.</p>
+      <div id="chartHard"></div>
+      <div id="chartSoft" style="margin-top:14px"></div>
+      <div id="chartPair" style="margin-top:14px"></div>
+      <div class="legend">
+        <span><i class="swatch cH"></i>Hit</span>
+        <span><i class="swatch cS"></i>Stand</span>
+        <span><i class="swatch cD"></i>Double (ellers hit/stand)</span>
+        <span><i class="swatch cP"></i>Split</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Strategi-træner</h2>
+      <p class="muted">Hvad er det korrekte træk? Vælg og få svar med det samme.</p>
+      <div id="bjHand" style="margin:10px 0">
+        <div class="muted">Din hånd</div>
+        <div class="slotgroup" id="bjPlayer"></div>
+        <div class="muted" style="margin-top:8px">Dealer viser</div>
+        <div class="slotgroup" id="bjDealer"></div>
+      </div>
+      <div class="row">
+        <button class="btn" data-act="H">Hit</button>
+        <button class="btn" data-act="S">Stand</button>
+        <button class="btn" data-act="D">Double</button>
+        <button class="btn" data-act="P">Split</button>
+      </div>
+      <div id="bjFeedback"></div>
+      <div class="stat">
+        <div>Rigtige: <b id="bjRight">0</b></div>
+        <div>Forsøg: <b id="bjTotal">0</b></div>
+        <div>Streak: <b id="bjStreak">0</b></div>
+      </div>
+      <p class="note">Bemærk: dette kort er statistisk optimalt, men blackjack har stadig et lille husforspring. Basic strategy minimerer tabet — det fjerner det ikke.</p>
+    </div>
+  </section>
+
+  <!-- ================= COUNTING ================= -->
+  <section id="tab-count" class="hidden">
+    <div class="panel">
+      <h2>Hi-Lo kort-tælle træner</h2>
+      <p class="muted">Kortene flashes ét ad gangen. Hold styr på tællingen i hovedet. 2–6 = +1, 7–9 = 0, 10–Es = −1.</p>
+      <div class="row">
+        <label class="muted">Antal spil (decks):
+          <select id="cDecks">
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option selected>6</option><option>7</option><option>8</option>
+          </select>
+        </label>
+        <label class="muted">Hastighed:
+          <select id="cSpeed">
+            <option value="1500">Langsom (1,5s)</option>
+            <option value="900" selected>Mellem (0,9s)</option>
+            <option value="500">Hurtig (0,5s)</option>
+            <option value="300">Meget hurtig (0,3s)</option>
+          </select>
+        </label>
+        <label class="muted">Kort at dele:
+          <input type="number" id="cHowMany" value="20" min="5" max="416" style="width:70px">
+        </label>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="cStart">Start</button>
+        <button class="ghost btn" id="cStop" disabled>Stop</button>
+      </div>
+
+      <div id="cStage" style="text-align:center;min-height:80px;margin:16px 0">
+        <div class="card empty" style="width:80px;height:112px;margin:0 auto;font-size:1.4rem">?</div>
+        <p class="muted" id="cProgress"></p>
+      </div>
+
+      <div id="cGuess" class="hidden">
+        <div class="row" style="justify-content:center">
+          <label class="muted">Din running count:
+            <input type="number" id="cInput" style="width:80px">
+          </label>
+          <button class="btn" id="cCheck">Tjek</button>
+        </div>
+        <div id="cFeedback"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Hvad er "true count"?</h3>
+      <p class="muted">Running count delt med antal spil tilbage i skoen. Den fortæller hvor stort forspringet reelt er. Højere true count = flere høje kort tilbage = bedre for spilleren. Korttælling virker kun ved fysisk blackjack hvor skoen ikke blandes hver hånd — online RNG-blackjack blander hver runde, så det virker ikke der.</p>
+    </div>
+  </section>
+
+  <!-- ================= GUIDE ================= -->
+  <section id="tab-guide" class="hidden">
+    <div class="panel">
+      <h2>Poker hånd-rangering</h2>
+      <p class="muted">Fra stærkest til svagest.</p>
+      <div id="rankGuide"></div>
+    </div>
+    <div class="panel">
+      <h2>Starthånd-tips (Hold'em)</h2>
+      <ul class="muted" style="line-height:1.6">
+        <li><b>Premium:</b> AA, KK, QK, AK — spil aggressivt næsten altid.</li>
+        <li><b>Stærke:</b> JJ, TT, AQ, AJs, KQs — gode at åbne/raise med.</li>
+        <li><b>Spekulative:</b> små par (22–99), suited connectors (fx 87s) — spil billigt, ram sæt/straight.</li>
+        <li><b>Position betyder alt:</b> spil flere hænder når du er sidst til at handle.</li>
+        <li><b>Pot odds:</b> sammenlign prisen på et call med din vinderchance (brug odds-fanen).</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<div id="pickerOverlay" class="overlay hidden">
+  <div class="picker">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <b>Vælg kort</b>
+      <button class="ghost btn" id="pickerClose" style="padding:6px 12px">Luk</button>
+    </div>
+    <div id="pickerGrid"></div>
+  </div>
+</div>
+
+<script>
+/* ===================== Card model ===================== */
+const SUITS = [
+  {s:'♠', red:false, i:0},
+  {s:'♥', red:true,  i:1},
+  {s:'♦', red:true,  i:2},
+  {s:'♣', red:false, i:3},
+];
+const RANKS = [ // value + label
+  {v:14,l:'A'},{v:13,l:'K'},{v:12,l:'Q'},{v:11,l:'J'},{v:10,l:'10'},
+  {v:9,l:'9'},{v:8,l:'8'},{v:7,l:'7'},{v:6,l:'6'},{v:5,l:'5'},{v:4,l:'4'},{v:3,l:'3'},{v:2,l:'2'}
+];
+const cardKey = c => c.v*10 + c.i;                 // unique id
+function fullDeck(){
+  const d=[];
+  for(const r of RANKS) for(const s of SUITS) d.push({v:r.v,l:r.l,s:s.s,i:s.i,red:s.red});
+  return d;
+}
+function cardEl(c, cls=''){
+  if(!c) return `<div class="card empty ${cls}"><span class="r">+</span></div>`;
+  return `<div class="card ${c.red?'red':''} ${cls}"><span class="r">${c.l}</span><span class="s">${c.s}</span></div>`;
+}
+
+/* ===================== Tabs ===================== */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    ['poker','bj','count','guide'].forEach(id=>{
+      document.getElementById('tab-'+id).classList.toggle('hidden', id!==t.dataset.tab);
+    });
+  });
+});
+
+/* ===================== Card picker ===================== */
+let pickerTarget=null; // callback(card)
+function usedCards(){
+  // all cards currently placed anywhere
+  const list=[];
+  hero.forEach(c=>c&&list.push(cardKey(c)));
+  board.forEach(c=>c&&list.push(cardKey(c)));
+  return new Set(list);
+}
+function openPicker(cb){
+  pickerTarget=cb;
+  const used=usedCards();
+  let html='';
+  for(const s of SUITS){
+    html+='<div class="pickrow">';
+    for(const r of RANKS){
+      const c={v:r.v,l:r.l,s:s.s,i:s.i,red:s.red};
+      const isUsed=used.has(cardKey(c));
+      html+=`<div class="card ${c.red?'red':''} ${isUsed?'used':''}" data-k="${cardKey(c)}"><span class="r">${c.l}</span><span class="s">${c.s}</span></div>`;
+    }
+    html+='</div>';
+  }
+  const grid=document.getElementById('pickerGrid');
+  grid.innerHTML=html;
+  grid.querySelectorAll('.card').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const k=+el.dataset.k;
+      const c=fullDeck().find(x=>cardKey(x)===k);
+      pickerTarget&&pickerTarget(c);
+      closePicker();
+    });
+  });
+  document.getElementById('pickerOverlay').classList.remove('hidden');
+}
+function closePicker(){document.getElementById('pickerOverlay').classList.add('hidden');pickerTarget=null;}
+document.getElementById('pickerClose').addEventListener('click',closePicker);
+document.getElementById('pickerOverlay').addEventListener('click',e=>{if(e.target.id==='pickerOverlay')closePicker();});
+
+/* ===================== Poker state & slots ===================== */
+let hero=[null,null];
+let board=[null,null,null,null,null];
+
+function renderPokerSlots(){
+  const h=document.getElementById('heroSlots');
+  h.innerHTML='';
+  hero.forEach((c,idx)=>{
+    const wrap=document.createElement('div');
+    wrap.innerHTML=cardEl(c);
+    wrap.firstChild.addEventListener('click',()=>{
+      if(c){hero[idx]=null;renderPokerSlots();}
+      else openPicker(card=>{hero[idx]=card;renderPokerSlots();});
+    });
+    h.appendChild(wrap.firstChild);
+  });
+  const b=document.getElementById('boardSlots');
+  b.innerHTML='';
+  board.forEach((c,idx)=>{
+    const wrap=document.createElement('div');
+    wrap.innerHTML=cardEl(c);
+    wrap.firstChild.addEventListener('click',()=>{
+      if(c){board[idx]=null;renderPokerSlots();}
+      else openPicker(card=>{board[idx]=card;renderPokerSlots();});
+    });
+    b.appendChild(wrap.firstChild);
+  });
+}
+document.getElementById('clearPoker').addEventListener('click',()=>{
+  hero=[null,null];board=[null,null,null,null,null];
+  document.getElementById('pokerResult').classList.add('hidden');
+  renderPokerSlots();
+});
+renderPokerSlots();
+
+/* ===================== Poker evaluator ===================== */
+// cards as {v,i}. Returns comparable [category, ...tiebreaks]
+function evalFive(cards){
+  const vs=cards.map(c=>c.v).sort((a,b)=>b-a);
+  const flush=cards.every(c=>c.i===cards[0].i);
+  const counts={};
+  vs.forEach(v=>counts[v]=(counts[v]||0)+1);
+  const groups=Object.keys(counts).map(Number)
+    .sort((a,b)=> counts[b]-counts[a] || b-a);
+  const uniq=[...new Set(vs)].sort((a,b)=>b-a);
+  let straightHigh=null;
+  if(uniq.length===5){
+    if(uniq[0]-uniq[4]===4) straightHigh=uniq[0];
+    else if(uniq[0]===14 && uniq[1]===5) straightHigh=5; // wheel A-5
+  }
+  const g0=counts[groups[0]], g1=groups[1]?counts[groups[1]]:0;
+  if(flush && straightHigh) return [8,straightHigh];
+  if(g0===4){const k=vs.find(v=>v!==groups[0]);return [7,groups[0],k];}
+  if(g0===3 && g1===2) return [6,groups[0],groups[1]];
+  if(flush) return [5,...vs];
+  if(straightHigh) return [4,straightHigh];
+  if(g0===3){const ks=vs.filter(v=>v!==groups[0]);return [3,groups[0],...ks];}
+  if(g0===2 && g1===2){
+    const hp=Math.max(groups[0],groups[1]),lp=Math.min(groups[0],groups[1]);
+    const k=vs.find(v=>v!==hp&&v!==lp);return [2,hp,lp,k];
+  }
+  if(g0===2){const ks=vs.filter(v=>v!==groups[0]);return [1,groups[0],...ks];}
+  return [0,...vs];
+}
+function cmpRank(a,b){
+  const n=Math.max(a.length,b.length);
+  for(let i=0;i<n;i++){const x=a[i]||0,y=b[i]||0;if(x!==y)return x-y;}
+  return 0;
+}
+const COMBO5=(()=>{ // index combinations C(7,5)
+  const res=[];
+  for(let a=0;a<3;a++)for(let b=a+1;b<4;b++)for(let c=b+1;c<5;c++)
+    for(let d=c+1;d<6;d++)for(let e=d+1;e<7;e++)res.push([a,b,c,d,e]);
+  return res;
+})();
+function best7(cards){
+  let best=null;
+  for(const idx of COMBO5){
+    const r=evalFive(idx.map(i=>cards[i]));
+    if(!best||cmpRank(r,best)>0)best=r;
+  }
+  return best;
+}
+
+/* ===================== Monte Carlo simulation ===================== */
+let simRunning=false;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+document.getElementById('runSim').addEventListener('click',()=>{
+  if(simRunning)return;
+  if(!hero[0]||!hero[1]){alert('Vælg begge dine hole cards først.');return;}
+  const boardCards=board.filter(Boolean);
+  const opp=+document.getElementById('oppCount').value;
+  const known=[...hero,...boardCards];
+  const knownKeys=new Set(known.map(cardKey));
+  const deck=fullDeck().filter(c=>!knownKeys.has(cardKey(c)));
+
+  const TOTAL=12000, BATCH=600;
+  let done=0,win=0,tie=0,lose=0;
+  simRunning=true;
+  const btn=document.getElementById('runSim');btn.disabled=true;btn.textContent='Beregner…';
+  document.getElementById('pokerResult').classList.remove('hidden');
+
+  function batch(){
+    for(let t=0;t<BATCH && done<TOTAL;t++,done++){
+      const pool=deck.slice();shuffle(pool);let cur=0;
+      const opps=[];
+      for(let o=0;o<opp;o++){opps.push([pool[cur++],pool[cur++]]);}
+      const fb=boardCards.slice();
+      while(fb.length<5)fb.push(pool[cur++]);
+      const heroRank=best7([...hero,...fb]);
+      let beatAll=true,tieBest=false;
+      for(const oh of opps){
+        const r=best7([...oh,...fb]);
+        const c=cmpRank(r,heroRank);
+        if(c>0){beatAll=false;break;}
+        if(c===0)tieBest=true;
+      }
+      if(!beatAll)lose++;else if(tieBest)tie++;else win++;
+    }
+    const pct=v=>(100*v/done);
+    setBar('win',pct(win));setBar('tie',pct(tie));setBar('lose',pct(lose));
+    document.getElementById('simMeta').textContent=`${done.toLocaleString('da')} simuleringer · ${opp} modstander(e)`;
+    if(done<TOTAL){requestAnimationFrame(batch);}
+    else{simRunning=false;btn.disabled=false;btn.textContent='Beregn odds';}
+  }
+  function setBar(k,p){
+    document.getElementById(k+'Fill').style.width=p.toFixed(1)+'%';
+    const lbls={win:'Vinder',tie:'Split',lose:'Taber'};
+    document.getElementById(k+'Lbl').textContent=`${lbls[k]}: ${p.toFixed(1)}%`;
+  }
+  requestAnimationFrame(batch);
+});
+
+/* ===================== Blackjack strategy ===================== */
+// action codes: H hit, S stand, D double(else hit), Ds double(else stand), P split
+function hardAction(total,up){ // up 2..11 (11=ace)
+  if(total<=8)return 'H';
+  if(total===9)return (up>=3&&up<=6)?'D':'H';
+  if(total===10)return (up>=2&&up<=9)?'D':'H';
+  if(total===11)return (up>=2&&up<=10)?'D':'H';
+  if(total===12)return (up>=4&&up<=6)?'S':'H';
+  if(total>=13&&total<=16)return (up>=2&&up<=6)?'S':'H';
+  return 'S';
+}
+function softAction(total,up){ // total = 13..21 (A + n)
+  switch(total){
+    case 13: case 14: return (up>=5&&up<=6)?'D':'H';
+    case 15: case 16: return (up>=4&&up<=6)?'D':'H';
+    case 17: return (up>=3&&up<=6)?'D':'H';
+    case 18: if(up>=3&&up<=6)return 'Ds'; if(up===2||up===7||up===8)return 'S'; return 'H';
+    default: return 'S'; // 19,20,21
+  }
+}
+function pairAction(rank,up){ // rank 2..11 (11=ace pair)
+  switch(rank){
+    case 11: return 'P';
+    case 10: return 'S';
+    case 9:  return (up===7||up===10||up===11)?'S':'P';
+    case 8:  return 'P';
+    case 7:  return (up>=2&&up<=7)?'P':'H';
+    case 6:  return (up>=2&&up<=6)?'P':'H';
+    case 5:  return (up>=2&&up<=9)?'D':'H';
+    case 4:  return (up>=5&&up<=6)?'P':'H';
+    case 3:  return (up>=2&&up<=7)?'P':'H';
+    case 2:  return (up>=2&&up<=7)?'P':'H';
+  }
+}
+const ACT_CLASS={H:'cH',S:'cS',D:'cD',Ds:'cD',P:'cP'};
+const ACT_TXT={H:'H',S:'S',D:'D',Ds:'Ds',P:'P'};
+const UPCARDS=[2,3,4,5,6,7,8,9,10,11];
+const upLabel=u=>u===11?'A':u;
+
+function buildChart(title,rows,cellFn){
+  let h=`<h3>${title}</h3><table class="chart"><tr><th></th>`;
+  UPCARDS.forEach(u=>h+=`<th>${upLabel(u)}</th>`);
+  h+='</tr>';
+  rows.forEach(row=>{
+    h+=`<tr><th>${row.label}</th>`;
+    UPCARDS.forEach(u=>{const a=cellFn(row.key,u);h+=`<td class="${ACT_CLASS[a]}">${ACT_TXT[a]}</td>`;});
+    h+='</tr>';
+  });
+  return h+'</table>';
+}
+document.getElementById('chartHard').innerHTML=buildChart('Hårde totaler',
+  [17,16,15,14,13,12,11,10,9,8].map(t=>({label:t,key:t})),(t,u)=>hardAction(t,u));
+document.getElementById('chartSoft').innerHTML=buildChart('Bløde totaler (med Es)',
+  [{label:'A,9 (20)',key:20},{label:'A,8 (19)',key:19},{label:'A,7 (18)',key:18},
+   {label:'A,6 (17)',key:17},{label:'A,5 (16)',key:16},{label:'A,4 (15)',key:15},
+   {label:'A,3 (14)',key:14},{label:'A,2 (13)',key:13}],(t,u)=>softAction(t,u));
+document.getElementById('chartPair').innerHTML=buildChart('Par',
+  [11,10,9,8,7,6,5,4,3,2].map(r=>({label:(r===11?'A,A':`${r},${r}`),key:r})),(r,u)=>pairAction(r,u));
+
+/* ===================== Blackjack trainer ===================== */
+let bjState=null, bjRight=0,bjTotal=0,bjStreak=0;
+function randRank(){return RANKS[Math.floor(Math.random()*RANKS.length)];}
+function bjCardEl(r){const s=SUITS[Math.floor(Math.random()*4)];return {v:r.v,l:r.l,s:s.s,red:s.red};}
+function newBjHand(){
+  // pick a scenario: pair / soft / hard
+  const roll=Math.random();
+  let p1,p2;
+  if(roll<0.25){ // pair
+    const r=randRank();p1=r;p2=r;
+  }else if(roll<0.5){ // soft (one ace + non-ace)
+    p1={v:14,l:'A'};
+    let r;do{r=randRank();}while(r.v===14);p2=r;
+  }else{
+    do{p1=randRank();p2=randRank();}while(p1.v===14&&p2.v===14);
+  }
+  let up;do{up=randRank();}while(false);
+  const upV=up.v===14?11:Math.min(up.v,10);
+  // determine correct action
+  const isPair=(p1.v===p2.v);
+  const isSoft=(p1.v===14||p2.v===14)&&!(p1.v===14&&p2.v===14&&false);
+  let correct, kind;
+  const val=v=>v===14?11:Math.min(v,10);
+  if(isPair){
+    const pr=p1.v===14?11:Math.min(p1.v,10);
+    // pairAction uses rank 2..11; map ten-cards to 10
+    correct=pairAction(p1.v===14?11:Math.min(p1.v,10),upV);kind='pair';
+  }else if(p1.v===14||p2.v===14){
+    const other=p1.v===14?p2:p1;
+    const total=11+val(other.v); // A counted as 11
+    correct=softAction(total,upV);kind='soft';
+  }else{
+    const total=val(p1.v)+val(p2.v);
+    correct=hardAction(total,upV);kind='hard';
+  }
+  bjState={p1,p2,up,upV,correct,kind};
+  document.getElementById('bjPlayer').innerHTML=cardEl(bjCardEl(p1))+cardEl(bjCardEl(p2));
+  document.getElementById('bjDealer').innerHTML=cardEl(bjCardEl(up))+cardEl(null);
+  document.getElementById('bjFeedback').innerHTML='';
+}
+document.querySelectorAll('#tab-bj [data-act]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(!bjState)return;
+    const chosen=btn.dataset.act; // H S D P
+    // normalize correct (Ds counts as D choice, but "Double" is right answer)
+    let correct=bjState.correct;
+    const correctChoice = (correct==='Ds'||correct==='D')?'D':correct;
+    bjTotal++;
+    const fb=document.getElementById('bjFeedback');
+    const nice={H:'Hit',S:'Stand',D:'Double',Ds:'Double (ellers stand)',P:'Split'};
+    if(chosen===correctChoice){
+      bjRight++;bjStreak++;
+      fb.className='feedback ok';fb.textContent=`Rigtigt! Korrekt træk: ${nice[correct]}.`;
+    }else{
+      bjStreak=0;
+      fb.className='feedback no';fb.textContent=`Ikke helt. Korrekt træk var: ${nice[correct]}.`;
+    }
+    document.getElementById('bjRight').textContent=bjRight;
+    document.getElementById('bjTotal').textContent=bjTotal;
+    document.getElementById('bjStreak').textContent=bjStreak;
+    setTimeout(newBjHand,1400);
+  });
+});
+newBjHand();
+
+/* ===================== Counting trainer ===================== */
+function hiloValue(v){ if(v>=2&&v<=6)return 1; if(v>=7&&v<=9)return 0; return -1; } // 10..14 => -1
+let countTimer=null, countState=null;
+document.getElementById('cStart').addEventListener('click',()=>{
+  clearInterval(countTimer);
+  const decks=+document.getElementById('cDecks').value;
+  const speed=+document.getElementById('cSpeed').value;
+  const howMany=Math.min(+document.getElementById('cHowMany').value, decks*52);
+  let shoe=[];for(let d=0;d<decks;d++)shoe=shoe.concat(fullDeck());
+  shuffle(shoe);
+  countState={shoe,howMany,decks,dealt:0,running:0};
+  document.getElementById('cGuess').classList.add('hidden');
+  document.getElementById('cFeedback').innerHTML='';
+  document.getElementById('cStop').disabled=false;
+  document.getElementById('cStart').disabled=true;
+  const stage=document.getElementById('cStage');
+  const prog=document.getElementById('cProgress');
+  function tick(){
+    if(countState.dealt>=countState.howMany){finishCount();return;}
+    const c=countState.shoe[countState.dealt];
+    countState.running+=hiloValue(c.v);
+    countState.dealt++;
+    stage.innerHTML=`<div class="card ${c.red?'red':''}" style="width:80px;height:112px;margin:0 auto;font-size:1.6rem"><span class="r">${c.l}</span><span class="s">${c.s}</span></div><p class="muted">${countState.dealt} / ${countState.howMany}</p>`;
+  }
+  tick();
+  countTimer=setInterval(tick,speed);
+});
+function finishCount(){
+  clearInterval(countTimer);
+  document.getElementById('cStop').disabled=true;
+  document.getElementById('cStart').disabled=false;
+  document.getElementById('cGuess').classList.remove('hidden');
+  document.getElementById('cStage').innerHTML=`<div class="card empty" style="width:80px;height:112px;margin:0 auto;font-size:1.4rem">✓</div><p class="muted">Færdig — hvad er din tælling?</p>`;
+  document.getElementById('cInput').value='';
+  document.getElementById('cInput').focus();
+}
+document.getElementById('cStop').addEventListener('click',finishCount);
+document.getElementById('cCheck').addEventListener('click',()=>{
+  if(!countState)return;
+  const guess=parseInt(document.getElementById('cInput').value,10);
+  const fb=document.getElementById('cFeedback');
+  const decksLeft=Math.max((countState.decks*52-countState.dealt)/52,0.25);
+  const trueCount=(countState.running/decksLeft);
+  if(guess===countState.running){
+    fb.className='feedback ok';
+    fb.innerHTML=`Korrekt! Running count = <b>${countState.running}</b>. True count ≈ <b>${trueCount.toFixed(1)}</b>.`;
+  }else{
+    fb.className='feedback no';
+    fb.innerHTML=`Ikke helt. Rigtig running count = <b>${countState.running}</b> (du sagde ${isNaN(guess)?'—':guess}). True count ≈ <b>${trueCount.toFixed(1)}</b>.`;
+  }
+});
+
+/* ===================== Hand guide ===================== */
+const GUIDE=[
+  ['Straight flush','Fem i træk, samme kulør','9♠ 8♠ 7♠ 6♠ 5♠'],
+  ['Fire ens','Fire kort af samme værdi','K♠ K♥ K♦ K♣ 2♠'],
+  ['Full house','Tre ens + et par','Q♠ Q♥ Q♦ 7♣ 7♠'],
+  ['Flush','Fem kort samme kulør','A♦ J♦ 8♦ 5♦ 2♦'],
+  ['Straight','Fem i træk, blandet kulør','9♣ 8♦ 7♠ 6♥ 5♣'],
+  ['Tre ens','Tre kort af samme værdi','8♠ 8♥ 8♦ K♣ 4♠'],
+  ['To par','To forskellige par','J♠ J♥ 4♦ 4♣ 9♠'],
+  ['Et par','To kort af samme værdi','10♠ 10♥ A♦ 7♣ 3♠'],
+  ['High card','Ingen kombination','A♠ Q♦ 9♣ 6♥ 2♠'],
+];
+document.getElementById('rankGuide').innerHTML=GUIDE.map((g,i)=>{
+  const cards=g[2].split(' ').map(t=>{
+    const suit=t.slice(-1);const lab=t.slice(0,-1);const red=(suit==='♥'||suit==='♦');
+    return `<div class="card mini ${red?'red':''}"><span class="r">${lab}</span><span class="s">${suit}</span></div>`;
+  }).join('');
+  return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)">
+    <b style="width:18px;color:var(--muted)">${i+1}</b>
+    <div style="flex:1"><b>${g[0]}</b><div class="muted" style="font-size:.8rem">${g[1]}</div></div>
+    <div class="slotgroup" style="margin:0">${cards}</div></div>`;
+}).join('');
+</script>
+</body>
+</html>
