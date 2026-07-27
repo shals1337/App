@@ -74,6 +74,12 @@ def _fair_probs_per_bookmaker(
     return per_bookmaker
 
 
+# Odds-børser (exchanges) har kunstigt lav margin, så deres priser ligger
+# næsten altid lidt over konsensus. De giver derfor falske "value"-signaler
+# og kan valgfrit udelukkes fra jagten på bedste odds.
+EXCHANGES = {"Betfair", "Matchbook", "Smarkets"}
+
+
 def analyse_match(
     home_team: str,
     away_team: str,
@@ -81,6 +87,7 @@ def analyse_match(
     bookmaker_odds: Dict[str, Dict[str, float]],
     commence_time: Optional[str] = None,
     league: Optional[str] = None,
+    exclude_from_best: Optional[set] = None,
 ) -> MatchAnalysis:
     """Beregn konsensus-sandsynligheder og value bets for én kamp.
 
@@ -90,6 +97,9 @@ def analyse_match(
         Udfaldenes navne i fast rækkefølge, fx ``[home, "Draw", away]``.
     bookmaker_odds:
         ``{bookmaker_navn: {udfald_navn: decimal_odds}}``.
+    exclude_from_best:
+        Bookmakere der ignoreres når *bedste* odds/value findes (fx børser).
+        De tæller stadig med i konsensus-sandsynligheden.
 
     For hvert udfald udregnes:
     - konsensus-sandsynlighed = gennemsnit af de margin-rensede
@@ -97,6 +107,7 @@ def analyse_match(
     - bedste tilgængelige odds og hvem der tilbyder dem,
     - edge = konsensus_sandsynlighed * bedste_odds - 1 (forventet værdi).
     """
+    exclude_from_best = exclude_from_best or set()
     if not outcome_names:
         raise ValueError("mindst ét udfald kræves")
 
@@ -129,6 +140,8 @@ def analyse_match(
         best_book = ""
         best_odds = 0.0
         for book_name, prices in bookmaker_odds.items():
+            if book_name in exclude_from_best:
+                continue
             if name in prices and prices[name] > best_odds:
                 best_odds = prices[name]
                 best_book = book_name

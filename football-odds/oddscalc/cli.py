@@ -21,10 +21,13 @@ from typing import List, Optional
 
 from . import api
 from .demo import demo_events
-from .probs import MatchAnalysis, analyse_match
+from .probs import EXCHANGES, MatchAnalysis, analyse_match
 
 
-def _analyse_events(events: List[dict]) -> List[MatchAnalysis]:
+def _analyse_events(
+    events: List[dict], exclude_exchanges: bool = False
+) -> List[MatchAnalysis]:
+    exclude = EXCHANGES if exclude_exchanges else set()
     analyses: List[MatchAnalysis] = []
     for ev in events:
         if not ev.get("bookmaker_odds"):
@@ -38,6 +41,7 @@ def _analyse_events(events: List[dict]) -> List[MatchAnalysis]:
                     bookmaker_odds=ev["bookmaker_odds"],
                     commence_time=ev.get("commence_time"),
                     league=ev.get("league"),
+                    exclude_from_best=exclude,
                 )
             )
         except ValueError:
@@ -126,6 +130,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Bookmaker-regioner, kommasepareret (default: eu,uk).",
     )
     p.add_argument(
+        "--exclude-exchanges",
+        action="store_true",
+        help="Ignorér odds-børser (Betfair, Matchbook, Smarkets) når bedste "
+        "odds/value findes — de har kunstigt lav margin og giver falske "
+        "value-signaler.",
+    )
+    p.add_argument(
         "--min-edge",
         type=float,
         default=0.02,
@@ -184,7 +195,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         events = [api.normalise_event(ev) for ev in raw]
         source = f"LIVE — {sport_key}"
 
-    analyses = _analyse_events(events)
+    analyses = _analyse_events(events, exclude_exchanges=args.exclude_exchanges)
     if not analyses:
         print("Ingen kampe med brugbare odds fundet.")
         return 0

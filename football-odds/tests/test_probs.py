@@ -38,6 +38,28 @@ def test_value_bet_detected():
     assert b_outcome.is_value
 
 
+def test_exclude_from_best():
+    # Børsen "Betfair" giver bedste odds men skal kunne ekskluderes.
+    odds = {
+        "Betfair": {"A": 2.10, "Draw": 3.40, "B": 5.50},
+        "Bet365": {"A": 2.10, "Draw": 3.40, "B": 3.60},
+    }
+    a = analyse_match("A", "B", ["A", "Draw", "B"], odds)
+    b = next(o for o in a.outcomes if o.name == "B")
+    assert b.best_bookmaker == "Betfair"
+
+    a2 = analyse_match(
+        "A", "B", ["A", "Draw", "B"], odds, exclude_from_best={"Betfair"}
+    )
+    b2 = next(o for o in a2.outcomes if o.name == "B")
+    assert b2.best_bookmaker == "Bet365"
+    assert b2.best_odds == 3.60
+    # Konsensus er uændret — børsen tæller stadig med der.
+    assert a.outcomes[0].consensus_prob == pytest.approx(
+        a2.outcomes[0].consensus_prob
+    )
+
+
 def test_incomplete_bookmaker_skipped():
     a = analyse_match(
         home_team="A",

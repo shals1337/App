@@ -56,9 +56,27 @@ python -m oddscalc --demo
 |------|-----------|
 | `--demo` | Kør på indbygget testdata uden API-nøgle |
 | `--league <navn>` | Hent live odds for en liga |
+| `--file <sti>` | Analysér en gemt rå The Odds API-JSON-fil |
 | `--regions eu,uk` | Hvilke bookmaker-regioner der medtages |
+| `--exclude-exchanges` | Ignorér børser (Betfair/Matchbook) i value-jagten |
 | `--min-edge 0.03` | Kun markér value bets med ≥ 3% forventet værdi |
 | `--api-key <nøgle>` | Angiv nøgle direkte i stedet for miljøvariabel |
+
+### Analysér en gemt API-fil
+
+Har du allerede et svar fra The Odds API liggende (fx `examples/the_odds_api_sample.json`),
+kan du køre analysen direkte på det — også for tennis/cricket (2-vejs markeder):
+
+```bash
+python -m oddscalc --file examples/the_odds_api_sample.json --exclude-exchanges
+```
+
+### Børser (exchanges)
+
+Odds-børser som Betfair og Matchbook har meget lav margin, så deres priser ligger
+næsten altid lidt over konsensus og giver derfor *falske* value-signaler. Brug
+`--exclude-exchanges` for kun at jagte ægte fejlprissætning hos almindelige
+bookmakere. Børserne tæller stadig med i konsensus-sandsynligheden (de er skarpe).
 
 ## Eksempel-output
 
