@@ -399,6 +399,28 @@
   .gate-feat div{font-size:12.5px;color:var(--muted)}
   .locked-hint{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim);z-index:111}
 
+  /* hjælp / faq */
+  .help-concept{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:8px}
+  .hc{background:linear-gradient(165deg,var(--card),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+  .hc h4{font-family:var(--display);font-size:15px;font-weight:800;margin-bottom:6px}
+  .hc p{font-size:12.8px;color:var(--muted);line-height:1.55}
+  .hc .eq{display:inline-block;margin-top:9px;font-family:var(--display);font-size:12px;color:var(--gold);
+    background:var(--chip);border:1px solid var(--chipline);border-radius:8px;padding:4px 10px}
+  .help-list{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .hl-row{display:grid;grid-template-columns:190px 1fr;gap:14px;background:var(--panel);padding:12px 16px;font-size:13px}
+  .hl-row .t{font-weight:700;display:flex;align-items:center;gap:8px}
+  .hl-row .d{color:var(--muted);line-height:1.5}
+  @media(max-width:640px){.hl-row{grid-template-columns:1fr;gap:3px}}
+  .faq{display:flex;flex-direction:column;gap:9px}
+  .fq{background:linear-gradient(165deg,var(--card),var(--panel2));border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .fq-q{padding:14px 16px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .fq-q:hover{background:var(--panel2)}
+  .fq-q .chev{color:var(--accent);transition:transform .2s;flex-shrink:0}
+  .fq.open .chev{transform:rotate(180deg)}
+  .fq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .fq.open .fq-a{max-height:340px}
+  .fq-a div{padding:0 16px 15px;font-size:12.8px;color:var(--muted);line-height:1.6}
+
   .foot{color:var(--dim);font-size:11px;text-align:center;margin-top:30px;line-height:1.7}
 
   /* mobile */
@@ -466,6 +488,7 @@
       <div class="nav-item" data-tab="record"><span class="ic">🏅</span> Facit / træfsikkerhed</div>
       <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> EV-beregner</div>
       <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> Alerts <span class="cnt" id="nAlerts">0</span></div>
+      <div class="nav-item" data-tab="help"><span class="ic">❓</span> Hjælp / FAQ</div>
       <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> Roadmap</div>
     </nav>
 
@@ -612,6 +635,31 @@
         <button class="sortsel" id="enableNotif" style="cursor:pointer">🔔 Slå notifikationer til</button></div>
       <div class="note" id="notifState" style="margin-bottom:16px"></div>
       <div class="grid" id="alertList"></div>
+    </section>
+
+    <!-- HJÆLP / FAQ -->
+    <section class="tab" id="tab-help">
+      <div class="head"><div><h2>Hjælp / FAQ</h2>
+        <div class="sub">Hvordan appen virker, hvad hver funktion gør — og hvorfor.</div></div></div>
+
+      <div class="section-label">🧠 Sådan virker motoren</div>
+      <div class="help-concept">
+        <div class="hc"><h4>Implied probability</h4><p>Odds er bare en sandsynlighed skrevet om. En odds på 2.00 svarer til 50% chance. Det er første skridt til at vurdere om et spil er godt.</p><span class="eq">chance = 1 ÷ odds</span></div>
+        <div class="hc"><h4>Konsensus (margin-renset)</h4><p>Bookmakere lægger en margin oveni, så deres odds summer til over 100%. Appen fjerner marginen og tager gennemsnittet på tværs af alle bookmakere — markedets bedste bud på den sande chance.</p></div>
+        <div class="hc"><h4>Value / forventet værdi</h4><p>Hvis konsensus siger 40%, men en bookmaker giver odds svarende til 33%, har du matematisk fordel. Positiv EV = tjener penge på lang sigt (hvis konsensus er korrekt).</p><span class="eq">EV = chance × bedste odds − 1</span></div>
+        <div class="hc"><h4>Score &amp; risiko</h4><p>Scoren (0-100) vægter EV, antal bookmakere og oddsniveau. Et "+75%" på en 9.00-outsider er oftest en fælde; +3% på 1.90 hos 30 bookmakere er ægte. Risiko-tagget minder om, at høje odds = lav træfchance.</p></div>
+      </div>
+
+      <div class="section-label">📑 Fanerne</div>
+      <div class="help-list" id="helpTabs"></div>
+
+      <div class="section-label">🔧 Funktioner i kampene</div>
+      <div class="help-list" id="helpFeat"></div>
+
+      <div class="section-label">❓ Ofte stillede spørgsmål</div>
+      <div class="faq" id="faq"></div>
+
+      <div class="note" style="margin-top:18px">⚠️ <b>Vigtigt:</b> value og modeller er estimater. Positiv EV betyder gevinst <i>på lang sigt hvis konsensus er korrekt</i> — ikke garanti på det enkelte spil. Derfor findes “Min bank” og “Facit”: så du måler virkeligheden. Spil ansvarligt. 18+.</div>
     </section>
 
     <!-- ROADMAP -->
@@ -1242,6 +1290,51 @@ function renderRecord(){
   requestAnimationFrame(()=>document.querySelectorAll("#recordBody .tile .n").forEach(()=>{}));
 }
 
+// ---- hjælp / faq ----
+const HELP_TABS=[
+  ["🏆 I dag","Dashboard med nøgletal og de højest scorede value bets lige nu. Dit hurtige overblik."],
+  ["🔥 Value bets","Alle kampe med mindst ét value bet (EV ≥ 2%). Her ligger mulighederne — sortér efter score, EV eller tid."],
+  ["📋 Alle kampe","Alle scannede kampe uanset value. Brug søgning og filtre til at finde præcis det du leder efter."],
+  ["⭐ Favoritter","Kampe du har markeret med stjernen. Gemmes i din browser."],
+  ["🛡️ Arbitrage","'Sikre spil' hvor de bedste odds på tværs af bookmakere giver garanteret profit uanset resultat — inkl. hvordan du fordeler indsatsen."],
+  ["📊 Statistik","Value pr. land og liga, hvilke ligaer der er skarpest (lavest margin), og hvilke bookmakere der oftest har de bedste odds."],
+  ["📒 Min bank","Log dine spil og se penge vundet vs. tabt, netto, ROI og win-rate. Åbne spil afregnes automatisk mod resultaterne."],
+  ["🎯 Resultater","Afsluttede kampe med 1X2-, over/under- og BTTS-facit. Bruges også til at afregne dine spil."],
+  ["🏅 Facit / træfsikkerhed","Hvor ofte appens egne value-tips rammer rigtigt vs. forkert. Hvert tip afgøres automatisk når kampen er spillet."],
+  ["🧮 EV-beregner","Tast dine egne odds og din vurdering → se implied probability, EV og anbefalet Kelly-indsats."],
+  ["🚨 Alerts","Value-kampe der starter snart. Slå browser-notifikationer til for at få besked."],
+  ["🗺️ Roadmap","Ærlig status over hvad der virker nu, og hvad de resterende ønsker kræver."],
+];
+const HELP_FEAT=[
+  ["🧮 Målmodel (Poisson)","Klik 'Vis målmodel' på en kamp. Udleder forventede mål fra oddsene og beregner selv BTTS, over/under og de mest sandsynlige slutresultater."],
+  ["🎟️ Kupon / akkumulator","Tryk ＋ på udfald for at bygge en kupon: samlet odds, samlet EV og advarsel hvis to valg er fra samme kamp."],
+  ["🔍 Kamp-detaljer","Klik på et kampnavn for at se alle bookmakeres odds side om side (bedste fremhævet), målmodel og odds-graf."],
+  ["📈 Sparkline / historik","Den lille graf viser om favoritodds stiger eller falder over tid. Faldende odds = 'sharp money' strømmer ind."],
+  ["🔗 Bookmaker-knap","Åbner den bookmaker der har de bedste odds for udfaldet."],
+  ["🎚️ Filtre","Land, liga, bookmaker, odds-range, minimum-EV, risiko og starttidspunkt — kombinér frit."],
+];
+const FAQ=[
+  ["Hvad betyder 'value'?","At de bedste tilgængelige odds er højere end den sande chance (konsensus) tilsiger. Det giver positiv forventet værdi — en matematisk fordel på lang sigt."],
+  ["Hvorfor er de høje value-tal (+50%) mistænkelige?","De sidder oftest på outsidere hvor én bookmaker er langsom eller har en holdning. Ægte, holdbar value ligger typisk på 2-5%. Kig altid på risiko-tagget og scoren."],
+  ["Hvad er forskellen på 'fair' og 'bedste' odds?","Fair = de odds der præcis matcher konsensus-chancen (ingen margin). Bedste = de højeste odds nogen bookmaker faktisk tilbyder. Er bedste højere end fair, er der value."],
+  ["Hvorfor kan jeg ekskludere børser?","Børser (Betfair, Matchbook) har næsten ingen margin, så deres odds ligger altid lidt over konsensus og laver falske value-signaler. De tæller dog stadig med i konsensus, fordi de er skarpe."],
+  ["Hvor kommer dataene fra?","Live odds og resultater fra The Odds API — rigtige odds fra 30+ bookmakere. En automatisk opdatering henter friske data."],
+  ["Betyder value at jeg vinder?","Nej. Value = positiv forventet værdi hvis konsensus er korrekt. Enkeltspil kan sagtens tabe; fordelen viser sig først over mange spil. Derfor findes 'Min bank' og 'Facit'."],
+  ["Hvordan regnes værdien i 'Min bank'?","Vundet = gevinst på vindende spil (indsats × (odds−1)). Tabt = indsats på tabende spil. Netto = vundet − tabt. ROI = netto ÷ samlet indsats."],
+  ["Hvad er arbitrage?","Når forskellige bookmakere er så uenige at du kan spille alle udfald og vinde uanset resultat. Sjældent og kortvarigt — og odds skifter hurtigt, så tjek altid inden."],
+  ["Hvordan virker målmodellen?","Den finder de forventede mål (Poisson) der bedst matcher konsensus-oddsene, og beregner derfra markeder API'et ikke leverer, som BTTS og korrekt resultat. Et estimat, ikke et facit."],
+  ["Hvorfor står facit på 0 ramt?","Facit afgøres først når kampene er spillet. Appen har registreret tips, der afgøres automatisk efterhånden som resultaterne kommer ind."],
+];
+function renderHelp(){
+  document.getElementById("helpTabs").innerHTML=HELP_TABS.map(([t,d])=>
+    `<div class="hl-row"><div class="t">${t}</div><div class="d">${d}</div></div>`).join("");
+  document.getElementById("helpFeat").innerHTML=HELP_FEAT.map(([t,d])=>
+    `<div class="hl-row"><div class="t">${t}</div><div class="d">${d}</div></div>`).join("");
+  document.getElementById("faq").innerHTML=FAQ.map(([q,a])=>
+    `<div class="fq"><div class="fq-q">${q}<span class="chev">▾</span></div><div class="fq-a"><div>${a}</div></div></div>`).join("");
+  document.querySelectorAll("#faq .fq-q").forEach(q=>q.addEventListener("click",()=>q.parentElement.classList.toggle("open")));
+}
+
 // ---- roadmap ----
 const ROADMAP=[
   {t:"📊 Odds Scanner",s:"live",st:"st-live",items:[
@@ -1334,6 +1427,7 @@ function switchTab(name){
   if(name==="bank")renderBank();
   if(name==="results")renderResults();
   if(name==="record")renderRecord();
+  if(name==="help")renderHelp();
   const gridId={today:"todayList",value:"valueList",all:"allList",fav:"favList",alerts:"alertList",arb:"arbList"}[name];
   if(gridId)animateBars(document.getElementById(gridId));
 }
