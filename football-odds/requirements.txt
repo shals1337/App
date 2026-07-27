@@ -1,0 +1,5 @@
+# Kernefunktionaliteten bruger kun Pythons standardbibliotek — ingen
+# runtime-afhængigheder er nødvendige.
+#
+# Til udvikling/test:
+pytest>=7.0
