@@ -79,6 +79,7 @@ def build_matches(raw: list) -> list:
                 "home": a.home_team,
                 "away": a.away_team,
                 "league": a.league or "",
+                "sportKey": ev.get("sport_key", ""),
                 "commence": a.commence_time or "",
                 "books": a.num_bookmakers,
                 "margin": round((a.avg_overround - 1) * 100, 1),
@@ -98,7 +99,12 @@ def main(argv: list) -> int:
 
     template = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
     data_json = json.dumps(matches, ensure_ascii=False, separators=(",", ":"))
-    html = template.replace("/*__DATA__*/[]", data_json)
+    from datetime import datetime, timezone
+
+    built_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    html = template.replace("/*__DATA__*/[]", data_json).replace(
+        "__BUILT_AT__", built_at
+    )
 
     out_path = argv[1] if len(argv) > 1 else str(Path(__file__).parent / "index.html")
     Path(out_path).write_text(html, encoding="utf-8")
