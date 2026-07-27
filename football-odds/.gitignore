@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+
+# Genereret web-app data (bygges med web/build.py)
+web/live_*.json

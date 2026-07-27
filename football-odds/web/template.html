@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⚽ Odds-analyse — live fodbold</title>
+<style>
+  :root{
+    --bg:#0d1b22; --panel:#16232b; --panel2:#13212a; --line:#25373f;
+    --text:#e8eef2; --muted:#8ba1ad; --dim:#6c8797;
+    --accent:#2dd4bf; --accent2:#3b82f6; --pos:#38d39f; --neg:#e07a7a;
+    --chip:#12313a; --chipline:#2b4a54;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,'Segoe UI',Roboto,system-ui,sans-serif;
+    background:linear-gradient(160deg,#0b1720,#132832 60%,#1a3540);
+    background-attachment:fixed;color:var(--text);min-height:100vh}
+  a{color:inherit}
+  /* ---------- Header ---------- */
+  header{position:sticky;top:0;z-index:20;
+    background:linear-gradient(90deg,#149b86,#2a74d6);
+    border-bottom:1px solid rgba(255,255,255,.12);
+    box-shadow:0 4px 20px rgba(0,0,0,.25)}
+  .bar{max-width:1180px;margin:0 auto;padding:14px 22px;display:flex;
+    align-items:center;gap:18px;flex-wrap:wrap}
+  .logo{font-size:19px;font-weight:800;white-space:nowrap;display:flex;
+    align-items:center;gap:8px;color:#fff}
+  .logo span{color:#c7fff2}
+  .search{flex:1;min-width:220px;position:relative}
+  .search input{width:100%;background:var(--panel);border:1px solid var(--line);
+    color:var(--text);border-radius:12px;padding:11px 14px 11px 40px;font-size:14px;outline:none}
+  .search input:focus{border-color:var(--accent)}
+  .search svg{position:absolute;left:13px;top:11px;opacity:.5}
+  .stat{font-size:12.5px;color:rgba(255,255,255,.85);white-space:nowrap}
+  .stat b{color:#fff}
+  /* ---------- Layout ---------- */
+  .shell{max-width:1180px;margin:0 auto;padding:20px 22px 60px;display:grid;
+    grid-template-columns:250px 1fr;gap:22px;align-items:start}
+  .side{position:sticky;top:78px;max-height:calc(100vh - 96px);overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+  .side h3{font-size:11px;text-transform:uppercase;letter-spacing:.6px;
+    color:var(--dim);margin:6px 6px 10px;font-weight:700}
+  .toggles{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .tg{display:flex;align-items:center;gap:9px;font-size:13px;padding:8px 10px;
+    border-radius:10px;cursor:pointer;user-select:none}
+  .tg:hover{background:var(--panel2)}
+  .tg input{accent-color:var(--accent);width:16px;height:16px}
+  .sortsel{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:9px 10px;font-size:13px;margin-bottom:16px;outline:none}
+  .lg{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    font-size:13px;padding:7px 10px;border-radius:9px;cursor:pointer}
+  .lg:hover{background:var(--panel2)}
+  .lg.active{background:linear-gradient(90deg,rgba(45,212,191,.18),rgba(59,130,246,.10));
+    color:#fff;font-weight:600}
+  .lg .cnt{font-size:11px;color:var(--dim);background:var(--panel2);border-radius:20px;
+    padding:2px 8px;min-width:26px;text-align:center}
+  .lg.active .cnt{color:#bfeee2}
+  /* ---------- Cards ---------- */
+  .results-head{display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:14px;gap:12px;flex-wrap:wrap}
+  .results-head h2{font-size:17px;font-weight:700}
+  .results-head .sub{color:var(--muted);font-size:12.5px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:15px 18px;margin-bottom:12px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  .card.hasvalue{border-color:rgba(45,211,159,.4)}
+  .chead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .match{font-size:16px;font-weight:700}
+  .vs{color:var(--dim);font-size:12px;font-weight:500;margin:0 3px}
+  .lgtag{font-size:11px;color:#bfeee2;background:var(--chip);border:1px solid var(--chipline);
+    padding:2px 9px;border-radius:20px}
+  .meta{color:var(--dim);font-size:11.5px;margin:6px 0 12px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--dim);padding:0 8px 7px;font-weight:600}
+  td{padding:7px 8px;border-top:1px solid var(--line);font-size:13px}
+  .lab{font-weight:600;white-space:nowrap}
+  .pre{display:inline-block;width:15px;color:var(--dim);font-weight:700}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .strong{font-weight:700;color:#fff}
+  .book{color:var(--muted);font-size:12px}
+  .pos{color:var(--pos);font-weight:700}
+  .neg{color:var(--neg)}
+  .valrow{background:rgba(45,211,159,.06)}
+  .badge{background:#1f7a5a;color:#c9ffe9;font-size:9.5px;font-weight:700;
+    padding:2px 7px;border-radius:5px;margin-left:8px;vertical-align:middle}
+  .barwrap{position:relative;background:var(--panel2);border-radius:6px;height:19px;min-width:150px}
+  .bar{background:linear-gradient(90deg,var(--accent),var(--accent2));height:100%;border-radius:6px}
+  .pct{position:absolute;left:8px;top:1px;font-size:11.5px;font-weight:700;line-height:17px}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px}
+  .foot{color:var(--dim);font-size:11px;text-align:center;margin-top:26px;line-height:1.6}
+  .mobtoggle{display:none}
+  /* ---------- Responsive ---------- */
+  @media (max-width:820px){
+    .shell{grid-template-columns:1fr;padding:14px}
+    .side{position:static;max-height:none}
+    .mobtoggle{display:inline-flex;align-items:center;gap:6px;background:var(--panel);
+      border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;
+      font-size:13px;cursor:pointer;margin-bottom:14px}
+    .side.collapsed{display:none}
+  }
+  @media (prefers-color-scheme:light){
+    :root{--bg:#eef3f6;--panel:#ffffff;--panel2:#f1f5f8;--line:#dce4e9;
+      --text:#132029;--muted:#5c7180;--dim:#8497a3;--chip:#e6f6f1;--chipline:#bfe6db}
+    body{background:linear-gradient(160deg,#e8eef2,#dfeaf0)}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">⚽ Odds<span style="color:var(--accent)">Calc</span></div>
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="search" placeholder="Søg efter hold eller liga… (fx Barcelona, Superliga)" autocomplete="off">
+    </div>
+    <div class="stat"><b id="statMatches">0</b> kampe · <b id="statValue">0</b> value</div>
+  </div>
+</header>
+
+<div class="shell">
+  <button class="mobtoggle" id="mobtoggle">☰ Filtre & ligaer</button>
+  <aside class="side collapsed" id="side">
+    <h3>Vis</h3>
+    <div class="toggles">
+      <label class="tg"><input type="checkbox" id="onlyValue"> Kun value bets</label>
+      <label class="tg"><input type="checkbox" id="exExch" checked> Ekskludér børser</label>
+    </div>
+    <h3>Sortér</h3>
+    <select class="sortsel" id="sort">
+      <option value="time">Kampstart (tidligst)</option>
+      <option value="value">Bedste value først</option>
+      <option value="books">Flest bookmakere</option>
+      <option value="margin">Laveste margin</option>
+    </select>
+    <h3>Ligaer</h3>
+    <div id="leagues"></div>
+  </aside>
+
+  <main>
+    <div class="results-head">
+      <h2 id="resTitle">Alle kampe</h2>
+      <div class="sub" id="resSub"></div>
+    </div>
+    <div id="list"></div>
+    <div class="foot">
+      Konsensus = gennemsnit af margin-rensede sandsynligheder på tværs af alle bookmakere.
+      Value = konsensus-chance × bedste odds − 1. Børser (Betfair/Matchbook) tæller med i
+      konsensus, men kan ekskluderes fra bedste-odds/value.<br>
+      Data: The Odds API · kun til analyse — spil ansvarligt.
+    </div>
+  </main>
+</div>
+
+<script>
+const MATCHES = /*__DATA__*/[];
+const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
+const MIN_EDGE = 0.02;
+
+const state = { q:"", league:"", onlyValue:false, exExch:true, sort:"time" };
+
+// Bedste odds/bookmaker/edge for ét udfald, afhængigt af børs-toggle.
+function view(o){
+  const best = state.exExch ? o.bestNE : o.bestAll;
+  const book = state.exExch ? o.bookNE : o.bookAll;
+  const edge = best > 0 ? o.prob * best - 1 : -1;
+  return { best, book, edge };
+}
+// Bedste value på tværs af en kamps udfald (givet nuværende toggle).
+function bestEdge(m){
+  return Math.max(...m.outcomes.map(o=>view(o).edge));
+}
+function fmtTime(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  if(isNaN(d)) return iso.slice(0,16).replace("T"," ");
+  return d.toLocaleString("da-DK",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+function leagueShort(l){ return (l||"").split(" - ")[0]; }
+
+function hasValue(m){ return bestEdge(m) >= MIN_EDGE; }
+
+function passFilters(m){
+  if(state.league && m.league !== state.league) return false;
+  if(state.onlyValue && !hasValue(m)) return false;
+  if(state.q){
+    const q = state.q.toLowerCase();
+    const hay = (m.home+" "+m.away+" "+m.league).toLowerCase();
+    if(!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function sortMatches(arr){
+  const s = state.sort;
+  const c = [...arr];
+  if(s==="time") c.sort((a,b)=> (a.commence||"").localeCompare(b.commence||""));
+  else if(s==="value") c.sort((a,b)=> bestEdge(b) - bestEdge(a));
+  else if(s==="books") c.sort((a,b)=> b.books - a.books);
+  else if(s==="margin") c.sort((a,b)=> a.margin - b.margin);
+  return c;
+}
+
+function outcomeRow(o, idx, n){
+  const pre = n===3 ? ["1","X","2"][idx] : ["1","2"][idx];
+  const v = view(o);
+  const edge = v.edge*100;
+  const isVal = v.edge >= MIN_EDGE;
+  const badge = isVal ? '<span class="badge">VALUE</span>' : "";
+  const cls = edge>0 ? "pos" : "neg";
+  const pct = (o.prob*100);
+  return `<tr class="${isVal?'valrow':''}">
+    <td class="lab"><span class="pre">${pre}</span>${o.name}${badge}</td>
+    <td><div class="barwrap"><div class="bar" style="width:${pct.toFixed(0)}%"></div><span class="pct">${pct.toFixed(1)}%</span></div></td>
+    <td class="num">${o.fair.toFixed(2)}</td>
+    <td class="num strong">${v.best.toFixed(2)}</td>
+    <td class="book">${v.book||"—"}</td>
+    <td class="num ${cls}">${edge>=0?'+':''}${edge.toFixed(1)}%</td>
+  </tr>`;
+}
+
+function card(m){
+  const n = m.outcomes.length;
+  const rows = m.outcomes.map((o,i)=>outcomeRow(o,i,n)).join("");
+  return `<div class="card ${hasValue(m)?'hasvalue':''}">
+    <div class="chead">
+      <span class="match">${m.home} <span class="vs">vs</span> ${m.away}</span>
+      <span class="lgtag">${leagueShort(m.league)}</span>
+    </div>
+    <div class="meta">🕒 ${fmtTime(m.commence)} &nbsp;·&nbsp; ${m.books} bookmakere &nbsp;·&nbsp; margin ${m.margin.toFixed(1)}%</div>
+    <table>
+      <thead><tr><th></th><th>Chance (konsensus)</th><th>Fair</th><th>Bedste</th><th>Bookmaker</th><th>Value</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function render(){
+  const filtered = MATCHES.filter(passFilters);
+  const sorted = sortMatches(filtered);
+  const list = document.getElementById("list");
+  if(sorted.length===0){
+    list.innerHTML = `<div class="empty">Ingen kampe matcher.<br>Prøv at rydde søgningen eller vælg en anden liga.</div>`;
+  } else {
+    list.innerHTML = sorted.map(card).join("");
+  }
+  const valueCount = filtered.filter(hasValue).length;
+  document.getElementById("resTitle").textContent =
+    state.league ? leagueShort(state.league) : (state.q ? `Søgning: “${state.q}”` : "Alle kampe");
+  document.getElementById("resSub").textContent =
+    `${sorted.length} kampe · ${valueCount} med value`;
+  document.getElementById("statMatches").textContent = MATCHES.length;
+  document.getElementById("statValue").textContent = MATCHES.filter(hasValue).length;
+}
+
+function buildLeagueMenu(){
+  const counts = {};
+  MATCHES.forEach(m=>{ counts[m.league]=(counts[m.league]||0)+1; });
+  const leagues = Object.keys(counts).sort((a,b)=>counts[b]-counts[a] || a.localeCompare(b));
+  const el = document.getElementById("leagues");
+  const items = [`<div class="lg active" data-lg=""><span>Alle ligaer</span><span class="cnt">${MATCHES.length}</span></div>`]
+    .concat(leagues.map(l=>`<div class="lg" data-lg="${l.replace(/"/g,'&quot;')}"><span>${leagueShort(l)}</span><span class="cnt">${counts[l]}</span></div>`));
+  el.innerHTML = items.join("");
+  el.querySelectorAll(".lg").forEach(node=>{
+    node.addEventListener("click",()=>{
+      el.querySelectorAll(".lg").forEach(x=>x.classList.remove("active"));
+      node.classList.add("active");
+      state.league = node.getAttribute("data-lg");
+      render();
+    });
+  });
+}
+
+// Events
+document.getElementById("q").addEventListener("input",e=>{ state.q=e.target.value.trim(); render(); });
+document.getElementById("onlyValue").addEventListener("change",e=>{ state.onlyValue=e.target.checked; render(); });
+document.getElementById("exExch").addEventListener("change",e=>{ state.exExch=e.target.checked; render(); });
+document.getElementById("sort").addEventListener("change",e=>{ state.sort=e.target.value; render(); });
+document.getElementById("mobtoggle").addEventListener("click",()=>{
+  document.getElementById("side").classList.toggle("collapsed");
+});
+
+buildLeagueMenu();
+render();
+</script>
+</body>
+</html>
