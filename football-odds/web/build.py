@@ -134,6 +134,12 @@ def build_matches(raw: list) -> list:
                     "bookNE": ne_book,
                 }
             )
+        # Alle bookmakeres 1X2-odds (i udfaldsrækkefølge) til detalje-modal.
+        all_books = {
+            b: [round(prices[n], 2) for n in norm["outcome_names"]]
+            for b, prices in books.items()
+            if all(n in prices for n in norm["outcome_names"])
+        }
         match = {
             "id": ev.get("id", ""),
             "home": a.home_team,
@@ -144,6 +150,7 @@ def build_matches(raw: list) -> list:
             "books": a.num_bookmakers,
             "margin": round((a.avg_overround - 1) * 100, 1),
             "outcomes": outcomes,
+            "allBooks": all_books,
         }
         tot = _totals(ev)
         if tot:
@@ -246,8 +253,13 @@ def main(argv: list) -> int:
     data_json = json.dumps(matches, ensure_ascii=False, separators=(",", ":"))
     hist_json = json.dumps(embed_hist, ensure_ascii=False, separators=(",", ":"))
     res_json = json.dumps(results, ensure_ascii=False, separators=(",", ":"))
+
+    font_path = Path(__file__).parent / "fonts.css"
+    font_css = font_path.read_text(encoding="utf-8") if font_path.exists() else ""
+
     html = (
-        template.replace("/*__DATA__*/[]", data_json)
+        template.replace("/*__FONT__*/", font_css)
+        .replace("/*__DATA__*/[]", data_json)
         .replace("/*__HIST__*/{}", hist_json)
         .replace("/*__RESULTS__*/{}", res_json)
         .replace("__BUILT_AT__", built_at)
