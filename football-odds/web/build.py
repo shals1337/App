@@ -135,6 +135,7 @@ def build_matches(raw: list) -> list:
                 }
             )
         match = {
+            "id": ev.get("id", ""),
             "home": a.home_team,
             "away": a.away_team,
             "league": a.league or "",
@@ -152,12 +153,59 @@ def build_matches(raw: list) -> list:
     return out
 
 
+def build_results(scores_raw: list) -> dict:
+    """Byg resultat-opslag fra The Odds API /scores.
+
+    Returnerer ``{home|away (lowercase): {"hs":int,"as":int,"commence":str}}``
+    for afsluttede kampe — bruges til resultat-feed og afregning af spil.
+    """
+    res = {}
+    for ev in scores_raw:
+        if not (ev.get("completed") and ev.get("scores")):
+            continue
+        home, away = ev.get("home_team"), ev.get("away_team")
+        smap = {s["name"]: s["score"] for s in ev["scores"]}
+        try:
+            hs, as_ = int(smap.get(home)), int(smap.get(away))
+        except (TypeError, ValueError):
+            continue
+        key = f"{home}|{away}".lower()
+        res[key] = {
+            "id": ev.get("id", ""),
+            "home": home,
+            "away": away,
+            "hs": hs,
+            "as": as_,
+            "commence": ev.get("commence_time", ""),
+            "league": ev.get("sport_title", ""),
+        }
+    return res
+
+
 def main(argv: list) -> int:
-    if len(argv) < 1:
-        print("brug: python web/build.py <raw.json> [out.html]", file=sys.stderr)
+    # Simpel arg-parsing: <raw.json> [out.html] [--scores <fil>]
+    scores_file = None
+    positional = []
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--scores" and i + 1 < len(argv):
+            scores_file = argv[i + 1]
+            i += 2
+        else:
+            positional.append(argv[i])
+            i += 1
+    if not positional:
+        print(
+            "brug: python web/build.py <raw.json> [out.html] [--scores <fil>]",
+            file=sys.stderr,
+        )
         return 2
-    raw = json.load(open(argv[0], encoding="utf-8"))
+    raw = json.load(open(positional[0], encoding="utf-8"))
     matches = build_matches(raw)
+
+    results = {}
+    if scores_file and Path(scores_file).exists():
+        results = build_results(json.load(open(scores_file, encoding="utf-8")))
 
     from datetime import datetime, timezone
 
@@ -197,17 +245,26 @@ def main(argv: list) -> int:
     template = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
     data_json = json.dumps(matches, ensure_ascii=False, separators=(",", ":"))
     hist_json = json.dumps(embed_hist, ensure_ascii=False, separators=(",", ":"))
+    res_json = json.dumps(results, ensure_ascii=False, separators=(",", ":"))
     html = (
         template.replace("/*__DATA__*/[]", data_json)
         .replace("/*__HIST__*/{}", hist_json)
+        .replace("/*__RESULTS__*/{}", res_json)
         .replace("__BUILT_AT__", built_at)
     )
 
-    out_path = argv[1] if len(argv) > 1 else str(Path(__file__).parent / "index.html")
+    out_path = (
+        positional[1]
+        if len(positional) > 1
+        else str(Path(__file__).parent / "index.html")
+    )
     Path(out_path).write_text(html, encoding="utf-8")
 
     leagues = sorted({m["league"] for m in matches})
-    print(f"Skrev {out_path}: {len(matches)} kampe, {len(leagues)} ligaer.")
+    print(
+        f"Skrev {out_path}: {len(matches)} kampe, {len(leagues)} ligaer, "
+        f"{len(results)} resultater."
+    )
     return 0
 
 

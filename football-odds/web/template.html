@@ -238,6 +238,42 @@
   .brow .fill.warn{background:linear-gradient(90deg,#f5b544,#fb8b3d)}
   .brow .vv{width:52px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--text)}
 
+  /* arbitrage */
+  .arbprofit{margin-left:auto;font-size:13px;font-weight:800;color:#04120f;
+    background:linear-gradient(90deg,var(--pos),var(--accent));padding:4px 12px;border-radius:20px}
+  .arbstake{display:inline-block;font-size:11px;color:var(--accent);background:var(--chip);
+    border:1px solid var(--chipline);border-radius:6px;padding:2px 8px;margin-left:6px;font-weight:700}
+  /* poisson model */
+  .modelbtn{margin-top:11px;font-size:11.5px;font-weight:700;color:var(--accent);background:none;
+    border:1px dashed var(--chipline);border-radius:8px;padding:6px 11px;cursor:pointer;transition:background .15s}
+  .modelbtn:hover{background:var(--chip)}
+  .model{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);display:none}
+  .model.show{display:block;animation:fadein .3s ease both}
+  .model-h{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);font-weight:800;margin:2px 0 9px}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  .mcell{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .mcell .l{font-size:10px;color:var(--dim)}
+  .mcell .v{font-size:15px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+  .cs{display:inline-block;background:var(--chip);border:1px solid var(--chipline);border-radius:7px;
+    padding:3px 9px;margin:3px 4px 0 0;font-size:12px;font-weight:700}
+  .cs small{color:var(--dim);font-weight:500}
+  /* bank / results rows */
+  .lrow{display:flex;align-items:center;gap:12px;background:linear-gradient(165deg,var(--card),var(--panel2));
+    border:1px solid var(--line);border-radius:12px;padding:11px 15px;margin-bottom:9px;font-size:13px}
+  .lrow .who{flex:1;font-weight:700}
+  .lrow .sm{color:var(--dim);font-size:11.5px;font-weight:500}
+  .lrow .amt{font-variant-numeric:tabular-nums;font-weight:800}
+  .lrow select.st{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 8px;font-size:12px}
+  .lrow .del{cursor:pointer;color:var(--dim);font-size:15px}
+  .lrow .del:hover{color:var(--crit)}
+  .pill2{font-size:10px;font-weight:800;text-transform:uppercase;padding:2px 8px;border-radius:6px}
+  .p-won{background:rgba(62,230,164,.15);color:var(--pos)}
+  .p-lost{background:rgba(251,111,111,.15);color:var(--crit)}
+  .p-open{background:rgba(120,140,150,.14);color:var(--muted)}
+  .p-void{background:rgba(245,181,68,.14);color:var(--warn)}
+  .score-badge{font-weight:800;font-variant-numeric:tabular-nums;background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:3px 10px}
+
   .foot{color:var(--dim);font-size:11px;text-align:center;margin-top:30px;line-height:1.7}
 
   /* mobile */
@@ -278,7 +314,10 @@
       <div class="nav-item" data-tab="value"><span class="ic">🔥</span> Value bets <span class="cnt" id="nValue">0</span></div>
       <div class="nav-item" data-tab="all"><span class="ic">📋</span> Alle kampe <span class="cnt" id="nAll">0</span></div>
       <div class="nav-item" data-tab="fav"><span class="ic">⭐</span> Favoritter <span class="cnt" id="nFav">0</span></div>
+      <div class="nav-item" data-tab="arb"><span class="ic">🛡️</span> Arbitrage <span class="cnt" id="nArb">0</span></div>
       <div class="nav-item" data-tab="stats"><span class="ic">📊</span> Statistik</div>
+      <div class="nav-item" data-tab="bank"><span class="ic">📒</span> Min bank</div>
+      <div class="nav-item" data-tab="results"><span class="ic">🎯</span> Resultater <span class="cnt" id="nRes">0</span></div>
       <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> EV-beregner</div>
       <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> Alerts <span class="cnt" id="nAlerts">0</span></div>
       <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> Roadmap</div>
@@ -351,6 +390,39 @@
       <div class="grid" id="favList"></div>
     </section>
 
+    <!-- ARBITRAGE -->
+    <section class="tab" id="tab-arb">
+      <div class="head"><div><h2>Arbitrage / sikre spil</h2>
+        <div class="sub">Kampe hvor de bedste odds på tværs af bookmakere giver garanteret profit uanset resultat. Ægte arbs er sjældne og kortvarige.</div></div></div>
+      <div class="note" style="margin-bottom:16px">💡 Fordel indsatsen som vist, så vinder du det samme uanset udfaldet. Odds skifter hurtigt — tjek altid inden du spiller. Børser er inkluderet her (det er der arbs oftest findes).</div>
+      <div class="grid" id="arbList"></div>
+    </section>
+
+    <!-- MIN BANK (bet tracker) -->
+    <section class="tab" id="tab-bank">
+      <div class="head"><div><h2>Min bank</h2>
+        <div class="sub">Log dine spil og følg P/L, ROI og win-rate. Gemmes kun i din browser.</div></div></div>
+      <div class="tiles" id="bankTiles" style="grid-template-columns:repeat(4,1fr)"></div>
+      <div class="calc" style="max-width:none;margin-bottom:18px">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
+          <div><label style="font-size:12px;color:var(--muted)">Kamp / spil</label><input id="bMatch" placeholder="fx Silkeborg – sejr"></div>
+          <div><label style="font-size:12px;color:var(--muted)">Odds</label><input id="bOdds" type="number" step="0.01" value="2.00"></div>
+          <div><label style="font-size:12px;color:var(--muted)">Indsats (kr)</label><input id="bStake" type="number" step="10" value="100"></div>
+          <div><label style="font-size:12px;color:var(--muted)">Status</label>
+            <select id="bStatus"><option value="open">Åben</option><option value="won">Vundet</option><option value="lost">Tabt</option><option value="void">Void</option></select></div>
+          <button class="betbtn" id="bAdd" style="height:44px;padding:0 16px;font-size:13px">➕ Tilføj</button>
+        </div>
+      </div>
+      <div id="bankList"></div>
+    </section>
+
+    <!-- RESULTATER -->
+    <section class="tab" id="tab-results">
+      <div class="head"><div><h2>Resultater</h2>
+        <div class="sub">Afsluttede kampe (seneste dage) med 1X2-, over/under- og BTTS-facit. Bruges til at afregne dine spil automatisk.</div></div></div>
+      <div id="resultsBody"></div>
+    </section>
+
     <!-- STATISTIK -->
     <section class="tab" id="tab-stats">
       <div class="head"><div><h2>Statistik</h2>
@@ -402,6 +474,7 @@
 <script>
 const MATCHES = /*__DATA__*/[];
 const HIST = /*__HIST__*/{};
+const RESULTS = /*__RESULTS__*/{};
 const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
 const BUILT_AT = "__BUILT_AT__";
@@ -579,8 +652,10 @@ function card(m,i){
     <table><thead><tr><th></th><th>Chance (konsensus)</th><th title="Implied prob af bedste odds">Impl.</th><th>Fair</th><th>Bedste</th><th>Bookmaker</th><th>Value</th></tr></thead>
     <tbody>${rows}</tbody></table>
     ${totalsSection(m)}
+    ${n===3?`<button class="modelbtn" data-model="${id.replace(/"/g,'&quot;')}">🧮 Vis målmodel (BTTS, korrekt resultat)</button><div class="model" data-modelfor="${id.replace(/"/g,'&quot;')}"></div>`:''}
   </div>`;
 }
+function matchById(id){return MATCHES.find(m=>matchId(m)===id);}
 function animateBars(container){
   requestAnimationFrame(()=>{container.querySelectorAll(".bar").forEach(b=>{b.style.width=b.dataset.w+"%";});});
 }
@@ -709,6 +784,165 @@ function renderStats(){
     </div>`;
 }
 
+// ---- arbitrage ----
+function arbOf(outcomes){
+  // Brug bedste odds MED børser (arbs findes oftest der).
+  const best=outcomes.map(o=>({name:o.name,odds:o.bestAll,book:o.bookAll}));
+  if(best.some(b=>!b.odds)) return null;
+  const inv=best.reduce((s,b)=>s+1/b.odds,0);
+  if(inv>=1) return null;
+  const profit=(1/inv-1)*100;
+  const stakes=best.map(b=>({...b,pct:(1/b.odds/inv*100)}));
+  return {profit,stakes,inv};
+}
+function renderArb(){
+  const rows=[];
+  MATCHES.filter(passes).forEach(m=>{
+    [["1X2",m.outcomes],["Over/Under "+(m.totals?m.totals.point:""),m.totals&&m.totals.outcomes]]
+      .forEach(([mk,outs])=>{if(!outs)return;const a=arbOf(outs);if(a)rows.push({m,mk,a});});
+  });
+  rows.sort((x,y)=>y.a.profit-x.a.profit);
+  document.getElementById("nArb").textContent=rows.length;
+  const el=document.getElementById("arbList");
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="big">🛡️</div>Ingen arbitrage-muligheder i udvalget lige nu.<br>De er sjældne — prøv at fjerne filtre eller slå børser til.</div>`;return;}
+  el.innerHTML=rows.slice(0,40).map(({m,mk,a},i)=>`
+    <div class="card hasvalue" style="animation-delay:${Math.min(i*.03,.5)}s">
+      <div class="chead">
+        <span class="match">${m.home}<span class="vs">vs</span>${m.away}</span>
+        <span class="lgtag">${leagueShort(m.league)} · ${mk}</span>
+        <span class="arbprofit">+${a.profit.toFixed(2)}% garanteret</span>
+      </div>
+      <div class="meta">🕒 ${fmtTime(m.commence)} · fordel 1000 kr sådan:</div>
+      <table><thead><tr><th>Udfald</th><th>Odds</th><th>Bookmaker</th><th class="num">Indsats af 1000 kr</th></tr></thead><tbody>
+      ${a.stakes.map(s=>`<tr><td class="lab">${s.name}</td><td class="strong">${s.odds.toFixed(2)}</td>
+        <td class="book"><a class="betbtn" href="${bookUrl(s.book,m.home,m.away)}" target="_blank" rel="noopener">${s.book} ↗</a></td>
+        <td class="num strong">${Math.round(s.pct*10)} kr</td></tr>`).join("")}
+      </tbody></table>
+    </div>`).join("");
+  animateBars(el);
+}
+
+// ---- Poisson målmodel ----
+function poissonPmf(k,l){let p=Math.exp(-l);for(let i=1;i<=k;i++)p*=l/i;return p;}
+// Find (lh,la) så uafhængig Poisson matcher konsensus 1X2 (+ totals hvis muligt).
+function fitLambdas(m){
+  const o=m.outcomes; if(o.length!==3) return null;
+  const pH=o[0].prob,pD=o[1].prob,pA=o[2].prob;
+  // startgæt for total mål: fra totals-linje hvis den findes, ellers 2.6
+  let mu=m.totals?m.totals.point:2.6;
+  // Justér mu så model-over matcher, hvis vi har totals.
+  // Grid-søgning over supremacy (lh-la) og mu for bedste match på 1X2.
+  let best=null;
+  for(let M=1.8;M<=3.8;M+=0.1){
+    for(let d=-2.2;d<=2.2;d+=0.1){
+      const lh=(M+d)/2, la=(M-d)/2; if(lh<=0.05||la<=0.05)continue;
+      let h=0,dr=0,a=0;
+      for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){
+        const p=poissonPmf(i,lh)*poissonPmf(j,la);
+        if(i>j)h+=p;else if(i===j)dr+=p;else a+=p;}
+      let err=(h-pH)**2+(dr-pD)**2+(a-pA)**2;
+      if(m.totals){const line=m.totals.point;let ov=0;
+        for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){if(i+j>line)ov+=poissonPmf(i,lh)*poissonPmf(j,la);}
+        err+=0.5*(ov-m.totals.outcomes[0].prob)**2;}
+      if(!best||err<best.err)best={lh,la,err};
+    }
+  }
+  return best;
+}
+function modelMarkets(m){
+  const f=fitLambdas(m); if(!f)return null;
+  const {lh,la}=f, N=11;
+  const P=[];let btts=0,over25=0,over15=0,over35=0;
+  const scores=[];
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+    const p=poissonPmf(i,lh)*poissonPmf(j,la);
+    scores.push({i,j,p});
+    if(i>0&&j>0)btts+=p;
+    if(i+j>1.5)over15+=p; if(i+j>2.5)over25+=p; if(i+j>3.5)over35+=p;
+  }
+  scores.sort((a,b)=>b.p-a.p);
+  return {lh,la,btts,over15,over25,over35,top:scores.slice(0,5)};
+}
+function modelHtml(m){
+  const mk=modelMarkets(m); if(!mk)return "<div class='model-h'>Kan ikke modellere denne kamp.</div>";
+  const pc=x=>(x*100).toFixed(1)+"%";
+  return `<div class="model-h">🧮 Egen målmodel (Poisson · λ ${mk.lh.toFixed(2)} – ${mk.la.toFixed(2)})</div>
+    <div class="mgrid">
+      <div class="mcell"><div class="l">Begge scorer (BTTS)</div><div class="v">${pc(mk.btts)}</div></div>
+      <div class="mcell"><div class="l">Over 1.5 mål</div><div class="v">${pc(mk.over15)}</div></div>
+      <div class="mcell"><div class="l">Over 2.5 mål</div><div class="v">${pc(mk.over25)}</div></div>
+      <div class="mcell"><div class="l">Over 3.5 mål</div><div class="v">${pc(mk.over35)}</div></div>
+    </div>
+    <div style="margin-top:10px"><div class="l" style="font-size:10px;color:var(--dim)">Mest sandsynlige resultater:</div>
+      ${mk.top.map(s=>`<span class="cs">${s.i}–${s.j} <small>${pc(s.p)}</small></span>`).join("")}</div>
+    <div class="note" style="margin-top:10px;font-size:11px">Modellen udleder forventede mål fra konsensus-odds og antager uafhængig Poisson. Den prissætter markeder API'et ikke leverer (BTTS, korrekt resultat) — et estimat, ikke en garanti.</div>`;
+}
+
+// ---- bet tracker ----
+const BANKKEY="oddscalc_bets";
+let bets=JSON.parse(localStorage.getItem(BANKKEY)||"[]");
+function saveBets(){localStorage.setItem(BANKKEY,JSON.stringify(bets));}
+function settleFromResults(){
+  // Auto-afregn åbne spil hvis kampen findes i resultaterne (matcher på tekst).
+  bets.forEach(b=>{
+    if(b.status!=="open")return;
+    const key=(b.match||"").toLowerCase();
+    for(const rk in RESULTS){const r=RESULTS[rk];
+      if(key.includes(r.home.toLowerCase())&&key.includes(r.away.toLowerCase())){
+        b.result=`${r.hs}-${r.as}`;b.settledHint=`${r.home} ${r.hs}-${r.as} ${r.away}`;break;}
+    }
+  });
+}
+function bankStats(){
+  let staked=0,ret=0,won=0,settled=0;
+  bets.forEach(b=>{const st=+b.stake||0,od=+b.odds||0;
+    if(b.status==="won"){staked+=st;ret+=st*od;won++;settled++;}
+    else if(b.status==="lost"){staked+=st;settled++;}
+    else if(b.status==="void"){/* neutralt */}});
+  const profit=ret-staked;
+  const roi=staked>0?profit/staked*100:0;
+  const wr=settled>0?won/settled*100:0;
+  return {profit,roi,wr,settled,open:bets.filter(b=>b.status==="open").length};
+}
+function renderBank(){
+  settleFromResults();saveBets();
+  const s=bankStats();
+  document.getElementById("bankTiles").innerHTML=`
+    <div class="tile ${s.profit>=0?'pos':''}"><div class="ic">💰</div><div class="n" style="color:${s.profit>=0?'var(--pos)':'var(--crit)'}">${s.profit>=0?'+':''}${Math.round(s.profit)}</div><div class="l">Profit (kr)</div></div>
+    <div class="tile"><div class="ic">📈</div><div class="n" style="color:${s.roi>=0?'var(--pos)':'var(--crit)'}">${s.roi>=0?'+':''}${s.roi.toFixed(1)}%</div><div class="l">ROI</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${s.wr.toFixed(0)}%</div><div class="l">Win-rate (${s.settled} afgjort)</div></div>
+    <div class="tile"><div class="ic">🕒</div><div class="n">${s.open}</div><div class="l">Åbne spil</div></div>`;
+  const el=document.getElementById("bankList");
+  if(!bets.length){el.innerHTML=`<div class="empty"><div class="big">📒</div>Ingen spil endnu. Tilføj dit første ovenfor.</div>`;return;}
+  el.innerHTML=[...bets].reverse().map((b,ri)=>{const idx=bets.length-1-ri;
+    const cls={won:"p-won",lost:"p-lost",open:"p-open",void:"p-void"}[b.status];
+    const pl=b.status==="won"?`+${Math.round((+b.stake)*(+b.odds-1))}`:b.status==="lost"?`−${Math.round(+b.stake)}`:"—";
+    return `<div class="lrow">
+      <span class="pill2 ${cls}">${{won:"Vundet",lost:"Tabt",open:"Åben",void:"Void"}[b.status]}</span>
+      <span class="who">${b.match||"—"}<div class="sm">${b.odds} @ ${b.stake} kr${b.settledHint?' · facit: '+b.settledHint:''}</div></span>
+      <span class="amt" style="color:${b.status==='won'?'var(--pos)':b.status==='lost'?'var(--crit)':'var(--muted)'}">${pl} kr</span>
+      <select class="st" data-i="${idx}"><option value="open"${b.status==='open'?' selected':''}>Åben</option><option value="won"${b.status==='won'?' selected':''}>Vundet</option><option value="lost"${b.status==='lost'?' selected':''}>Tabt</option><option value="void"${b.status==='void'?' selected':''}>Void</option></select>
+      <span class="del" data-del="${idx}">🗑</span></div>`;}).join("");
+}
+
+// ---- resultater ----
+function renderResults(){
+  const list=Object.values(RESULTS).sort((a,b)=>(b.commence||"").localeCompare(a.commence||""));
+  document.getElementById("nRes").textContent=list.length;
+  const el=document.getElementById("resultsBody");
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🎯</div>Ingen afsluttede resultater i datasættet endnu.</div>`;return;}
+  el.innerHTML=`<div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+    <div class="tile"><div class="ic">🎯</div><div class="n">${list.length}</div><div class="l">Afsluttede kampe</div></div>
+    <div class="tile"><div class="ic">⚽</div><div class="n">${Math.round(list.filter(r=>r.hs+r.as>2.5).length/list.length*100)}%</div><div class="l">Over 2.5 mål</div></div>
+    <div class="tile"><div class="ic">🤝</div><div class="n">${Math.round(list.filter(r=>r.hs>0&&r.as>0).length/list.length*100)}%</div><div class="l">Begge scorede</div></div>
+    <div class="tile"><div class="ic">🏠</div><div class="n">${Math.round(list.filter(r=>r.hs>r.as).length/list.length*100)}%</div><div class="l">Hjemmesejr</div></div>
+  </div>`+list.slice(0,80).map(r=>{
+    const res=r.hs>r.as?"1":r.hs<r.as?"2":"X";const ou=r.hs+r.as>2.5?"Over":"Under";const btts=r.hs>0&&r.as>0?"Ja":"Nej";
+    return `<div class="lrow"><span class="who">${r.home} <span class="vs">vs</span> ${r.away}<div class="sm">${leagueShort(r.league)} · ${fmtTime(r.commence)}</div></span>
+      <span class="score-badge">${r.hs} – ${r.as}</span>
+      <span class="pill2 p-open">1X2: ${res}</span><span class="pill2 p-open">${ou} 2.5</span><span class="pill2 p-open">BTTS: ${btts}</span></div>`;}).join("");
+}
+
 // ---- roadmap ----
 const ROADMAP=[
   {t:"📊 Odds Scanner",s:"live",st:"st-live",items:[
@@ -761,14 +995,17 @@ function renderRoad(){
 
 // ---- master render ----
 function renderAll(){
-  renderToday();renderValue();renderAllTab();renderFav();renderAlerts();
+  renderToday();renderValue();renderAllTab();renderFav();renderAlerts();renderArb();
   if(S.tab==="stats")renderStats();
+  if(S.tab==="bank")renderBank();
+  if(S.tab==="results")renderResults();
   document.getElementById("hMatches").textContent=MATCHES.length;
   document.getElementById("hValue").textContent=MATCHES.filter(m=>hasValue(m,S.exExch)).length;
   const lgs=new Set(MATCHES.map(m=>m.league));
   document.getElementById("hLeagues").textContent=lgs.size;
   document.getElementById("nValue").textContent=MATCHES.filter(m=>hasValue(m,S.exExch)).length;
   document.getElementById("nAll").textContent=MATCHES.length;
+  document.getElementById("nRes").textContent=Object.keys(RESULTS).length;
 }
 
 // ---- opsæt filtre ----
@@ -795,11 +1032,36 @@ function switchTab(name){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("show"));
   document.getElementById("tab-"+name).classList.add("show");
   if(name==="stats")renderStats();
-  const gridId={today:"todayList",value:"valueList",all:"allList",fav:"favList",alerts:"alertList"}[name];
+  if(name==="bank")renderBank();
+  if(name==="results")renderResults();
+  const gridId={today:"todayList",value:"valueList",all:"allList",fav:"favList",alerts:"alertList",arb:"arbList"}[name];
   if(gridId)animateBars(document.getElementById(gridId));
 }
 document.getElementById("nav").addEventListener("click",e=>{const n=e.target.closest(".nav-item");if(n)switchTab(n.dataset.tab);});
-document.querySelector("main").addEventListener("click",e=>{const s=e.target.closest(".star");if(s)toggleFav(s.dataset.fav);});
+document.querySelector("main").addEventListener("click",e=>{
+  const s=e.target.closest(".star");if(s){toggleFav(s.dataset.fav);return;}
+  const mb=e.target.closest(".modelbtn");
+  if(mb){const id=mb.dataset.model;const box=document.querySelector(`.model[data-modelfor="${CSS.escape(id)}"]`);
+    if(box){if(box.classList.contains("show")){box.classList.remove("show");mb.textContent="🧮 Vis målmodel (BTTS, korrekt resultat)";}
+      else{const m=matchById(id);if(m){box.innerHTML=modelHtml(m);box.classList.add("show");mb.textContent="🧮 Skjul målmodel";}}}
+    return;}
+  // bet-tracker: status-skift + slet
+  const del=e.target.closest(".del");
+  if(del){bets.splice(+del.dataset.del,1);saveBets();renderBank();return;}
+});
+document.querySelector("main").addEventListener("change",e=>{
+  const st=e.target.closest("select.st");
+  if(st){bets[+st.dataset.i].status=st.value;saveBets();renderBank();}
+});
+document.getElementById("bAdd").addEventListener("click",()=>{
+  const match=document.getElementById("bMatch").value.trim();
+  const odds=parseFloat(document.getElementById("bOdds").value)||0;
+  const stake=parseFloat(document.getElementById("bStake").value)||0;
+  const status=document.getElementById("bStatus").value;
+  if(!match||odds<=1||stake<=0){document.getElementById("bMatch").focus();return;}
+  bets.push({match,odds,stake,status,ts:Date.now()});saveBets();
+  document.getElementById("bMatch").value="";renderBank();
+});
 document.getElementById("q").addEventListener("input",e=>{S.q=e.target.value.trim().toLowerCase();renderAll();});
 document.getElementById("fCountry").addEventListener("change",e=>{S.country=e.target.value;S.league="";refreshLeagueSelect();renderAll();});
 document.getElementById("fLeague").addEventListener("change",e=>{S.league=e.target.value;renderAll();});
