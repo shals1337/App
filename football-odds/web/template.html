@@ -208,6 +208,36 @@
   .note{font-size:12px;color:var(--dim);background:var(--panel2);border:1px solid var(--line);
     border-radius:12px;padding:12px 14px;margin-top:14px;line-height:1.6}
 
+  /* over/under sektion */
+  .ou{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)}
+  .ou-h{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);font-weight:800;margin-bottom:8px}
+  .betbtn{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:var(--accent);
+    border:1px solid var(--chipline);background:var(--chip);border-radius:7px;padding:3px 8px;text-decoration:none;
+    transition:background .15s,transform .12s;white-space:nowrap}
+  .betbtn:hover{background:rgba(45,212,191,.16);transform:translateY(-1px)}
+  /* live badge */
+  .live{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#fff;
+    background:var(--crit);padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:5px}
+  .live .d{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
+  /* sparkline */
+  .spark{margin-left:8px;vertical-align:middle;opacity:.9}
+  .sparkwrap{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim)}
+  /* statistik */
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.statgrid{grid-template-columns:1fr}}
+  .spanel{background:linear-gradient(165deg,var(--card),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:16px 18px}
+  .spanel h4{font-size:13px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .brow{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px}
+  .brow .nm{width:135px;flex-shrink:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brow .track{flex:1;background:var(--panel2);border-radius:6px;height:16px;overflow:hidden}
+  .brow .fill{height:100%;border-radius:6px;transform-origin:left center;
+    animation:grow .8s cubic-bezier(.2,.8,.2,1) both;
+    background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .brow .fill.warn{background:linear-gradient(90deg,#f5b544,#fb8b3d)}
+  .brow .vv{width:52px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--text)}
+
   .foot{color:var(--dim);font-size:11px;text-align:center;margin-top:30px;line-height:1.7}
 
   /* mobile */
@@ -248,6 +278,7 @@
       <div class="nav-item" data-tab="value"><span class="ic">🔥</span> Value bets <span class="cnt" id="nValue">0</span></div>
       <div class="nav-item" data-tab="all"><span class="ic">📋</span> Alle kampe <span class="cnt" id="nAll">0</span></div>
       <div class="nav-item" data-tab="fav"><span class="ic">⭐</span> Favoritter <span class="cnt" id="nFav">0</span></div>
+      <div class="nav-item" data-tab="stats"><span class="ic">📊</span> Statistik</div>
       <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> EV-beregner</div>
       <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> Alerts <span class="cnt" id="nAlerts">0</span></div>
       <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> Roadmap</div>
@@ -320,6 +351,13 @@
       <div class="grid" id="favList"></div>
     </section>
 
+    <!-- STATISTIK -->
+    <section class="tab" id="tab-stats">
+      <div class="head"><div><h2>Statistik</h2>
+        <div class="sub">Analyse på tværs af alle scannede kampe — opdateres med filtrene i siden.</div></div></div>
+      <div id="statsBody"></div>
+    </section>
+
     <!-- EV-BEREGNER -->
     <section class="tab" id="tab-calc">
       <div class="head"><div><h2>EV-beregner</h2>
@@ -363,9 +401,22 @@
 
 <script>
 const MATCHES = /*__DATA__*/[];
+const HIST = /*__HIST__*/{};
 const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
 const BUILT_AT = "__BUILT_AT__";
+
+// Bookmaker-hjemmesider til "åbn hos"-knap (ingen ægte deep link fra API'et).
+const BOOK_URL={
+  "Bet365":"https://www.bet365.com","Unibet":"https://www.unibet.com","Pinnacle":"https://www.pinnacle.com",
+  "William Hill":"https://www.williamhill.com","Betfair":"https://www.betfair.com","Nordic Bet":"https://www.nordicbet.com",
+  "Betsson":"https://www.betsson.com","888sport":"https://www.888sport.com","LeoVegas":"https://www.leovegas.com",
+  "Coolbet":"https://www.coolbet.com","Tipico":"https://www.tipico.de","Matchbook":"https://www.matchbook.com"
+};
+function bookUrl(book,home,away){
+  if(BOOK_URL[book]) return BOOK_URL[book];
+  return "https://www.google.com/search?q="+encodeURIComponent(book+" "+home+" "+away+" odds");
+}
 
 // ---- land ud fra sport_key ----
 const COUNTRY = {
@@ -463,44 +514,71 @@ function sortBy(arr,key){const c=[...arr];
   return c;}
 
 // ---- render kort ----
-function outcomeRow(o,idx,n){
-  const pre=n===3?["1","X","2"][idx]:["1","2"][idx];
+function outcomeRow(o,idx,pres,m){
+  const pre=pres[idx];
   const v=view(o,S.exExch);
   const edge=v.edge*100, isVal=v.edge>=MIN_VALUE;
   const cls=edge>0?"pos":"neg";
+  const bet=v.book?`<a class="betbtn" href="${bookUrl(v.book,m.home,m.away)}" target="_blank" rel="noopener">${v.book} ↗</a>`:"—";
   return `<tr class="${isVal?'valrow':''}">
     <td class="lab"><span class="pre">${pre}</span>${o.name}${isVal?'<span class="badge">VALUE</span>':''}</td>
     <td><div class="barwrap"><div class="bar" data-w="${(o.prob*100).toFixed(0)}"></div><span class="pct">${(o.prob*100).toFixed(1)}%</span></div></td>
     <td class="num" title="Implied probability">${(100/v.best).toFixed(1)}%</td>
     <td class="num">${o.fair.toFixed(2)}</td>
     <td class="num strong">${v.best.toFixed(2)}</td>
-    <td class="book">${v.book||"—"}</td>
+    <td>${bet}</td>
     <td class="num ${cls}">${edge>=0?'+':''}${edge.toFixed(1)}%</td>
   </tr>`;
 }
+// SVG-sparkline af favorittens bedste odds over tid.
+function sparkline(m){
+  const h=HIST[matchId(m)];
+  if(!h||h.length<2) return "";
+  const favIdx=m.outcomes.reduce((bi,o,i,a)=>o.prob>a[bi].prob?i:bi,0);
+  const series=h.map(s=>s.h2h[favIdx]).filter(x=>x>0);
+  if(series.length<2) return "";
+  const mn=Math.min(...series),mx=Math.max(...series),rng=mx-mn||1,W=54,H=16;
+  const pts=series.map((y,i)=>`${(i/(series.length-1)*W).toFixed(1)},${(H-((y-mn)/rng)*H).toFixed(1)}`).join(" ");
+  const up=series[series.length-1]>series[0];
+  const col=up?"#fb6f6f":"#3ee6a4"; // odds op = chance ned (rød), odds ned = penge kommer (grøn)
+  const dir=up?"▲":"▼";
+  return `<span class="sparkwrap" title="Bedste odds på favoritten over tid"><svg class="spark" width="${W}" height="${H}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6"/></svg>${dir} ${series[0].toFixed(2)}→${series[series.length-1].toFixed(2)}</span>`;
+}
+function totalsSection(m){
+  if(!m.totals) return "";
+  const t=m.totals, pres=["O","U"];
+  const rows=t.outcomes.map((o,i)=>outcomeRow(o,i,pres,m)).join("");
+  return `<div class="ou"><div class="ou-h">⚽ Over/Under ${t.point} mål · ${t.books} bookmakere</div>
+    <table><tbody>${rows}</tbody></table></div>`;
+}
 function card(m,i){
   const id=matchId(m), n=m.outcomes.length;
+  const pres=n===3?["1","X","2"]:["1","2"];
   const sc=matchScore(m,S.exExch), b=bestOutcome(m,S.exExch);
   const scls=sc>=60?"s-hi":sc>=35?"s-mid":"s-lo";
   const risk=b?riskOf(b):"med";
   const rlabel={low:"Lav risiko",med:"Mellem",high:"Høj risiko"}[risk];
   const h=hoursUntil(m.commence);
-  const soon=h>=0&&h<=3?`<span class="soon">⏱ starter om ${h<1?Math.round(h*60)+' min':h.toFixed(1)+' t'}</span> ·`:"";
-  const rows=m.outcomes.map((o,idx)=>outcomeRow(o,idx,n)).join("");
+  const live=h<0&&h>-3.5;
+  const liveBadge=live?`<span class="live"><span class="d"></span>Live</span>`:"";
+  const soon=(h>=0&&h<=3)?`<span class="soon">⏱ starter om ${h<1?Math.round(h*60)+' min':h.toFixed(1)+' t'}</span> ·`:"";
+  const rows=m.outcomes.map((o,idx)=>outcomeRow(o,idx,pres,m)).join("");
   const delay=Math.min(i*0.03,0.5);
   return `<div class="card ${hasValue(m,S.exExch)?'hasvalue':''}" style="animation-delay:${delay}s">
     <div class="chead">
       <span class="star ${favs.has(id)?'on':''}" data-fav="${id.replace(/"/g,'&quot;')}">${favs.has(id)?'★':'☆'}</span>
       <span class="match">${m.home}<span class="vs">vs</span>${m.away}</span>
+      ${liveBadge}
       <span class="lgtag">${leagueShort(m.league)}</span>
       <span class="scorepill">
         ${hasValue(m,S.exExch)?`<span class="rtag ${risk}">${rlabel}</span>`:''}
         <span class="score ${scls}" title="Value-score 0-100">${sc}</span>
       </span>
     </div>
-    <div class="meta">${soon} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} bookmakere · margin ${m.margin.toFixed(1)}%</div>
+    <div class="meta">${soon} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} bookmakere · margin ${m.margin.toFixed(1)}% ${sparkline(m)}</div>
     <table><thead><tr><th></th><th>Chance (konsensus)</th><th title="Implied prob af bedste odds">Impl.</th><th>Fair</th><th>Bedste</th><th>Bookmaker</th><th>Value</th></tr></thead>
     <tbody>${rows}</tbody></table>
+    ${totalsSection(m)}
   </div>`;
 }
 function animateBars(container){
@@ -583,6 +661,54 @@ function renderCalc(){
   else{v.className="verdict bad";v.textContent=`✕ Ingen value. Markedet prissætter ${implied.toFixed(1)}% — lig med eller over din vurdering. Negativ EV.`;}
 }
 
+// ---- statistik ----
+function barRow(name,val,max,fmt,warn){
+  const w=max>0?Math.min(val/max*100,100):0;
+  return `<div class="brow"><span class="nm" title="${name}">${name}</span>
+    <span class="track"><span class="fill ${warn?'warn':''}" style="width:${w.toFixed(1)}%"></span></span>
+    <span class="vv">${fmt(val)}</span></div>`;
+}
+function renderStats(){
+  const pool=MATCHES.filter(passes);
+  // value pr. land
+  const byCountry={},marginByLeague={},cntLeague={},bookWins={},valByLeague={};
+  pool.forEach(m=>{
+    const c=countryOf(m);byCountry[c]=byCountry[c]||{n:0,v:0};byCountry[c].n++;
+    if(hasValue(m,S.exExch))byCountry[c].v++;
+    const lg=leagueShort(m.league);
+    marginByLeague[lg]=(marginByLeague[lg]||0)+m.margin;cntLeague[lg]=(cntLeague[lg]||0)+1;
+    if(hasValue(m,S.exExch))valByLeague[lg]=(valByLeague[lg]||0)+1;
+    m.outcomes.forEach(o=>{if(o.bookNE)bookWins[o.bookNE]=(bookWins[o.bookNE]||0)+1;});
+  });
+  const countries=Object.entries(byCountry).map(([c,d])=>[c,d.v,d.n])
+    .sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxCV=Math.max(1,...countries.map(x=>x[1]));
+  const leaguesMargin=Object.keys(cntLeague).map(l=>[l,marginByLeague[l]/cntLeague[l]])
+    .filter(x=>cntLeague[x[0]]>=3).sort((a,b)=>a[1]-b[1]).slice(0,10);
+  const maxMg=Math.max(...leaguesMargin.map(x=>x[1]),1);
+  const books=Object.entries(bookWins).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxB=Math.max(1,...books.map(x=>x[1]));
+  const valLg=Object.entries(valByLeague).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxVL=Math.max(1,...valLg.map(x=>x[1]));
+  // over/under fordeling
+  const ouMatches=pool.filter(m=>m.totals);
+  const overFav=ouMatches.filter(m=>m.totals.outcomes[0].prob>=0.5).length;
+
+  document.getElementById("statsBody").innerHTML=`
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr)">
+      <div class="tile"><div class="ic">📋</div><div class="n">${pool.length}</div><div class="l">Kampe i udvalg</div></div>
+      <div class="tile pos"><div class="ic">🔥</div><div class="n">${pool.filter(m=>hasValue(m,S.exExch)).length}</div><div class="l">Med value</div></div>
+      <div class="tile"><div class="ic">⚽</div><div class="n">${ouMatches.length}</div><div class="l">Med over/under</div></div>
+      <div class="tile"><div class="ic">📈</div><div class="n">${ouMatches.length?Math.round(overFav/ouMatches.length*100):0}%</div><div class="l">Hvor Over er favorit</div></div>
+    </div>
+    <div class="statgrid">
+      <div class="spanel"><h4>🌍 Value bets pr. land</h4>${countries.map(([c,v,n])=>barRow(`${c}`,v,maxCV,x=>`${x}/${n}`)).join("")||'<div class="book">Ingen data</div>'}</div>
+      <div class="spanel"><h4>🏆 Value bets pr. liga</h4>${valLg.map(([l,v])=>barRow(l,v,maxVL,x=>x)).join("")||'<div class="book">Ingen value i udvalget</div>'}</div>
+      <div class="spanel"><h4>💧 Laveste margin pr. liga (skarpest)</h4>${leaguesMargin.map(([l,mg])=>barRow(l,mg,maxMg,x=>x.toFixed(1)+"%",true)).join("")}</div>
+      <div class="spanel"><h4>🥇 Oftest bedste odds (bookmaker)</h4>${books.map(([b,c])=>barRow(b,c,maxB,x=>x)).join("")}</div>
+    </div>`;
+}
+
 // ---- roadmap ----
 const ROADMAP=[
   {t:"📊 Odds Scanner",s:"live",st:"st-live",items:[
@@ -636,6 +762,7 @@ function renderRoad(){
 // ---- master render ----
 function renderAll(){
   renderToday();renderValue();renderAllTab();renderFav();renderAlerts();
+  if(S.tab==="stats")renderStats();
   document.getElementById("hMatches").textContent=MATCHES.length;
   document.getElementById("hValue").textContent=MATCHES.filter(m=>hasValue(m,S.exExch)).length;
   const lgs=new Set(MATCHES.map(m=>m.league));
@@ -667,6 +794,7 @@ function switchTab(name){
   document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.tab===name));
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("show"));
   document.getElementById("tab-"+name).classList.add("show");
+  if(name==="stats")renderStats();
   const gridId={today:"todayList",value:"valueList",all:"allList",fav:"favList",alerts:"alertList"}[name];
   if(gridId)animateBars(document.getElementById(gridId));
 }
