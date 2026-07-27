@@ -88,16 +88,32 @@ def normalise_event(event: dict) -> dict:
             "home_team": str,
             "away_team": str,
             "commence_time": str,
-            "outcome_names": [home, "Draw", away],
+            "league": str,
+            "outcome_names": [...],
             "bookmaker_odds": {bookmaker: {udfald: odds}},
         }
 
-    Rækkefølgen af udfald er altid hjemme, uafgjort, ude — så CLI'en kan
-    vise 1 / X / 2 konsistent.
+    Håndterer både 3-vejs markeder (fodbold: hjemme / uafgjort / ude) og
+    2-vejs markeder (tennis, cricket-T20 uden uafgjort). Rækkefølgen er
+    altid hjemme, (uafgjort), ude — så 1 / X / 2 vises konsistent. Kun
+    ægte ``h2h``-markeder bruges; børs-"lay"-priser (``h2h_lay``) ignoreres.
     """
     home = event["home_team"]
     away = event["away_team"]
-    outcome_names = [home, "Draw", away]
+
+    # Afgør om markedet har uafgjort ved at kigge på de faktiske udfald.
+    has_draw = False
+    for book in event.get("bookmakers", []):
+        for market in book.get("markets", []):
+            if market.get("key") != "h2h":
+                continue
+            if any(o["name"] == "Draw" for o in market.get("outcomes", [])):
+                has_draw = True
+
+    if has_draw:
+        outcome_names = [home, "Draw", away]
+    else:
+        outcome_names = [home, away]
 
     bookmaker_odds: Dict[str, Dict[str, float]] = {}
     for book in event.get("bookmakers", []):
@@ -107,7 +123,7 @@ def normalise_event(event: dict) -> dict:
             prices = {
                 o["name"]: float(o["price"]) for o in market.get("outcomes", [])
             }
-            # Behold kun bookmakere med alle tre priser.
+            # Behold kun bookmakere med priser på alle udfald.
             if all(name in prices for name in outcome_names):
                 bookmaker_odds[book["title"]] = prices
 
@@ -115,6 +131,16 @@ def normalise_event(event: dict) -> dict:
         "home_team": home,
         "away_team": away,
         "commence_time": event.get("commence_time"),
+        "league": event.get("sport_title"),
         "outcome_names": outcome_names,
         "bookmaker_odds": bookmaker_odds,
     }
+
+
+def load_events_from_file(path: str) -> List[dict]:
+    """Indlæs en gemt rå The Odds API-JSON og normalisér til analyse-format."""
+    with open(path, "r", encoding="utf-8") as fh:
+        raw = json.load(fh)
+    if not isinstance(raw, list):
+        raise OddsAPIError("forventede en JSON-liste af kampe i filen")
+    return [normalise_event(ev) for ev in raw]

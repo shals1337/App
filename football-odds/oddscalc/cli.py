@@ -45,11 +45,22 @@ def _analyse_events(events: List[dict]) -> List[MatchAnalysis]:
     return analyses
 
 
+def _labels_for(a: MatchAnalysis) -> List[str]:
+    """Prefiks-labels: 1/X/2 for 3-vejs, 1/2 for 2-vejs markeder."""
+    if len(a.outcomes) == 3:
+        prefix = ["1", "X", "2"]
+    else:
+        prefix = ["1", "2"]
+    return [f"{prefix[i]} {o.name}" for i, o in enumerate(a.outcomes)]
+
+
 def _format_match(a: MatchAnalysis, min_edge: float) -> str:
     lines: List[str] = []
     header = f"{a.home_team}  vs  {a.away_team}"
     lines.append(header)
     lines.append("-" * len(header))
+    if a.league:
+        lines.append(f"Liga/turnering: {a.league}")
     if a.commence_time:
         lines.append(f"Kampstart: {a.commence_time}")
     lines.append(
@@ -60,16 +71,16 @@ def _format_match(a: MatchAnalysis, min_edge: float) -> str:
 
     # Kolonner: udfald, chance%, fair odds, bedste odds, hos, value.
     lines.append(
-        f"  {'Udfald':<22}{'Chance':>8}{'Fair':>8}{'Bedste':>9}"
+        f"  {'Udfald':<26}{'Chance':>8}{'Fair':>8}{'Bedste':>9}"
         f"  {'Bookmaker':<14}{'Value':>8}"
     )
-    labels = ["1 (Hjemme)", "X (Uafgjort)", "2 (Ude)"]
+    labels = _labels_for(a)
     for i, o in enumerate(a.outcomes):
         label = labels[i] if i < len(labels) else o.name
         value_str = f"{o.edge * 100:+.1f}%" if o.best_odds > 0 else "  -  "
         marker = "  <-- VALUE" if o.edge >= min_edge else ""
         lines.append(
-            f"  {label:<22}{o.consensus_pct:>7.1f}%{o.fair_decimal_odds:>8.2f}"
+            f"  {label:<26}{o.consensus_pct:>7.1f}%{o.fair_decimal_odds:>8.2f}"
             f"{o.best_odds:>9.2f}  {o.best_bookmaker:<14}{value_str:>8}{marker}"
         )
 
@@ -99,6 +110,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--demo",
         action="store_true",
         help="Kør med indbygget testdata (ingen API-nøgle nødvendig).",
+    )
+    p.add_argument(
+        "--file",
+        help="Analysér en gemt rå The Odds API-JSON-fil i stedet for at "
+        "kalde API'et.",
     )
     p.add_argument(
         "--api-key",
@@ -133,8 +149,15 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"  {name:<12} {key}")
         return 0
 
-    # Vælg datakilde: demo eller live.
-    if args.demo or (not args.league):
+    # Vælg datakilde: fil, demo eller live.
+    if args.file:
+        try:
+            events = api.load_events_from_file(args.file)
+        except (OSError, api.OddsAPIError, ValueError) as exc:
+            print(f"Fejl ved indlæsning af fil: {exc}", file=sys.stderr)
+            return 1
+        source = f"FIL — {args.file}"
+    elif args.demo or (not args.league):
         if not args.demo and not args.league:
             print(
                 "Ingen --league angivet — kører i demo-mode. "
