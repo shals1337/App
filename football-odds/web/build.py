@@ -189,6 +189,100 @@ def build_results(scores_raw: list) -> dict:
     return res
 
 
+TIP_MIN_EDGE = 0.02
+
+
+def update_tips(matches: list, results: dict) -> dict:
+    """Vedligehold et facit-kartotek over appens value-tips.
+
+    - Registrerer appens bedste value-udfald (EV ≥ 2%) pr. kamp som et tip.
+    - Afgør ramt/forkert når kampen dukker op i resultaterne.
+    - Gemmer web/tips.json og returnerer en opsummering til indlejring.
+    """
+    tips_path = Path(__file__).parent / "tips.json"
+    tips = {}
+    if tips_path.exists():
+        try:
+            tips = json.loads(tips_path.read_text(encoding="utf-8"))
+        except ValueError:
+            tips = {}
+
+    # Slå resultater op på både event-id og hold-nøgle.
+    by_id = {r["id"]: r for r in results.values() if r.get("id")}
+
+    def result_for(tip):
+        r = by_id.get(tip.get("id"))
+        if r:
+            return r
+        return results.get(f"{tip['home']}|{tip['away']}".lower())
+
+    # 1) Registrér nye tips fra de aktuelle kampe.
+    for m in matches:
+        # appens anbefaling = udfald med højeste EV (uden børser), hvis value.
+        best = None
+        for i, o in enumerate(m["outcomes"]):
+            if o["bestNE"] <= 0:
+                continue
+            edge = o["prob"] * o["bestNE"] - 1
+            if best is None or edge > best[1]:
+                best = (o, edge, i)
+        if not best or best[1] < TIP_MIN_EDGE:
+            continue
+        o, edge, idx = best
+        side = (["1", "X", "2"] if len(m["outcomes"]) == 3 else ["1", "2"])[idx]
+        key = f"{m['id']}|{o['name']}"
+        if key not in tips:
+            tips[key] = {
+                "id": m["id"],
+                "home": m["home"],
+                "away": m["away"],
+                "league": m["league"],
+                "commence": m["commence"],
+                "side": side,
+                "pick": o["name"],
+                "odds": o["bestNE"],
+                "prob": o["prob"],
+                "edge": round(edge, 4),
+                "ts": m["commence"],
+                "graded": False,
+            }
+
+    # 2) Afgør ugraderede tips der nu har et resultat.
+    for key, t in tips.items():
+        if t.get("graded"):
+            continue
+        r = result_for(t)
+        if not r:
+            continue
+        hs, as_ = r["hs"], r["as"]
+        actual = t["home"] if hs > as_ else (t["away"] if as_ > hs else "Draw")
+        t["graded"] = True
+        t["win"] = t["pick"] == actual
+        t["score"] = f"{hs}-{as_}"
+
+    tips_path.write_text(
+        json.dumps(tips, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+
+    graded = [t for t in tips.values() if t.get("graded")]
+    hits = [t for t in graded if t.get("win")]
+    misses = [t for t in graded if not t.get("win")]
+    pending = [t for t in tips.values() if not t.get("graded")]
+    staked = len(graded)
+    profit = sum((t["odds"] - 1) if t.get("win") else -1 for t in graded)
+    return {
+        "hits": len(hits),
+        "misses": len(misses),
+        "pending": len(pending),
+        "hitRate": round(len(hits) / staked * 100, 1) if staked else 0,
+        "roi": round(profit / staked * 100, 1) if staked else 0,
+        "profit": round(profit, 2),
+        # seneste afgjorte tips til visning (nyeste først)
+        "recent": sorted(graded, key=lambda t: t["commence"], reverse=True)[:60],
+    }
+
+
 def main(argv: list) -> int:
     # Simpel arg-parsing: <raw.json> [out.html] [--scores <fil>]
     scores_file = None
@@ -213,6 +307,8 @@ def main(argv: list) -> int:
     results = {}
     if scores_file and Path(scores_file).exists():
         results = build_results(json.load(open(scores_file, encoding="utf-8")))
+
+    tips_summary = update_tips(matches, results)
 
     from datetime import datetime, timezone
 
@@ -257,11 +353,13 @@ def main(argv: list) -> int:
     font_path = Path(__file__).parent / "fonts.css"
     font_css = font_path.read_text(encoding="utf-8") if font_path.exists() else ""
 
+    tips_json = json.dumps(tips_summary, ensure_ascii=False, separators=(",", ":"))
     html = (
         template.replace("/*__FONT__*/", font_css)
         .replace("/*__DATA__*/[]", data_json)
         .replace("/*__HIST__*/{}", hist_json)
         .replace("/*__RESULTS__*/{}", res_json)
+        .replace("/*__TIPS__*/{}", tips_json)
         .replace("__BUILT_AT__", built_at)
     )
 

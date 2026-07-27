@@ -417,6 +417,7 @@
       <div class="nav-item" data-tab="stats"><span class="ic">📊</span> Statistik</div>
       <div class="nav-item" data-tab="bank"><span class="ic">📒</span> Min bank</div>
       <div class="nav-item" data-tab="results"><span class="ic">🎯</span> Resultater <span class="cnt" id="nRes">0</span></div>
+      <div class="nav-item" data-tab="record"><span class="ic">🏅</span> Facit / træfsikkerhed</div>
       <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> EV-beregner</div>
       <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> Alerts <span class="cnt" id="nAlerts">0</span></div>
       <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> Roadmap</div>
@@ -522,6 +523,13 @@
       <div id="resultsBody"></div>
     </section>
 
+    <!-- FACIT / TRÆFSIKKERHED -->
+    <section class="tab" id="tab-record">
+      <div class="head"><div><h2>Facit / træfsikkerhed</h2>
+        <div class="sub">Hvor ofte appens value-tips rammer rigtigt. Hvert tip afgøres automatisk når kampen er spillet.</div></div></div>
+      <div id="recordBody"></div>
+    </section>
+
     <!-- STATISTIK -->
     <section class="tab" id="tab-stats">
       <div class="head"><div><h2>Statistik</h2>
@@ -586,6 +594,7 @@
 const MATCHES = /*__DATA__*/[];
 const HIST = /*__HIST__*/{};
 const RESULTS = /*__RESULTS__*/{};
+const TIPS = /*__TIPS__*/{};
 const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
 const BUILT_AT = "__BUILT_AT__";
@@ -1126,6 +1135,35 @@ function renderResults(){
       <span class="pill2 p-open">1X2: ${res}</span><span class="pill2 p-open">${ou} 2.5</span><span class="pill2 p-open">BTTS: ${btts}</span></div>`;}).join("");
 }
 
+// ---- facit / træfsikkerhed ----
+function renderRecord(){
+  const t=TIPS||{};const graded=(t.hits||0)+(t.misses||0);
+  const el=document.getElementById("recordBody");
+  const tiles=`<div class="tiles" style="grid-template-columns:repeat(5,1fr)">
+    <div class="tile pos"><div class="ic">✅</div><div class="n" style="color:var(--pos)">${t.hits||0}</div><div class="l">Ramt rigtigt</div></div>
+    <div class="tile"><div class="ic">❌</div><div class="n" style="color:var(--crit)">${t.misses||0}</div><div class="l">Ramt forkert</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${graded?(t.hitRate||0)+'%':'—'}</div><div class="l">Træfsikkerhed</div></div>
+    <div class="tile"><div class="ic">📈</div><div class="n" style="color:${(t.roi||0)>=0?'var(--pos)':'var(--crit)'}">${graded?((t.roi>=0?'+':'')+t.roi+'%'):'—'}</div><div class="l">ROI (1 enhed/tip)</div></div>
+    <div class="tile"><div class="ic">⏳</div><div class="n">${t.pending||0}</div><div class="l">Afventer resultat</div></div>
+  </div>`;
+  let body;
+  if(!graded){
+    body=`<div class="empty"><div class="big">🏅</div>Ingen afgjorte tips endnu.<br>
+      Appen har registreret <b>${t.pending||0}</b> value-tips, der afgøres automatisk når kampene er spillet.<br>
+      <span style="font-size:12px;color:var(--dim)">Facit fyldes op efterhånden som resultaterne kommer ind (den ugentlige opdatering henter dem).</span></div>`;
+  } else {
+    const rows=(t.recent||[]).map(r=>`<div class="lrow">
+      <span class="pill2 ${r.win?'p-won':'p-lost'}">${r.win?'✓ Ramt':'✗ Forkert'}</span>
+      <span class="who">${r.pick} <span class="sm">(${r.side})</span><div class="sm">${r.home} – ${r.away} · ${leagueShort(r.league)}</div></span>
+      <span class="score-badge">${r.score||''}</span>
+      <span class="amt" style="color:${r.win?'var(--pos)':'var(--crit)'}">${r.win?('+'+(r.odds-1).toFixed(2)):'−1.00'}</span>
+      <span class="book">@ ${r.odds.toFixed(2)}</span></div>`).join("");
+    body=`<div class="section-label">Seneste afgjorte tips</div>${rows}`;
+  }
+  el.innerHTML=tiles+body;
+  requestAnimationFrame(()=>document.querySelectorAll("#recordBody .tile .n").forEach(()=>{}));
+}
+
 // ---- roadmap ----
 const ROADMAP=[
   {t:"📊 Odds Scanner",s:"live",st:"st-live",items:[
@@ -1217,6 +1255,7 @@ function switchTab(name){
   if(name==="stats")renderStats();
   if(name==="bank")renderBank();
   if(name==="results")renderResults();
+  if(name==="record")renderRecord();
   const gridId={today:"todayList",value:"valueList",all:"allList",fav:"favList",alerts:"alertList",arb:"arbList"}[name];
   if(gridId)animateBars(document.getElementById(gridId));
 }
