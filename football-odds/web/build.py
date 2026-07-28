@@ -241,14 +241,17 @@ def update_tips(matches: list, results: dict) -> dict:
                 "home": m["home"],
                 "away": m["away"],
                 "league": m["league"],
-                "commence": m["commence"],
+                "commence": m["commence"],   # dato/kamptidspunkt
+                "market": "1X2",             # marked
                 "side": side,
                 "pick": o["name"],
-                "odds": o["bestNE"],
-                "prob": o["prob"],
-                "edge": round(edge, 4),
+                "fair": o["fair"],           # dit beregnede fair odds
+                "odds": o["bestNE"],         # bookmakerens (bedste) odds
+                "book": o["bookNE"],         # hvilken bookmaker
+                "prob": o["prob"],           # konsensus-sandsynlighed
+                "edge": round(edge, 4),      # EV (andel)
                 "ts": m["commence"],
-                "graded": False,
+                "graded": False,             # vandt/tabte afgøres senere
             }
 
     # 2) Afgør ugraderede tips der nu har et resultat.
@@ -269,20 +272,29 @@ def update_tips(matches: list, results: dict) -> dict:
         encoding="utf-8",
     )
 
-    graded = [t for t in tips.values() if t.get("graded")]
+    all_tips = list(tips.values())
+    graded = [t for t in all_tips if t.get("graded")]
     hits = [t for t in graded if t.get("win")]
     misses = [t for t in graded if not t.get("win")]
-    pending = [t for t in tips.values() if not t.get("graded")]
+    pending = [t for t in all_tips if not t.get("graded")]
     staked = len(graded)
     profit = sum((t["odds"] - 1) if t.get("win") else -1 for t in graded)
+    avg_ev = (
+        sum(t.get("edge", 0) for t in all_tips) / len(all_tips) if all_tips else 0
+    )
+    # Hele "databasen" af anbefalinger (nyeste først), til statistiksiden.
+    rows = sorted(all_tips, key=lambda t: t["commence"], reverse=True)[:400]
     return {
         "hits": len(hits),
         "misses": len(misses),
         "pending": len(pending),
+        "count": len(all_tips),
+        "graded": staked,
         "hitRate": round(len(hits) / staked * 100, 1) if staked else 0,
         "roi": round(profit / staked * 100, 1) if staked else 0,
         "profit": round(profit, 2),
-        # seneste afgjorte tips til visning (nyeste først)
+        "avgEv": round(avg_ev * 100, 2),
+        "rows": rows,
         "recent": sorted(graded, key=lambda t: t["commence"], reverse=True)[:60],
     }
 

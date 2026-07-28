@@ -267,6 +267,8 @@
   .live{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#fff;
     background:var(--crit);padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:5px}
   .live .d{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
+  .sharp{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:#20170a;
+    background:linear-gradient(100deg,var(--gold2),var(--gold));padding:2px 8px;border-radius:6px}
   /* sparkline */
   .spark{margin-left:8px;vertical-align:middle;opacity:.9}
   .sparkwrap{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim)}
@@ -321,6 +323,13 @@
   .p-void{background:rgba(245,181,68,.14);color:var(--warn)}
   .score-badge{font-weight:800;font-variant-numeric:tabular-nums;background:var(--panel2);
     border:1px solid var(--line);border-radius:8px;padding:3px 10px}
+  /* database-tabel */
+  .dbwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  .dbtable{width:100%;border-collapse:collapse;min-width:640px}
+  .dbtable th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);
+    padding:11px 12px;font-weight:700;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  .dbtable td{padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px}
+  .dbtable tbody tr:hover,.dbtable tr:hover{background:var(--panel2)}
 
   /* add-to-slip knap */
   .addslip{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;
@@ -540,6 +549,11 @@
       <div class="tg"><label class="tg"><input type="checkbox" id="exExch" checked> <span data-i18n="f_exch">Ekskludér børser</span></label></div>
       <div class="fg" style="margin-top:10px"><label data-i18n="f_bankroll">Bankroll (kr) — til Kelly</label>
         <input type="number" id="fBankroll" step="100" min="0" value="1000"></div>
+      <div class="fg"><label data-i18n="f_oddsfmt">Odds-format</label><select id="fOddsFmt">
+        <option value="decimal">Decimal (2.50)</option>
+        <option value="fraction" data-i18n="of_fraction">Brøk (3/2)</option>
+        <option value="american">Amerikansk (+150)</option>
+      </select></div>
     </div>
   </div>
 
@@ -597,6 +611,7 @@
         <div class="sub">Log dine spil og følg P/L, ROI og win-rate. Gemmes kun i din browser.</div></div></div>
       <div class="tiles" id="bankTiles" style="grid-template-columns:repeat(4,1fr)"></div>
       <div id="bankWL" class="wl"></div>
+      <div id="bankGraph"></div>
       <div class="calc" style="max-width:none;margin-bottom:18px">
         <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
           <div><label style="font-size:12px;color:var(--muted)">Kamp / spil</label><input id="bMatch" placeholder="fx Silkeborg – sejr"></div>
@@ -756,6 +771,7 @@ const T = {
     f_minev:"Min. EV",f_showall:"vis alt",f_risk:"Risiko",f_low:"Lav",f_med:"Mellem",f_high:"Høj",
     f_start:"Starttidspunkt",f_all:"Alle",f_3h:"Næste 3 timer",f_12h:"Næste 12 timer",f_24h:"I dag / 24t",
     f_72h:"Næste 3 dage",f_exch:"Ekskludér børser",f_bankroll:"Bankroll (kr) — til Kelly",
+    f_oddsfmt:"Odds-format",of_fraction:"Brøk (3/2)",
     gate_sub:"Lås fuld adgang op med din licensnøgle.",gate_f1:"✅ Live value bets på tværs af 40+ ligaer",
     gate_f2:"✅ Arbitrage, målmodel, kupon & bet-tracker",gate_f3:"✅ Facit / træfsikkerhed & statistik",
     gate_activate:"Aktivér licens",gate_buy:"Har du ikke en nøgle? Køb licens →",
@@ -774,6 +790,7 @@ const T = {
     f_minev:"Min. EV",f_showall:"show all",f_risk:"Risk",f_low:"Low",f_med:"Medium",f_high:"High",
     f_start:"Kick-off",f_all:"All",f_3h:"Next 3 hours",f_12h:"Next 12 hours",f_24h:"Today / 24h",
     f_72h:"Next 3 days",f_exch:"Exclude exchanges",f_bankroll:"Bankroll — for Kelly",
+    f_oddsfmt:"Odds format",of_fraction:"Fraction (3/2)",
     gate_sub:"Unlock full access with your license key.",gate_f1:"✅ Live value bets across 40+ leagues",
     gate_f2:"✅ Arbitrage, goal model, bet slip & tracker",gate_f3:"✅ Track record & statistics",
     gate_activate:"Activate license",gate_buy:"Don't have a key? Buy a license →",
@@ -800,7 +817,11 @@ Object.assign(T.da,{
   dutch_profit:"Gevinst/tab",dutch_roi:"ROI",dutch_cover:"Samlet dækning",
   dutch_guaranteed:"✓ Garanteret gevinst på {p} kr uanset resultatet (arbitrage).",
   dutch_note:"Du dækker flere udfald. Dækning over 100% = du betaler en præmie for sikkerhed; under 100% = garanteret gevinst.",
-  help_sub:"Hvordan appen virker, hvad hver funktion gør — og hvorfor.",help_tour:"▶ Vis rundvisning igen"
+  help_sub:"Hvordan appen virker, hvad hver funktion gør — og hvorfor.",help_tour:"▶ Vis rundvisning igen",
+  st_profit:"Profit (enheder)",st_roi:"ROI",st_hitrate:"Hitrate",st_count:"Antal spil",st_avgev:"Gns. EV",
+  st_subline:"{h} ramt · {m} forkert · {p} afventer",db_title:"📒 Alle gemte anbefalinger",export_csv:"⤓ Eksportér CSV",
+  tbl_date:"Dato",tbl_match:"Kamp",tbl_market:"Marked",tbl_pick:"Valg",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Resultat",
+  res_won:"Vandt",res_lost:"Tabte",res_pending:"Afventer"
 });
 Object.assign(T.en,{
   all_countries:"All countries",all_leagues:"All leagues",all_books:"All bookmakers",goals:"goals",
@@ -818,7 +839,11 @@ Object.assign(T.en,{
   dutch_profit:"Profit/loss",dutch_roi:"ROI",dutch_cover:"Total coverage",
   dutch_guaranteed:"✓ Guaranteed profit of {p} regardless of the result (arbitrage).",
   dutch_note:"You're covering several outcomes. Coverage over 100% = you pay a premium for safety; under 100% = guaranteed profit.",
-  help_sub:"How the app works, what each feature does — and why.",help_tour:"▶ Show tour again"
+  help_sub:"How the app works, what each feature does — and why.",help_tour:"▶ Show tour again",
+  st_profit:"Profit (units)",st_roi:"ROI",st_hitrate:"Hit rate",st_count:"Bets",st_avgev:"Avg. EV",
+  st_subline:"{h} hit · {m} missed · {p} pending",db_title:"📒 All saved recommendations",export_csv:"⤓ Export CSV",
+  tbl_date:"Date",tbl_match:"Match",tbl_market:"Market",tbl_pick:"Pick",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Result",
+  res_won:"Won",res_lost:"Lost",res_pending:"Pending"
 });
 function t(k){return (T[LANG]&&T[LANG][k])||(T.da[k])||k;}
 function applyI18n(){
@@ -949,7 +974,23 @@ function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);
 // ---- state ----
 const S={tab:"today",q:"",country:"",league:"",book:"",oddMin:null,oddMax:null,
   minEv:-10,risk:{low:1,med:1,high:1},time:"all",exExch:true,valueSort:"score",allSort:"time",
-  bankroll:+(localStorage.getItem("oddscalc_bankroll")||1000)};
+  bankroll:+(localStorage.getItem("oddscalc_bankroll")||1000),
+  oddsFmt:localStorage.getItem("oddscalc_oddsfmt")||"decimal"};
+// Odds-format: decimal / brøk / amerikansk.
+function gcd(a,b){return b?gcd(b,a%b):a;}
+function toFraction(x){ // x = decimal-1 (nettogevinst pr. enhed)
+  let best=[1,1],err=1e9;
+  for(let den=1;den<=25;den++){const num=Math.round(x*den);if(num<1)continue;
+    const e=Math.abs(x-num/den);if(e<err){err=e;best=[num,den];}}
+  const g=gcd(best[0],best[1])||1;return best[0]/g+"/"+best[1]/g;
+}
+function fmtOdds(dec){
+  if(!dec||dec<=1)return (dec||0).toFixed(2);
+  const f=S.oddsFmt||"decimal";
+  if(f==="fraction")return toFraction(dec-1);
+  if(f==="american")return dec>=2?("+"+Math.round((dec-1)*100)):("−"+Math.round(100/(dec-1)));
+  return dec.toFixed(2);
+}
 // Half-Kelly indsats for et value-udfald.
 function kellyStake(v){
   if(v.best<=1||v.edge<=0) return 0;
@@ -993,8 +1034,8 @@ function outcomeRow(o,idx,pres,m,slip){
     <td class="lab"><span class="pre">${pre}</span>${o.name}${isVal?'<span class="badge">VALUE</span>':''}</td>
     <td><div class="barwrap"><div class="bar" data-w="${(o.prob*100).toFixed(0)}"></div><span class="pct">${(o.prob*100).toFixed(1)}%</span></div></td>
     <td class="num" title="Implied probability">${(100/v.best).toFixed(1)}%</td>
-    <td class="num">${o.fair.toFixed(2)}</td>
-    <td class="num strong">${v.best.toFixed(2)}</td>
+    <td class="num">${fmtOdds(o.fair)}</td>
+    <td class="num strong">${fmtOdds(v.best)}</td>
     <td>${bet}${add}</td>
     <td class="num ${cls}">${edge>=0?'+':''}${edge.toFixed(1)}%${isVal?`<div class="kelly" title="Anbefalet ½-Kelly-indsats ud fra din bankroll">½K ${Math.round(kellyStake(v))} kr</div>`:''}</td>
   </tr>`;
@@ -1030,6 +1071,8 @@ function card(m,i){
   const h=hoursUntil(m.commence);
   const live=h<0&&h>-3.5;
   const liveBadge=live?`<span class="live"><span class="d"></span>Live</span>`:"";
+  const sm=sharpMove(m);
+  const sharpBadge=sm?`<span class="sharp" title="${LANG==='en'?'Odds dropping — sharp money':'Odds falder — sharp money'}">⚡ Sharp −${sm.toFixed(0)}%</span>`:"";
   const soon=(h>=0&&h<=3)?`<span class="soon">⏱ starter om ${h<1?Math.round(h*60)+' min':h.toFixed(1)+' t'}</span> ·`:"";
   const rows=m.outcomes.map((o,idx)=>outcomeRow(o,idx,pres,m,true)).join("");
   const delay=Math.min(i*0.03,0.5);
@@ -1037,7 +1080,7 @@ function card(m,i){
     <div class="chead">
       <span class="star ${favs.has(id)?'on':''}" data-fav="${id.replace(/"/g,'&quot;')}">${favs.has(id)?'★':'☆'}</span>
       <span class="match detaillink" data-detail="${id.replace(/"/g,'&quot;')}" style="cursor:pointer" title="Se detaljer">${m.home}<span class="vs">vs</span>${m.away}</span>
-      ${liveBadge}
+      ${liveBadge}${sharpBadge}
       <span class="lgtag">${leagueShort(m.league)}</span>
       <span class="scorepill">
         ${hasValue(m,S.exExch)?`<span class="rtag ${risk}">${rlabel}</span>`:''}
@@ -1052,6 +1095,14 @@ function card(m,i){
   </div>`;
 }
 function matchById(id){return MATCHES.find(m=>matchId(m)===id);}
+// "Sharp move": favorittens bedste odds er faldet markant siden første måling.
+function sharpMove(m){
+  const h=HIST[matchId(m)];if(!h||h.length<2)return 0;
+  const fav=m.outcomes.reduce((bi,o,i,a)=>o.prob>a[bi].prob?i:bi,0);
+  const s=h.map(x=>x.h2h[fav]).filter(x=>x>0);if(s.length<2)return 0;
+  const drop=(s[0]-s[s.length-1])/s[0]*100; // positivt = odds faldet
+  return drop>=4?drop:0;
+}
 function animateBars(container){
   requestAnimationFrame(()=>{container.querySelectorAll(".bar").forEach(b=>{b.style.width=b.dataset.w+"%";});});
 }
@@ -1225,7 +1276,7 @@ function openModal(id){
   const rows=Object.entries(m.allBooks||{}).sort((a,b)=>a[0].localeCompare(b[0]));
   const bestPer=names.map((_,i)=>Math.max(...rows.map(r=>r[1][i]||0)));
   const cmp=rows.length?`<table class="bkcmp"><thead><tr><th>Bookmaker</th>${names.map((nm,i)=>`<th class="num">${pres[i]} ${nm.length>10?nm.slice(0,10)+'…':nm}</th>`).join("")}</tr></thead>
-    <tbody>${rows.map(([bk,od])=>`<tr><td class="book">${bk}</td>${od.map((x,i)=>`<td class="num ${x===bestPer[i]?'best':''}">${x.toFixed(2)}</td>`).join("")}</tr>`).join("")}</tbody></table>`
+    <tbody>${rows.map(([bk,od])=>`<tr><td class="book">${bk}</td>${od.map((x,i)=>`<td class="num ${x===bestPer[i]?'best':''}">${fmtOdds(x)}</td>`).join("")}</tr>`).join("")}</tbody></table>`
     :'<div class="book">Ingen bookmaker-detaljer.</div>';
   const h=HIST[id]||[];
   const graph=h.length>=2?`<div class="model-h">📈 Favoritodds over tid</div>${bigGraph(m)}`:"";
@@ -1280,7 +1331,7 @@ function renderArb(){
       </div>
       <div class="meta">🕒 ${fmtTime(m.commence)} · fordel 1000 kr sådan:</div>
       <table><thead><tr><th>Udfald</th><th>Odds</th><th>Bookmaker</th><th class="num">Indsats af 1000 kr</th></tr></thead><tbody>
-      ${a.stakes.map(s=>`<tr><td class="lab">${s.name}</td><td class="strong">${s.odds.toFixed(2)}</td>
+      ${a.stakes.map(s=>`<tr><td class="lab">${s.name}</td><td class="strong">${fmtOdds(s.odds)}</td>
         <td class="book"><a class="betbtn" href="${bookUrl(s.book,m.home,m.away)}" target="_blank" rel="noopener">${s.book} ↗</a></td>
         <td class="num strong">${Math.round(s.pct*10)} kr</td></tr>`).join("")}
       </tbody></table>
@@ -1340,7 +1391,7 @@ function modelHtml(m){
       <div class="mcell"><div class="l">Over 3.5 mål</div><div class="v">${pc(mk.over35)}</div></div>
     </div>
     <div style="margin-top:10px"><div class="l" style="font-size:10px;color:var(--dim)">Mest sandsynlige resultater:</div>
-      ${mk.top.map(s=>`<span class="cs">${s.i}–${s.j} <small>${pc(s.p)}</small></span>`).join("")}</div>
+      ${mk.top.map(s=>`<span class="cs">${s.i}–${s.j} <small>${pc(s.p)} · ${fmtOdds(1/s.p)}</small></span>`).join("")}</div>
     <div class="note" style="margin-top:10px;font-size:11px">Modellen udleder forventede mål fra konsensus-odds og antager uafhængig Poisson. Den prissætter markeder API'et ikke leverer (BTTS, korrekt resultat) — et estimat, ikke en garanti.</div>`;
 }
 
@@ -1385,8 +1436,9 @@ function renderBank(){
       <span style="color:var(--crit)">Tabt ${Math.round(s.lostKr)} kr</span></div>
     <div class="wl-bar"><div class="wl-won" style="width:${wp.toFixed(1)}%"></div><div class="wl-lost" style="width:${(100-wp).toFixed(1)}%"></div></div>
     <div class="wl-net">Netto: <b style="color:${s.profit>=0?'var(--pos)':'var(--crit)'}">${s.profit>=0?'+':''}${Math.round(s.profit)} kr</b> · ROI ${s.roi>=0?'+':''}${s.roi.toFixed(1)}% · ${s.roi>=0?'i plus 🎉':'i minus'}</div>`:"";
+  renderBankGraph();
   const el=document.getElementById("bankList");
-  if(!bets.length){el.innerHTML=`<div class="empty"><div class="big">📒</div>Ingen spil endnu. Tilføj dit første ovenfor.</div>`;return;}
+  if(!bets.length){el.innerHTML=`<div class="empty"><div class="big">📒</div>${LANG==='en'?'No bets yet. Add your first above.':'Ingen spil endnu. Tilføj dit første ovenfor.'}</div>`;return;}
   el.innerHTML=[...bets].reverse().map((b,ri)=>{const idx=bets.length-1-ri;
     const cls={won:"p-won",lost:"p-lost",open:"p-open",void:"p-void"}[b.status];
     const pl=b.status==="won"?`+${Math.round((+b.stake)*(+b.odds-1))}`:b.status==="lost"?`−${Math.round(+b.stake)}`:"—";
@@ -1396,6 +1448,34 @@ function renderBank(){
       <span class="amt" style="color:${b.status==='won'?'var(--pos)':b.status==='lost'?'var(--crit)':'var(--muted)'}">${pl} kr</span>
       <select class="st" data-i="${idx}"><option value="open"${b.status==='open'?' selected':''}>Åben</option><option value="won"${b.status==='won'?' selected':''}>Vundet</option><option value="lost"${b.status==='lost'?' selected':''}>Tabt</option><option value="void"${b.status==='void'?' selected':''}>Void</option></select>
       <span class="del" data-del="${idx}">🗑</span></div>`;}).join("");
+}
+
+// ---- bankroll-graf + streaks ----
+function renderBankGraph(){
+  const el=document.getElementById("bankGraph");if(!el)return;
+  const settled=bets.filter(b=>b.status==="won"||b.status==="lost").sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(settled.length<1){el.innerHTML="";return;}
+  let bal=0,pts=[0],curW=0,curL=0,bestW=0,bestL=0;
+  settled.forEach(b=>{const st=+b.stake||0,od=+b.odds||0;
+    if(b.status==="won"){bal+=st*(od-1);curW++;curL=0;bestW=Math.max(bestW,curW);}
+    else{bal-=st;curL++;curW=0;bestL=Math.max(bestL,curL);}
+    pts.push(bal);});
+  const mn=Math.min(...pts),mx=Math.max(...pts),rng=(mx-mn)||1,W=680,H=120,pad=6;
+  const coords=pts.map((y,i)=>`${(i/(pts.length-1)*W).toFixed(1)},${(H-pad-((y-mn)/rng)*(H-2*pad)).toFixed(1)}`);
+  const zeroY=(H-pad-((0-mn)/rng)*(H-2*pad)).toFixed(1);
+  const up=bal>=0;
+  const curStreak=curW>0?`${curW} ${LANG==='en'?'wins in a row':'i træk (vundet)'}`:(curL>0?`${curL} ${LANG==='en'?'losses in a row':'i træk (tabt)'}`:"—");
+  el.innerHTML=`
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+      <div class="tile"><div class="ic">🔥</div><div class="n">${curStreak}</div><div class="l">${LANG==='en'?'Current streak':'Aktuel stime'}</div></div>
+      <div class="tile pos"><div class="ic">🏆</div><div class="n" style="color:var(--pos)">${bestW}</div><div class="l">${LANG==='en'?'Best win streak':'Længste vinderrække'}</div></div>
+      <div class="tile"><div class="ic">🥶</div><div class="n" style="color:var(--crit)">${bestL}</div><div class="l">${LANG==='en'?'Longest losing run':'Længste taberrække'}</div></div>
+    </div>
+    <div class="section-label" style="margin:4px 2px 8px">${LANG==='en'?'📈 Bankroll over time':'📈 Bankroll over tid'}</div>
+    <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="background:var(--panel);border:1px solid var(--line);border-radius:14px">
+      <line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--line2)" stroke-dasharray="4 4"/>
+      <polyline points="${coords.join(' ')}" fill="none" stroke="${up?'var(--pos)':'var(--crit)'}" stroke-width="2.5"/>
+    </svg>`;
 }
 
 // ---- resultater ----
@@ -1418,31 +1498,55 @@ function renderResults(){
 
 // ---- facit / træfsikkerhed ----
 function renderRecord(){
-  const tp=TIPS||{};const graded=(tp.hits||0)+(tp.misses||0);
+  const tp=TIPS||{};const graded=tp.graded||0;
   const el=document.getElementById("recordBody");
+  const dt=d=>{const x=new Date(d);return isNaN(x)?(d||"").slice(0,10):x.toLocaleDateString(LANG==="en"?"en-GB":"da-DK",{day:"2-digit",month:"short"});};
   const tiles=`<div class="tiles" style="grid-template-columns:repeat(5,1fr)">
-    <div class="tile pos"><div class="ic">✅</div><div class="n" style="color:var(--pos)">${tp.hits||0}</div><div class="l">${t('rc_hit')}</div></div>
-    <div class="tile"><div class="ic">❌</div><div class="n" style="color:var(--crit)">${tp.misses||0}</div><div class="l">${t('rc_miss')}</div></div>
-    <div class="tile"><div class="ic">🎯</div><div class="n">${graded?(tp.hitRate||0)+'%':'—'}</div><div class="l">${t('rc_rate')}</div></div>
-    <div class="tile"><div class="ic">📈</div><div class="n" style="color:${(tp.roi||0)>=0?'var(--pos)':'var(--crit)'}">${graded?((tp.roi>=0?'+':'')+tp.roi+'%'):'—'}</div><div class="l">${t('rc_roi')}</div></div>
-    <div class="tile"><div class="ic">⏳</div><div class="n">${tp.pending||0}</div><div class="l">${t('rc_pending')}</div></div>
-  </div>`;
-  let body;
-  if(!graded){
-    body=`<div class="empty"><div class="big">🏅</div>${t('empty_rec')}<br>
-      <b>${tp.pending||0}</b> ${LANG==='en'?'value tips recorded — graded automatically once matches are played.':'value-tips registreret, der afgøres automatisk når kampene er spillet.'}<br>
-      <span style="font-size:12px;color:var(--dim)">${LANG==='en'?'Fills in as results arrive (the weekly update fetches them).':'Facit fyldes op efterhånden som resultaterne kommer ind.'}</span></div>`;
+    <div class="tile"><div class="ic">💰</div><div class="n" style="color:${(tp.profit||0)>=0?'var(--pos)':'var(--crit)'}">${graded?((tp.profit>=0?'+':'')+tp.profit):'—'}</div><div class="l">${t('st_profit')}</div></div>
+    <div class="tile"><div class="ic">📈</div><div class="n" style="color:${(tp.roi||0)>=0?'var(--pos)':'var(--crit)'}">${graded?((tp.roi>=0?'+':'')+tp.roi+'%'):'—'}</div><div class="l">${t('st_roi')}</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${graded?(tp.hitRate||0)+'%':'—'}</div><div class="l">${t('st_hitrate')}</div></div>
+    <div class="tile"><div class="ic">📋</div><div class="n">${tp.count||0}</div><div class="l">${t('st_count')}</div></div>
+    <div class="tile pos"><div class="ic">⚡</div><div class="n" style="color:var(--pos)">+${tp.avgEv||0}%</div><div class="l">${t('st_avgev')}</div></div>
+  </div>
+  <div class="sub" style="margin:-6px 2px 16px;color:var(--dim);font-size:12.5px">${t('st_subline').replace('{h}',tp.hits||0).replace('{m}',tp.misses||0).replace('{p}',tp.pending||0)}</div>`;
+
+  const rows=(tp.rows||[]);
+  let db;
+  if(!rows.length){
+    db=`<div class="empty"><div class="big">📒</div>${t('empty_rec')}</div>`;
   } else {
-    const rows=(tp.recent||[]).map(r=>`<div class="lrow">
-      <span class="pill2 ${r.win?'p-won':'p-lost'}">${r.win?(LANG==='en'?'✓ Hit':'✓ Ramt'):(LANG==='en'?'✗ Miss':'✗ Forkert')}</span>
-      <span class="who">${r.pick} <span class="sm">(${r.side})</span><div class="sm">${r.home} – ${r.away} · ${leagueShort(r.league)}</div></span>
-      <span class="score-badge">${r.score||''}</span>
-      <span class="amt" style="color:${r.win?'var(--pos)':'var(--crit)'}">${r.win?('+'+(r.odds-1).toFixed(2)):'−1.00'}</span>
-      <span class="book">@ ${r.odds.toFixed(2)}</span></div>`).join("");
-    body=`<div class="section-label">${LANG==='en'?'Most recent graded tips':'Seneste afgjorte tips'}</div>${rows}`;
+    const trs=rows.map(r=>{
+      const st=r.graded?(r.win?'won':'lost'):'pending';
+      const badge={won:`<span class="pill2 p-won">${t('res_won')}${r.score?' '+r.score:''}</span>`,
+        lost:`<span class="pill2 p-lost">${t('res_lost')}${r.score?' '+r.score:''}</span>`,
+        pending:`<span class="pill2 p-open">${t('res_pending')}</span>`}[st];
+      return `<tr><td class="sm">${dt(r.commence)}</td>
+        <td class="lab">${r.home} – ${r.away}</td>
+        <td class="sm">${r.market} <b>${r.pick}</b></td>
+        <td class="num">${fmtOdds(r.fair||0)}</td>
+        <td class="num strong">${fmtOdds(r.odds||0)}</td>
+        <td class="num pos">+${(r.edge*100).toFixed(1)}%</td>
+        <td>${badge}</td></tr>`;}).join("");
+    db=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span>${t('db_title')} (${rows.length})</span>
+        <button class="help-restart" id="expCsv" style="margin:0">${t('export_csv')}</button></div>
+      <div class="dbwrap"><table class="dbtable"><thead><tr>
+        <th>${t('tbl_date')}</th><th>${t('tbl_match')}</th><th>${t('tbl_market')}</th>
+        <th class="num">${t('tbl_fair')}</th><th class="num">${t('tbl_odds')}</th><th class="num">${t('tbl_ev')}</th><th>${t('tbl_result')}</th>
+      </tr></thead><tbody>${trs}</tbody></table></div>`;
   }
-  el.innerHTML=tiles+body;
-  requestAnimationFrame(()=>document.querySelectorAll("#recordBody .tile .n").forEach(()=>{}));
+  el.innerHTML=tiles+db;
+  const exp=document.getElementById("expCsv");if(exp)exp.addEventListener("click",exportCsv);
+}
+function exportCsv(){
+  const rows=(TIPS.rows||[]);
+  const head=["Dato","Kamp","Marked","Valg","Fair","Odds","EV%","Resultat"];
+  const lines=[head.join(",")].concat(rows.map(r=>{
+    const res=r.graded?(r.win?"Vandt":"Tabte"):"Afventer";
+    return [r.commence,`${r.home} - ${r.away}`,r.market,r.pick,r.fair,r.odds,(r.edge*100).toFixed(1),res+(r.score?" "+r.score:"")]
+      .map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",");}));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="oddscalc-anbefalinger.csv";a.click();
 }
 
 // ---- hjælp / faq ----
@@ -1738,6 +1842,7 @@ document.getElementById("fEv").addEventListener("input",e=>{S.minEv=+e.target.va
 document.getElementById("fTime").addEventListener("change",e=>{S.time=e.target.value;renderAll();});
 document.getElementById("exExch").addEventListener("change",e=>{S.exExch=e.target.checked;initFilters();renderAll();});
 document.getElementById("fBankroll").addEventListener("input",e=>{S.bankroll=+e.target.value||0;localStorage.setItem("oddscalc_bankroll",S.bankroll);renderAll();});
+document.getElementById("fOddsFmt").addEventListener("change",e=>{S.oddsFmt=e.target.value;localStorage.setItem("oddscalc_oddsfmt",S.oddsFmt);renderAll();});
 document.querySelectorAll(".rchip").forEach(c=>c.addEventListener("click",()=>{
   const r=c.dataset.risk;S.risk[r]=S.risk[r]?0:1;c.dataset.on=S.risk[r];renderAll();}));
 document.getElementById("valueSort").addEventListener("change",e=>{S.valueSort=e.target.value;renderValue();});
@@ -1791,6 +1896,8 @@ document.getElementById("foot").innerHTML=
   `Konsensus = gennemsnit af margin-rensede sandsynligheder på tværs af alle bookmakere · Value = konsensus-chance × bedste odds − 1 · Score vægter EV, antal bookmakere og oddsniveau.<br>Data hentet fra The Odds API${BUILT_AT&&!BUILT_AT.startsWith("__")?" · "+fmtTime(BUILT_AT):""}. Kun til analyse — spil ansvarligt. 18+.`;
 document.getElementById("langBtn").addEventListener("click",()=>setLang(LANG==="da"?"en":"da"));
 applyI18n();
+document.getElementById("fOddsFmt").value=S.oddsFmt;
+document.getElementById("fBankroll").value=S.bankroll;
 initFilters();renderCalc();renderDutch();renderRoad();renderAll();switchTab("today");
 // licens-gate + splash
 document.getElementById("gateActivate").addEventListener("click",tryActivate);
