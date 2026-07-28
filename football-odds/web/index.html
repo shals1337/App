@@ -817,6 +817,7 @@ const MIN_VALUE = 0.02;
 
 // ---- i18n (dansk / engelsk) ----
 let LANG = LS.getItem("oddscalc_lang") || "da";
+let pollFails=0; // deklareret tidligt: startAutoRefresh() bruger den under init (TDZ-fix)
 const T = {
   da:{
     nav_today:"I dag",nav_value:"Value bets",nav_all:"Alle kampe",nav_fav:"Favoritter",nav_arb:"Arbitrage",
@@ -2010,7 +2011,6 @@ document.getElementById("gateActivate").addEventListener("click",tryActivate);
 document.getElementById("gateKey").addEventListener("keydown",e=>{if(e.key==="Enter")tryActivate();});
 document.getElementById("gateBuy").href=BUY_URL;
 // ---- auto-refresh (live når hostet med en data.json der opdateres) ----
-let pollFails=0;
 function updateLiveLabel(){
   const lbl=document.getElementById("liveLbl"),dot=document.getElementById("liveDot");
   if(!lbl)return;
