@@ -17,3 +17,6 @@ xcuserdata/
 .build/
 .swiftpm/
 Packages/
+
+# Netlify build output
+_site/

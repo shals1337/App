@@ -1,0 +1,33 @@
+# Netlify-konfiguration — hoster OddsCalc gratis fra et PRIVAT repo.
+#
+# Vi publicerer bevidst KUN de to filer der skal være offentlige:
+#   index.html  (selve appen — fonte er indlejret, så den er selvstændig)
+#   data.json   (odds-data som appen henter live)
+# keygen.py, template.html, build.py m.m. kopieres IKKE med ud på sitet.
+#
+# SÅDAN GØR DU (engangs):
+#   1) GitHub: gør repo privat  (Settings → General → Danger Zone → Change visibility)
+#   2) netlify.com → log ind med GitHub (gratis)
+#   3) Add new site → Import an existing project → GitHub → vælg shals1337/App
+#   4) Branch to deploy: claude/python-football-odds-calculator-tvbl26
+#      (Netlify læser denne fil automatisk — build-kommando + publish er sat nedenfor)
+#   5) Deploy. Du får en URL som https://<navn>.netlify.app  (kan ændres)
+#
+# Når GitHub-updateren committer ny data.json, redeployer Netlify automatisk.
+
+[build]
+  # Saml en ren publiceringsmappe med kun de offentlige filer.
+  command = "rm -rf _site && mkdir -p _site && cp football-odds/web/index.html football-odds/web/data.json _site/"
+  publish = "_site"
+
+# Cache-styring: appen (index.html) må ikke caches hårdt, så rettelser slår
+# hurtigt igennem; data.json skal altid være frisk.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/data.json"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
