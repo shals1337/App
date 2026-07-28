@@ -63,7 +63,7 @@
     background:linear-gradient(180deg,rgba(8,13,12,.86),rgba(8,13,12,.6));
     backdrop-filter:blur(18px) saturate(1.2);border-bottom:1px solid var(--line);
     box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 8px 30px rgba(0,0,0,.35)}
-  .bar{max-width:1320px;margin:0 auto;padding:13px 22px;display:flex;
+  .topbar{max-width:1320px;margin:0 auto;padding:13px 22px;display:flex;
     align-items:center;gap:16px}
   .logo{font-size:19px;font-weight:800;white-space:nowrap;display:flex;
     align-items:center;gap:10px;letter-spacing:-.4px}
@@ -201,6 +201,8 @@
   .meta{color:var(--dim);font-size:11.5px;margin:7px 0 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .soon{color:var(--warn);font-weight:700}
   table{width:100%;border-collapse:collapse}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tscroll table{min-width:480px}
   th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);
     padding:0 8px 8px;font-weight:700}
   td{padding:8px;border-top:1px solid var(--line);font-size:13px}
@@ -477,10 +479,14 @@
   /* mobile */
   .mobnav{display:none}
   @media (max-width:900px){
-    .shell{grid-template-columns:1fr;padding:14px}
+    .shell{grid-template-columns:minmax(0,1fr);padding:14px}
     .rail{position:static}
     .hstats{display:none}
     .tiles{grid-template-columns:repeat(2,1fr)}
+    .topbar{flex-wrap:wrap;padding:11px 14px;gap:10px}
+    .logo{order:1;margin-right:auto}
+    #liveBtn{order:2}#langBtn{order:3}#bell{order:4}
+    .search{order:5;flex-basis:100%;min-width:0}
   }
   @media (prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important}
@@ -520,7 +526,7 @@
   <a class="gate-buy" id="gateBuy" href="#" target="_blank" rel="noopener" data-i18n="gate_buy">Har du ikke en nøgle? Køb licens →</a>
 </div></div>
 <header>
-  <div class="bar">
+  <div class="topbar">
     <div class="logo"><span class="ball">⚽</span> Odds<b>Calc</b></div>
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -1112,7 +1118,7 @@ function totalsSection(m){
   const tt=m.totals, pres=["O","U"];
   const rows=tt.outcomes.map((o,i)=>outcomeRow(o,i,pres,m,false)).join("");
   return `<div class="ou"><div class="ou-h">⚽ Over/Under ${tt.point} ${t('goals')} · ${tt.books} ${t('books')}</div>
-    <table><tbody>${rows}</tbody></table></div>`;
+    <div class="tscroll"><table><tbody>${rows}</tbody></table></div></div>`;
 }
 function card(m,i){
   const id=matchId(m), n=m.outcomes.length;
@@ -1141,8 +1147,8 @@ function card(m,i){
       </span>
     </div>
     <div class="meta">${soon} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} ${t('books')} · ${t('margin')} ${m.margin.toFixed(1)}% ${sparkline(m)}</div>
-    <table><thead><tr><th></th><th>${t('th_chance')}</th><th title="Implied">${t('th_impl')}</th><th>${t('th_fair')}</th><th>${t('th_best')}</th><th>${t('th_book')}</th><th>${t('th_value')}</th></tr></thead>
-    <tbody>${rows}</tbody></table>
+    <div class="tscroll"><table><thead><tr><th></th><th>${t('th_chance')}</th><th title="Implied">${t('th_impl')}</th><th>${t('th_fair')}</th><th>${t('th_best')}</th><th>${t('th_book')}</th><th>${t('th_value')}</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
     ${totalsSection(m)}
     ${n===3?`<button class="modelbtn" data-model="${id.replace(/"/g,'&quot;')}">${t('showmodel')}</button><div class="model" data-modelfor="${id.replace(/"/g,'&quot;')}"></div>`:''}
   </div>`;
