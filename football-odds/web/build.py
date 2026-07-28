@@ -414,6 +414,20 @@ def main(argv: list) -> int:
     )
     Path(out_path).write_text(html, encoding="utf-8")
 
+    # Skriv også data separat, så en hostet side kan auto-opdatere (live)
+    # ved at hente data.json med jævne mellemrum — uden at bygge HTML igen.
+    data_bundle = {
+        "builtAt": built_at,
+        "matches": matches,
+        "results": results,
+        "hist": embed_hist,
+        "tips": tips_summary,
+    }
+    Path(Path(out_path).parent / "data.json").write_text(
+        json.dumps(data_bundle, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+
     leagues = sorted({m["league"] for m in matches})
     print(
         f"Skrev {out_path}: {len(matches)} kampe, {len(leagues)} ligaer, "

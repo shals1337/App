@@ -500,6 +500,7 @@
       <div class="hstat val"><div class="n" id="hValue">0</div><div class="l">Value</div></div>
       <div class="hstat"><div class="n" id="hLeagues">0</div><div class="l" data-i18n="h_leagues">Ligaer</div></div>
     </div>
+    <div class="bell" id="liveBtn" title="Opdatér" style="width:auto;padding:0 12px;font-weight:700;font-size:12px;gap:6px"><span id="liveDot" style="width:8px;height:8px;border-radius:50%;background:var(--dim)"></span><span id="liveLbl">—</span></div>
     <div class="bell" id="langBtn" title="Sprog / Language" style="width:auto;padding:0 12px;font-weight:800;font-size:13px">🌐 <span id="langLbl">DA</span></div>
     <div class="bell" id="bell" title="Alerts">🔔<span class="dot" id="belldot" style="display:none"></span></div>
   </div>
@@ -752,10 +753,10 @@
 </div></div>
 
 <script>
-const MATCHES = /*__DATA__*/[];
-const HIST = /*__HIST__*/{};
-const RESULTS = /*__RESULTS__*/{};
-const TIPS = /*__TIPS__*/{};
+let MATCHES = /*__DATA__*/[];
+let HIST = /*__HIST__*/{};
+let RESULTS = /*__RESULTS__*/{};
+let TIPS = /*__TIPS__*/{};
 const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
 
@@ -860,8 +861,10 @@ function setLang(l){LANG=l;localStorage.setItem("oddscalc_lang",l);applyI18n();
   if(typeof initFilters==="function")initFilters();renderAll();
   if(typeof renderDutch==="function")renderDutch();
   if(typeof renderCalc==="function")renderCalc();
+  if(typeof updateLiveLabel==="function")updateLiveLabel();
   if(S.tab==="help")renderHelp();switchTab(S.tab);}
 const BUILT_AT = "__BUILT_AT__";
+let LAST_BUILT = BUILT_AT;
 
 // Bookmaker-hjemmesider til "åbn hos"-knap (ingen ægte deep link fra API'et).
 const BOOK_URL={
@@ -1911,10 +1914,45 @@ applyI18n();
 document.getElementById("fOddsFmt").value=S.oddsFmt;
 document.getElementById("fBankroll").value=S.bankroll;
 initFilters();renderCalc();renderDutch();renderRoad();renderAll();switchTab("today");
+startAutoRefresh();
 // licens-gate + splash
 document.getElementById("gateActivate").addEventListener("click",tryActivate);
 document.getElementById("gateKey").addEventListener("keydown",e=>{if(e.key==="Enter")tryActivate();});
 document.getElementById("gateBuy").href=BUY_URL;
+// ---- auto-refresh (live når hostet med en data.json der opdateres) ----
+function updateLiveLabel(){
+  const lbl=document.getElementById("liveLbl"),dot=document.getElementById("liveDot");
+  if(!lbl)return;
+  const d=new Date(LAST_BUILT);
+  const time=isNaN(d)?"—":d.toLocaleTimeString(LANG==="en"?"en-GB":"da-DK",{hour:"2-digit",minute:"2-digit"});
+  const mins=isNaN(d)?999:(Date.now()-d)/60000;
+  lbl.textContent=(LANG==="en"?"Updated ":"Opdateret ")+time;
+  dot.style.background=mins<90?"var(--pos)":"var(--warn)";
+  dot.style.boxShadow=mins<90?"0 0 8px var(--pos)":"none";
+}
+async function pollData(){
+  try{
+    const r=await fetch("data.json?"+Date.now(),{cache:"no-store"});
+    if(!r.ok)return false;
+    const d=await r.json();
+    if(!d||!Array.isArray(d.matches))return false;
+    if(d.builtAt && d.builtAt!==LAST_BUILT){
+      MATCHES=d.matches; RESULTS=d.results||{}; HIST=d.hist||{}; TIPS=d.tips||{};
+      LAST_BUILT=d.builtAt;
+      initFilters();renderAll();switchTab(S.tab);updateLiveLabel();
+    }
+    return true;
+  }catch(e){return false;}
+}
+function startAutoRefresh(){
+  updateLiveLabel();
+  document.getElementById("liveBtn").addEventListener("click",pollData);
+  // Kun poll når siden er hostet (http/https) — file:// og artifact kan ikke.
+  if(location.protocol==="http:"||location.protocol==="https:"){
+    pollData();
+    setInterval(()=>{if(!document.hidden)pollData();},60000); // hvert minut
+  }
+}
 function maybeTour(){if(!localStorage.getItem("oddscalc_tour"))showTour();}
 setTimeout(()=>{const s=document.getElementById("splash");if(s)s.classList.add("hide");
   if(REQUIRE_LICENSE&&!licensed())document.getElementById("gate").classList.add("show");

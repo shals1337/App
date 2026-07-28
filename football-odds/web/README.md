@@ -14,6 +14,25 @@ Selvstændig web-app bygget fra live The Odds API-data.
 python web/build.py all_soccer.json --scores all_scores.json
 ```
 
+Builderen skriver både `index.html` (data indlejret) og `data.json` (data
+alene). Den hostede side henter `data.json` hvert minut og opdaterer sig selv.
+
+## Gratis "live"-opdatering (uden at betale)
+
+Ingen betalt server nødvendig:
+
+1. **Host gratis på GitHub Pages** — peg Pages på `football-odds/web/`.
+2. **Auto-opdatering med GitHub Actions** — workflowen
+   `.github/workflows/oddscalc-update.yml` kører builderen på en tidsplan,
+   henter friske odds og committer `data.json`. Tilføj din nøgle som
+   repo-secret `ODDS_API_KEY` (Settings → Secrets → Actions).
+3. **Appen auto-refresher** — den henter `data.json` hvert minut og viser
+   "Opdateret HH:MM" med en grøn prik i headeren.
+
+Juster `cron` i workflowen efter din gratis API-kvote (færre ligaer / sjældnere
+= billigere). Ægte sekund-live kræver en betalt datakilde eller Betfair
+Exchange-API'et (gratis nøgle, men kun børs-odds).
+
 ## Licens / betaling — læs dette
 
 Appen har en **licens-gate** (`REQUIRE_LICENSE = true` i `template.html`).

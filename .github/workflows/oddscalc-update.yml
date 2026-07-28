@@ -1,0 +1,73 @@
+name: OddsCalc auto-update
+
+# Gratis "live"-opdatering: kører builderen på en tidsplan, henter friske
+# odds + resultater, og committer web/index.html + web/data.json.
+# Hostes gratis på GitHub Pages (peg Pages på mappen football-odds/web).
+#
+# KRÆVER en repo-secret: ODDS_API_KEY  (Settings → Secrets → Actions).
+# Juster 'cron' efter din gratis API-kvote — hvert 30. min er ~1440 kald/md,
+# så hold dig til få ligaer, eller kør sjældnere.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # hvert 30. minut (juster efter kvote)
+  workflow_dispatch: {}        # + manuel kørsel-knap
+
+concurrency:
+  group: oddscalc-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch odds + scores and build
+        working-directory: football-odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os, json, urllib.request, urllib.parse, sys
+          key = os.environ["ODDS_API_KEY"]
+          # Hold dig til få ligaer for at spare gratis-kvoten:
+          leagues = [
+              "soccer_epl", "soccer_spain_la_liga", "soccer_italy_serie_a",
+              "soccer_germany_bundesliga", "soccer_denmark_superliga",
+          ]
+          odds, scores = [], []
+          for lg in leagues:
+              u = "https://api.the-odds-api.com/v4/sports/%s/odds?%s" % (
+                  lg, urllib.parse.urlencode({
+                      "apiKey": key, "regions": "eu",
+                      "markets": "h2h,totals", "oddsFormat": "decimal"}))
+              try:
+                  with urllib.request.urlopen(u, timeout=40) as r:
+                      odds += json.loads(r.read())
+              except Exception as e:
+                  print("odds", lg, "fejl", e, file=sys.stderr)
+              s = "https://api.the-odds-api.com/v4/sports/%s/scores?%s" % (
+                  lg, urllib.parse.urlencode({"apiKey": key, "daysFrom": 3}))
+              try:
+                  with urllib.request.urlopen(s, timeout=40) as r:
+                      scores += json.loads(r.read())
+              except Exception as e:
+                  print("scores", lg, "fejl", e, file=sys.stderr)
+          json.dump(odds, open("all_soccer.json", "w"))
+          json.dump(scores, open("all_scores.json", "w"))
+          print("hentede", len(odds), "kampe,", len(scores), "resultater")
+          PY
+          python web/build.py all_soccer.json --scores all_scores.json
+
+      - name: Commit updated data
+        run: |
+          git config user.name "oddscalc-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add football-odds/web/index.html football-odds/web/data.json \
+                  football-odds/web/history.json football-odds/web/tips.json
+          git commit -m "Auto-update odds data" || echo "ingen ændringer"
+          git push
