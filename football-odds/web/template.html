@@ -801,6 +801,13 @@
 </div></div>
 
 <script>
+// Sikker storage: localStorage kan kaste (sandkasse-iframe/artifact, blokerede cookies).
+// Falder tilbage til hukommelse, så appen altid loader i stedet for at hænge på splash.
+const LS = (function(){
+  try{ const k="__ls_probe__"; window.localStorage.setItem(k,"1"); window.localStorage.removeItem(k); return window.localStorage; }
+  catch(e){ const mem=Object.create(null);
+    return { getItem:k=>k in mem?mem[k]:null, setItem:(k,v)=>{mem[k]=String(v);}, removeItem:k=>{delete mem[k];} }; }
+})();
 let MATCHES = /*__DATA__*/[];
 let HIST = /*__HIST__*/{};
 let RESULTS = /*__RESULTS__*/{};
@@ -809,7 +816,7 @@ const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
 
 // ---- i18n (dansk / engelsk) ----
-let LANG = localStorage.getItem("oddscalc_lang") || "da";
+let LANG = LS.getItem("oddscalc_lang") || "da";
 const T = {
   da:{
     nav_today:"I dag",nav_value:"Value bets",nav_all:"Alle kampe",nav_fav:"Favoritter",nav_arb:"Arbitrage",
@@ -909,7 +916,7 @@ function applyI18n(){
   const ll=document.getElementById("langLbl");if(ll)ll.textContent=LANG.toUpperCase();
   document.documentElement.lang=LANG;
 }
-function setLang(l){LANG=l;localStorage.setItem("oddscalc_lang",l);applyI18n();
+function setLang(l){LANG=l;LS.setItem("oddscalc_lang",l);applyI18n();
   if(typeof initFilters==="function")initFilters();renderAll();
   if(typeof renderDutch==="function")renderDutch();
   if(typeof renderCalc==="function")renderCalc();
@@ -946,12 +953,12 @@ function licValid(key){
   if([...key].some(c=>LIC_ALPHA.indexOf(c)<0))return false;
   return licChecksum(key.slice(0,15))===key.slice(15);
 }
-function licensed(){return licValid(localStorage.getItem("oddscalc_lic"));}
+function licensed(){return licValid(LS.getItem("oddscalc_lic"));}
 function tryActivate(){
   const k=document.getElementById("gateKey").value;
-  if(licValid(k)){localStorage.setItem("oddscalc_lic",k.toUpperCase().replace(/[^A-Z0-9]/g,""));
+  if(licValid(k)){LS.setItem("oddscalc_lic",k.toUpperCase().replace(/[^A-Z0-9]/g,""));
     document.getElementById("gateErr").textContent="";document.getElementById("gate").classList.remove("show");
-    if(!localStorage.getItem("oddscalc_tour"))showTour();}
+    if(!LS.getItem("oddscalc_tour"))showTour();}
   else{document.getElementById("gateErr").textContent=t('gate_err');}
 }
 
@@ -1009,16 +1016,16 @@ function hoursUntil(iso){const d=new Date(iso);return (d-Date.now())/3.6e6;}
 
 // ---- favoritter (localStorage) ----
 const FAVKEY="oddscalc_favs";
-let favs=new Set(JSON.parse(localStorage.getItem(FAVKEY)||"[]"));
+let favs=new Set(JSON.parse(LS.getItem(FAVKEY)||"[]"));
 function matchId(m){return m.home+"|"+m.away+"|"+m.commence;}
 function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);
-  localStorage.setItem(FAVKEY,JSON.stringify([...favs]));renderAll();}
+  LS.setItem(FAVKEY,JSON.stringify([...favs]));renderAll();}
 
 // ---- odds-snapshot (bygger historik over tid) ----
 (function snapshot(){
   try{
     const key="oddscalc_hist";
-    const hist=JSON.parse(localStorage.getItem(key)||"{}");
+    const hist=JSON.parse(LS.getItem(key)||"{}");
     const stamp=BUILT_AT||new Date().toISOString();
     MATCHES.forEach(m=>{const id=matchId(m);
       hist[id]=hist[id]||[];
@@ -1026,15 +1033,15 @@ function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);
         hist[id].push({t:stamp,o:m.outcomes.map(o=>o.bestAll)});
         if(hist[id].length>40)hist[id].shift();
       }});
-    localStorage.setItem(key,JSON.stringify(hist));
+    LS.setItem(key,JSON.stringify(hist));
   }catch(e){}
 })();
 
 // ---- state ----
 const S={tab:"today",q:"",country:"",league:"",book:"",oddMin:null,oddMax:null,
   minEv:-10,risk:{low:1,med:1,high:1},time:"all",exExch:true,valueSort:"score",allSort:"time",
-  bankroll:+(localStorage.getItem("oddscalc_bankroll")||1000),
-  oddsFmt:localStorage.getItem("oddscalc_oddsfmt")||"decimal"};
+  bankroll:+(LS.getItem("oddscalc_bankroll")||1000),
+  oddsFmt:LS.getItem("oddscalc_oddsfmt")||"decimal"};
 // Odds-format: decimal / brøk / amerikansk.
 function gcd(a,b){return b?gcd(b,a%b):a;}
 function toFraction(x){ // x = decimal-1 (nettogevinst pr. enhed)
@@ -1456,8 +1463,8 @@ function modelHtml(m){
 
 // ---- bet tracker ----
 const BANKKEY="oddscalc_bets";
-let bets=JSON.parse(localStorage.getItem(BANKKEY)||"[]");
-function saveBets(){localStorage.setItem(BANKKEY,JSON.stringify(bets));}
+let bets=JSON.parse(LS.getItem(BANKKEY)||"[]");
+function saveBets(){LS.setItem(BANKKEY,JSON.stringify(bets));}
 function settleFromResults(){
   // Auto-afregn åbne spil hvis kampen findes i resultaterne (matcher på tekst).
   bets.forEach(b=>{
@@ -1795,7 +1802,7 @@ function renderTour(){
   document.getElementById("tourBack").style.visibility=tourStep>0?"visible":"hidden";
   document.getElementById("tourNext").textContent=tourStep===steps.length-1?(LANG==="en"?"Get started":"Kom i gang"):(LANG==="en"?"Next":"Næste");
 }
-function endTour(){document.getElementById("tour").classList.remove("show");localStorage.setItem("oddscalc_tour","1");}
+function endTour(){document.getElementById("tour").classList.remove("show");LS.setItem("oddscalc_tour","1");}
 document.getElementById("tourSkip").addEventListener("click",endTour);
 document.getElementById("tourRestart").addEventListener("click",showTour);
 document.getElementById("tourBack").addEventListener("click",()=>{if(tourStep>0){tourStep--;renderTour();}});
@@ -1939,8 +1946,8 @@ document.getElementById("fEv").addEventListener("input",e=>{S.minEv=+e.target.va
   document.getElementById("fEvLbl").textContent=S.minEv<=-10?"vis alt":(S.minEv>=0?'+':'')+S.minEv+"%";renderAll();});
 document.getElementById("fTime").addEventListener("change",e=>{S.time=e.target.value;renderAll();});
 document.getElementById("exExch").addEventListener("change",e=>{S.exExch=e.target.checked;initFilters();renderAll();});
-document.getElementById("fBankroll").addEventListener("input",e=>{S.bankroll=+e.target.value||0;localStorage.setItem("oddscalc_bankroll",S.bankroll);renderAll();});
-document.getElementById("fOddsFmt").addEventListener("change",e=>{S.oddsFmt=e.target.value;localStorage.setItem("oddscalc_oddsfmt",S.oddsFmt);renderAll();});
+document.getElementById("fBankroll").addEventListener("input",e=>{S.bankroll=+e.target.value||0;LS.setItem("oddscalc_bankroll",S.bankroll);renderAll();});
+document.getElementById("fOddsFmt").addEventListener("change",e=>{S.oddsFmt=e.target.value;LS.setItem("oddscalc_oddsfmt",S.oddsFmt);renderAll();});
 document.querySelectorAll(".rchip").forEach(c=>c.addEventListener("click",()=>{
   const r=c.dataset.risk;S.risk[r]=S.risk[r]?0:1;c.dataset.on=S.risk[r];renderAll();}));
 document.getElementById("valueSort").addEventListener("change",e=>{S.valueSort=e.target.value;renderValue();});
@@ -2052,7 +2059,7 @@ function startAutoRefresh(){
     setInterval(()=>{if(!document.hidden)pollData();},60000); // hvert minut
   }
 }
-function maybeTour(){if(!localStorage.getItem("oddscalc_tour"))showTour();}
+function maybeTour(){if(!LS.getItem("oddscalc_tour"))showTour();}
 // 18+ alders-gate
 function renderAgeGate(){
   const en=LANG==="en";
@@ -2064,12 +2071,12 @@ function renderAgeGate(){
   document.getElementById("ageNo").textContent=en?"No":"Nej, jeg er under 18";
 }
 function afterSplash(){
-  if(!localStorage.getItem("oddscalc_age18")){renderAgeGate();document.getElementById("ageGate").classList.add("show");return;}
+  if(!LS.getItem("oddscalc_age18")){renderAgeGate();document.getElementById("ageGate").classList.add("show");return;}
   if(REQUIRE_LICENSE&&!licensed()){document.getElementById("gate").classList.add("show");return;}
   maybeTour();
 }
 document.getElementById("ageYes").addEventListener("click",()=>{
-  localStorage.setItem("oddscalc_age18","1");
+  LS.setItem("oddscalc_age18","1");
   document.getElementById("ageGate").classList.remove("show");
   afterSplash();
 });
