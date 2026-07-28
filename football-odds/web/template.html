@@ -399,6 +399,26 @@
   .gate-feat{display:flex;flex-direction:column;gap:7px;margin:6px 0 18px;text-align:left}
   .gate-feat div{font-size:12.5px;color:var(--muted)}
   .locked-hint{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim);z-index:111}
+  /* onboarding-tur */
+  #tour{position:fixed;inset:0;z-index:105;display:none;place-items:center;padding:24px;
+    background:rgba(4,7,6,.82);backdrop-filter:blur(8px)}
+  #tour.show{display:grid}
+  .tour-card{width:min(440px,100%);background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 30%),var(--panel);
+    border:1px solid var(--line2);border-radius:22px;padding:30px 28px;text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);animation:splashpop .4s cubic-bezier(.2,.8,.2,1) both}
+  .tour-ic{font-size:44px;margin-bottom:6px}
+  .tour-card h3{font-family:var(--display);font-size:21px;font-weight:800;margin-bottom:10px}
+  .tour-card p{color:var(--muted);font-size:14px;line-height:1.6;min-height:66px}
+  .tour-dots{display:flex;gap:7px;justify-content:center;margin:16px 0 20px}
+  .tour-dots i{width:8px;height:8px;border-radius:50%;background:var(--line2);transition:all .2s}
+  .tour-dots i.on{background:linear-gradient(var(--gold),var(--accent));width:22px;border-radius:5px}
+  .tour-nav{display:flex;justify-content:space-between;align-items:center}
+  .tour-skip{background:none;border:none;color:var(--dim);font-size:13px;cursor:pointer}
+  .tour-skip:hover{color:var(--text)}
+  .tour-back{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
+  .tour-next{background:linear-gradient(100deg,var(--gold2),var(--gold));border:none;color:#20170a;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--display)}
+  .help-restart{margin-top:6px;background:var(--panel2);border:1px solid var(--line);color:var(--accent);
+    border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:700;cursor:pointer}
 
   /* hjælp / faq */
   .help-concept{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:8px}
@@ -630,6 +650,17 @@
         </div>
         <div class="verdict" id="cVerdict"></div>
       </div>
+
+      <div class="section-label" style="margin-top:26px" data-i18n="dutch_title">➗ Dutching / stake-splitter</div>
+      <div class="calc" style="max-width:640px">
+        <div class="sub" style="margin-bottom:16px" data-i18n="dutch_sub">Fordel din indsats over flere udfald, så du får samme udbetaling uanset hvilket der rammer.</div>
+        <div class="field"><label><span data-i18n="dutch_total">Samlet indsats (kr)</span></label>
+          <input type="number" id="dTotal" value="1000" step="50" min="0"></div>
+        <div id="dRows"></div>
+        <button class="betbtn" id="dAdd" style="padding:6px 12px;font-size:12px" data-i18n="dutch_add">＋ Tilføj udfald</button>
+        <div class="calc-out" id="dOut"></div>
+        <div class="verdict" id="dVerdict"></div>
+      </div>
     </section>
 
     <!-- ALERTS -->
@@ -644,7 +675,8 @@
     <!-- HJÆLP / FAQ -->
     <section class="tab" id="tab-help">
       <div class="head"><div><h2 data-i18n="nav_help">Hjælp / FAQ</h2>
-        <div class="sub">Hvordan appen virker, hvad hver funktion gør — og hvorfor.</div></div></div>
+        <div class="sub" data-i18n="help_sub">Hvordan appen virker, hvad hver funktion gør — og hvorfor.</div></div>
+        <button class="help-restart" id="tourRestart" data-i18n="help_tour">▶ Vis rundvisning igen</button></div>
 
       <div class="section-label">🧠 Sådan virker motoren</div>
       <div class="help-concept">
@@ -688,6 +720,21 @@
 
 <!-- DETALJE-MODAL -->
 <div id="modal" class="modal"><div class="modal-card" id="modalCard"></div></div>
+
+<!-- ONBOARDING-TUR -->
+<div id="tour" class="tour"><div class="tour-card">
+  <div class="tour-ic" id="tourIc">👋</div>
+  <h3 id="tourTitle"></h3>
+  <p id="tourText"></p>
+  <div class="tour-dots" id="tourDots"></div>
+  <div class="tour-nav">
+    <button class="tour-skip" id="tourSkip"></button>
+    <div style="display:flex;gap:8px">
+      <button class="tour-back" id="tourBack"></button>
+      <button class="tour-next" id="tourNext"></button>
+    </div>
+  </div>
+</div></div>
 
 <script>
 const MATCHES = /*__DATA__*/[];
@@ -747,7 +794,13 @@ Object.assign(T.da,{
   re_finished:"Afsluttede kampe",re_over:"Over 2.5 mål",re_btts:"Begge scorede",re_home:"Hjemmesejr",
   allbooks:"Alle bookmakere",empty_fav:"Ingen favoritter endnu.",empty_alerts:"Ingen value-kampe starter inden for 6 timer lige nu.",
   empty_arb:"Ingen arbitrage-muligheder i udvalget lige nu.",empty_rec:"Ingen afgjorte tips endnu.",
-  title_arb:"Arbitrage / sikre spil",title_road:"Funktioner & roadmap",search_prefix:"Søgning"
+  title_arb:"Arbitrage / sikre spil",title_road:"Funktioner & roadmap",search_prefix:"Søgning",
+  dutch_title:"➗ Dutching / stake-splitter",dutch_sub:"Fordel din indsats over flere udfald, så du får samme udbetaling uanset hvilket der rammer.",
+  dutch_total:"Samlet indsats (kr)",dutch_add:"＋ Tilføj udfald",dutch_return:"Udbetaling (uanset vinder)",
+  dutch_profit:"Gevinst/tab",dutch_roi:"ROI",dutch_cover:"Samlet dækning",
+  dutch_guaranteed:"✓ Garanteret gevinst på {p} kr uanset resultatet (arbitrage).",
+  dutch_note:"Du dækker flere udfald. Dækning over 100% = du betaler en præmie for sikkerhed; under 100% = garanteret gevinst.",
+  help_sub:"Hvordan appen virker, hvad hver funktion gør — og hvorfor.",help_tour:"▶ Vis rundvisning igen"
 });
 Object.assign(T.en,{
   all_countries:"All countries",all_leagues:"All leagues",all_books:"All bookmakers",goals:"goals",
@@ -759,7 +812,13 @@ Object.assign(T.en,{
   re_finished:"Finished matches",re_over:"Over 2.5 goals",re_btts:"Both scored",re_home:"Home win",
   allbooks:"All bookmakers",empty_fav:"No favourites yet.",empty_alerts:"No value matches start within 6 hours right now.",
   empty_arb:"No arbitrage opportunities in the selection right now.",empty_rec:"No settled tips yet.",
-  title_arb:"Arbitrage / sure bets",title_road:"Features & roadmap",search_prefix:"Search"
+  title_arb:"Arbitrage / sure bets",title_road:"Features & roadmap",search_prefix:"Search",
+  dutch_title:"➗ Dutching / stake splitter",dutch_sub:"Split your stake across several outcomes so you get the same payout whichever hits.",
+  dutch_total:"Total stake",dutch_add:"＋ Add outcome",dutch_return:"Payout (whichever wins)",
+  dutch_profit:"Profit/loss",dutch_roi:"ROI",dutch_cover:"Total coverage",
+  dutch_guaranteed:"✓ Guaranteed profit of {p} regardless of the result (arbitrage).",
+  dutch_note:"You're covering several outcomes. Coverage over 100% = you pay a premium for safety; under 100% = guaranteed profit.",
+  help_sub:"How the app works, what each feature does — and why.",help_tour:"▶ Show tour again"
 });
 function t(k){return (T[LANG]&&T[LANG][k])||(T.da[k])||k;}
 function applyI18n(){
@@ -770,6 +829,8 @@ function applyI18n(){
 }
 function setLang(l){LANG=l;localStorage.setItem("oddscalc_lang",l);applyI18n();
   if(typeof initFilters==="function")initFilters();renderAll();
+  if(typeof renderDutch==="function")renderDutch();
+  if(typeof renderCalc==="function")renderCalc();
   if(S.tab==="help")renderHelp();switchTab(S.tab);}
 const BUILT_AT = "__BUILT_AT__";
 
@@ -805,7 +866,8 @@ function licensed(){return licValid(localStorage.getItem("oddscalc_lic"));}
 function tryActivate(){
   const k=document.getElementById("gateKey").value;
   if(licValid(k)){localStorage.setItem("oddscalc_lic",k.toUpperCase().replace(/[^A-Z0-9]/g,""));
-    document.getElementById("gateErr").textContent="";document.getElementById("gate").classList.remove("show");}
+    document.getElementById("gateErr").textContent="";document.getElementById("gate").classList.remove("show");
+    if(!localStorage.getItem("oddscalc_tour"))showTour();}
   else{document.getElementById("gateErr").textContent=t('gate_err');}
 }
 
@@ -1466,6 +1528,82 @@ function renderHelp(){
   document.querySelectorAll("#faq .fq-q").forEach(q=>q.addEventListener("click",()=>q.parentElement.classList.toggle("open")));
 }
 
+// ---- dutching / stake-splitter ----
+let dutchOdds=[2.50,3.20];
+function renderDutch(){
+  const rows=document.getElementById("dRows");
+  rows.innerHTML=dutchOdds.map((o,i)=>`<div class="field" style="display:flex;gap:10px;align-items:center">
+    <span style="width:22px;color:var(--dim);font-weight:700">${i+1}</span>
+    <input type="number" class="dodds" data-i="${i}" value="${o}" step="0.01" min="1.01" style="flex:1">
+    <span class="dstake" data-s="${i}" style="width:110px;text-align:right;font-weight:800;font-family:var(--display)"></span>
+    ${dutchOdds.length>2?`<span class="del" data-d="${i}" style="cursor:pointer;color:var(--dim)">🗑</span>`:'<span style="width:16px"></span>'}
+  </div>`).join("");
+  computeDutch();
+}
+function computeDutch(){
+  const total=parseFloat(document.getElementById("dTotal").value)||0;
+  const inv=dutchOdds.reduce((s,o)=>s+(o>1?1/o:0),0);
+  const ret=inv>0?total/inv:0;
+  dutchOdds.forEach((o,i)=>{const st=inv>0?total*(1/o)/inv:0;
+    const el=document.querySelector(`.dstake[data-s="${i}"]`);if(el)el.textContent=Math.round(st)+" kr";});
+  const profit=ret-total, roi=total>0?profit/total*100:0;
+  document.getElementById("dOut").innerHTML=`
+    <div class="co"><div class="l">${t('dutch_return')}</div><div class="v">${Math.round(ret)} kr</div></div>
+    <div class="co ${profit>=0?'hl':''}"><div class="l">${t('dutch_profit')}</div><div class="v" style="color:${profit>=0?'var(--pos)':'var(--crit)'}">${profit>=0?'+':''}${Math.round(profit)} kr</div></div>
+    <div class="co"><div class="l">${t('dutch_roi')}</div><div class="v" style="color:${roi>=0?'var(--pos)':'var(--crit)'}">${roi>=0?'+':''}${roi.toFixed(1)}%</div></div>
+    <div class="co"><div class="l">${t('dutch_cover')}</div><div class="v">${(inv*100).toFixed(1)}%</div></div>`;
+  const v=document.getElementById("dVerdict");
+  if(inv<1){v.className="verdict good";v.textContent=t('dutch_guaranteed').replace('{p}',profit.toFixed(0));}
+  else{v.className="verdict";v.style.background="var(--panel2)";v.style.color="var(--muted)";v.style.border="1px solid var(--line)";
+    v.textContent=t('dutch_note');}
+}
+document.getElementById("dTotal").addEventListener("input",computeDutch);
+document.getElementById("dAdd").addEventListener("click",()=>{if(dutchOdds.length<6){dutchOdds.push(3.0);renderDutch();}});
+document.getElementById("dRows").addEventListener("input",e=>{const inp=e.target.closest(".dodds");
+  if(inp){dutchOdds[+inp.dataset.i]=parseFloat(inp.value)||0;computeDutch();}});
+document.getElementById("dRows").addEventListener("click",e=>{const d=e.target.closest("[data-d]");
+  if(d){dutchOdds.splice(+d.dataset.d,1);renderDutch();}});
+
+// ---- onboarding-tur ----
+const TOUR={
+  da:[
+    {ic:"👋",title:"Velkommen til OddsCalc",text:"Appen scanner live odds fra 30+ bookmakere og finder de spil hvor tallene er i din favør. Her er en hurtig rundvisning."},
+    {ic:"🔥",title:"Value bets",text:"Et 'value bet' er hvor de bedste odds er højere end den sande chance tilsiger. Fanen 'Value bets' viser dem alle — sorteret efter en score fra 0-100."},
+    {ic:"🛡️",title:"Score, risiko & arbitrage",text:"Hver kamp får en score og et risiko-tag. Under 'Arbitrage' finder du sikre spil hvor du kan vinde uanset resultatet."},
+    {ic:"📒",title:"Min bank & Facit",text:"Log dine spil i 'Min bank' og se penge vundet vs. tabt. 'Facit' viser hvor ofte appens tips rammer rigtigt over tid."},
+    {ic:"❓",title:"Hjælp & sprog",text:"Alt er forklaret i 'Hjælp / FAQ'. Skift mellem dansk og engelsk med 🌐-knappen øverst. God fornøjelse!"}
+  ],
+  en:[
+    {ic:"👋",title:"Welcome to OddsCalc",text:"The app scans live odds from 30+ bookmakers and finds the bets where the numbers are in your favour. Here's a quick tour."},
+    {ic:"🔥",title:"Value bets",text:"A 'value bet' is where the best odds are higher than the true chance implies. The 'Value bets' tab lists them all — sorted by a 0-100 score."},
+    {ic:"🛡️",title:"Score, risk & arbitrage",text:"Every match gets a score and a risk tag. Under 'Arbitrage' you'll find sure bets where you win regardless of the result."},
+    {ic:"📒",title:"My bank & Track record",text:"Log your bets in 'My bank' and see money won vs lost. 'Track record' shows how often the app's tips hit over time."},
+    {ic:"❓",title:"Help & language",text:"Everything is explained in 'Help / FAQ'. Switch between Danish and English with the 🌐 button up top. Enjoy!"}
+  ]
+};
+let tourStep=0;
+function showTour(){tourStep=0;document.getElementById("tour").classList.add("show");renderTour();}
+function renderTour(){
+  const steps=TOUR[LANG]||TOUR.da, s=steps[tourStep];
+  document.getElementById("tourIc").textContent=s.ic;
+  document.getElementById("tourTitle").textContent=s.title;
+  document.getElementById("tourText").textContent=s.text;
+  document.getElementById("tourDots").innerHTML=steps.map((_,i)=>`<i class="${i===tourStep?'on':''}"></i>`).join("");
+  document.getElementById("tourSkip").textContent=LANG==="en"?"Skip":"Spring over";
+  document.getElementById("tourBack").textContent=LANG==="en"?"Back":"Tilbage";
+  document.getElementById("tourBack").style.visibility=tourStep>0?"visible":"hidden";
+  document.getElementById("tourNext").textContent=tourStep===steps.length-1?(LANG==="en"?"Get started":"Kom i gang"):(LANG==="en"?"Next":"Næste");
+}
+function endTour(){document.getElementById("tour").classList.remove("show");localStorage.setItem("oddscalc_tour","1");}
+document.getElementById("tourSkip").addEventListener("click",endTour);
+document.getElementById("tourRestart").addEventListener("click",showTour);
+document.getElementById("tourBack").addEventListener("click",()=>{if(tourStep>0){tourStep--;renderTour();}});
+document.getElementById("tourNext").addEventListener("click",()=>{
+  const steps=TOUR[LANG]||TOUR.da;
+  if(tourStep<steps.length-1){tourStep++;renderTour();}
+  else{endTour();switchTab("value");}
+});
+
 // ---- roadmap ----
 const ROADMAP=[
   {t:"📊 Odds Scanner",s:"live",st:"st-live",items:[
@@ -1653,13 +1791,15 @@ document.getElementById("foot").innerHTML=
   `Konsensus = gennemsnit af margin-rensede sandsynligheder på tværs af alle bookmakere · Value = konsensus-chance × bedste odds − 1 · Score vægter EV, antal bookmakere og oddsniveau.<br>Data hentet fra The Odds API${BUILT_AT&&!BUILT_AT.startsWith("__")?" · "+fmtTime(BUILT_AT):""}. Kun til analyse — spil ansvarligt. 18+.`;
 document.getElementById("langBtn").addEventListener("click",()=>setLang(LANG==="da"?"en":"da"));
 applyI18n();
-initFilters();renderCalc();renderRoad();renderAll();switchTab("today");
+initFilters();renderCalc();renderDutch();renderRoad();renderAll();switchTab("today");
 // licens-gate + splash
 document.getElementById("gateActivate").addEventListener("click",tryActivate);
 document.getElementById("gateKey").addEventListener("keydown",e=>{if(e.key==="Enter")tryActivate();});
 document.getElementById("gateBuy").href=BUY_URL;
+function maybeTour(){if(!localStorage.getItem("oddscalc_tour"))showTour();}
 setTimeout(()=>{const s=document.getElementById("splash");if(s)s.classList.add("hide");
-  if(REQUIRE_LICENSE&&!licensed())document.getElementById("gate").classList.add("show");},900);
+  if(REQUIRE_LICENSE&&!licensed())document.getElementById("gate").classList.add("show");
+  else maybeTour();},900);
 </script>
 </body>
 </html>
