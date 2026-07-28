@@ -451,6 +451,19 @@
   .fq.open .fq-a{max-height:340px}
   .fq-a div{padding:0 16px 15px;font-size:12.8px;color:var(--muted);line-height:1.6}
 
+  /* stale/offline banner */
+  .stale-banner{display:none;max-width:1320px;margin:12px auto 0;padding:10px 16px;border-radius:12px;
+    font-size:13px;font-weight:600;text-align:center}
+  .stale-banner.show{display:block}
+  .stale-banner.warn{background:rgba(232,180,90,.14);color:var(--warn);border:1px solid rgba(232,180,90,.4)}
+  .stale-banner.err{background:rgba(240,133,127,.14);color:var(--crit);border:1px solid rgba(240,133,127,.4)}
+  /* legal */
+  .legal-card{background:linear-gradient(165deg,var(--card),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:20px 22px;margin-bottom:14px}
+  .legal-card h4{font-family:var(--display);font-size:16px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+  .legal-card p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:9px}
+  .legal-card a{color:var(--accent)}
+
   .foot{color:var(--dim);font-size:11px;text-align:center;margin-top:30px;line-height:1.7}
 
   /* mobile */
@@ -506,6 +519,8 @@
   </div>
 </header>
 
+<div id="staleBanner" class="stale-banner"></div>
+
 <div class="shell">
   <div class="rail">
     <nav id="nav">
@@ -521,6 +536,7 @@
       <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> <span data-i18n="nav_calc">EV-beregner</span></div>
       <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> <span data-i18n="nav_alerts">Alerts</span> <span class="cnt" id="nAlerts">0</span></div>
       <div class="nav-item" data-tab="help"><span class="ic">❓</span> <span data-i18n="nav_help">Hjælp / FAQ</span></div>
+      <div class="nav-item" data-tab="legal"><span class="ic">⚖️</span> <span data-i18n="nav_legal">Vilkår & privatliv</span></div>
       <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> <span data-i18n="nav_road">Roadmap</span></div>
     </nav>
 
@@ -714,6 +730,14 @@
       <div class="note" style="margin-top:18px">⚠️ <b>Vigtigt:</b> value og modeller er estimater. Positiv EV betyder gevinst <i>på lang sigt hvis konsensus er korrekt</i> — ikke garanti på det enkelte spil. Derfor findes “Min bank” og “Facit”: så du måler virkeligheden. Spil ansvarligt. 18+.</div>
     </section>
 
+    <!-- VILKÅR & PRIVATLIV -->
+    <section class="tab" id="tab-legal">
+      <div class="head"><div><h2 data-i18n="nav_legal">Vilkår & privatliv</h2>
+        <div class="sub" data-i18n="legal_sub">Ansvarsfraskrivelse, betingelser, privatliv og spil ansvarligt.</div></div></div>
+      <div class="note" style="margin-bottom:16px" data-i18n="legal_draft">⚠️ Dette er et udkast til orientering — få en advokat til at gennemgå det før du sælger.</div>
+      <div id="legalBody"></div>
+    </section>
+
     <!-- ROADMAP -->
     <section class="tab" id="tab-road">
       <div class="head"><div><h2 data-i18n="title_road">Funktioner & roadmap</h2>
@@ -824,7 +848,9 @@ Object.assign(T.da,{
   tbl_date:"Dato",tbl_match:"Kamp",tbl_market:"Marked",tbl_pick:"Valg",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Resultat",tbl_clv:"CLV",
   res_won:"Vandt",res_lost:"Tabte",res_pending:"Afventer",
   clv_title:"🎯 Closing Line Value (CLV)",clv_avg:"Gns. CLV",clv_beat:"Slår slutodds",clv_count:"Målte tips",
-  clv_expl:"CLV måler om du fik bedre odds end markedet lukkede på. Positiv CLV over tid er det stærkeste tegn på at du slår markedet. Fyldes op efterhånden som odds nærmer sig kampstart.",clv_na:"—"
+  clv_expl:"CLV måler om du fik bedre odds end markedet lukkede på. Positiv CLV over tid er det stærkeste tegn på at du slår markedet. Fyldes op efterhånden som odds nærmer sig kampstart.",clv_na:"—",
+  nav_legal:"Vilkår & privatliv",legal_sub:"Ansvarsfraskrivelse, betingelser, privatliv og spil ansvarligt.",
+  legal_draft:"⚠️ Dette er et udkast til orientering — få en advokat til at gennemgå det før du sælger."
 });
 Object.assign(T.en,{
   all_countries:"All countries",all_leagues:"All leagues",all_books:"All bookmakers",goals:"goals",
@@ -848,7 +874,9 @@ Object.assign(T.en,{
   tbl_date:"Date",tbl_match:"Match",tbl_market:"Market",tbl_pick:"Pick",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Result",tbl_clv:"CLV",
   res_won:"Won",res_lost:"Lost",res_pending:"Pending",
   clv_title:"🎯 Closing Line Value (CLV)",clv_avg:"Avg. CLV",clv_beat:"Beats the close",clv_count:"Measured tips",
-  clv_expl:"CLV measures whether you got better odds than the market closed at. Positive CLV over time is the strongest sign you beat the market. Fills in as odds approach kick-off.",clv_na:"—"
+  clv_expl:"CLV measures whether you got better odds than the market closed at. Positive CLV over time is the strongest sign you beat the market. Fills in as odds approach kick-off.",clv_na:"—",
+  nav_legal:"Terms & privacy",legal_sub:"Disclaimer, terms, privacy and responsible gambling.",
+  legal_draft:"⚠️ This is a draft for guidance — have a lawyer review it before you sell."
 });
 function t(k){return (T[LANG]&&T[LANG][k])||(T.da[k])||k;}
 function applyI18n(){
@@ -1564,6 +1592,27 @@ function exportCsv(){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="oddscalc-anbefalinger.csv";a.click();
 }
 
+// ---- vilkår & privatliv (udkast) ----
+const LEGAL={
+ da:[
+  ["📊 Ansvarsfraskrivelse","OddsCalc er et analyse- og informationsværktøj. Det er <b>ikke</b> spilrådgivning eller finansiel rådgivning, og der gives <b>ingen garanti</b> for gevinst. Odds, sandsynligheder, value og modeller er estimater baseret på offentlige data og kan være forkerte eller forsinkede. Alle beslutninger og spil sker på eget ansvar. Tjek altid de aktuelle odds hos bookmakeren før du spiller."],
+  ["🔞 Spil ansvarligt","Du skal være <b>18 år</b> for at spille. Spil kan være vanedannende. Sæt grænser for tid og penge, og spil kun for penge du har råd til at tabe. Har du brug for hjælp: i Danmark <a href='https://www.stopspillet.dk' target='_blank' rel='noopener'>StopSpillet</a> (tlf. 70 22 28 25) eller <a href='https://ludomani.dk' target='_blank' rel='noopener'>Center for Ludomani</a>. Internationalt: <a href='https://www.begambleaware.org' target='_blank' rel='noopener'>BeGambleAware</a>."],
+  ["📄 Handelsbetingelser (udkast)","Ved køb af en licens får du en personlig, ikke-overdragelig brugsret til appen. Licensnøgler må ikke deles eller videresælges. Tjenesten leveres \"som den er\", uden garanti for tilgængelighed eller nøjagtighed. Ansvaret er begrænset til det betalte beløb. Fortrydelses-/refunderingsret følger gældende forbrugerlovgivning og din betalingsudbyders vilkår. Disse betingelser er et udkast og skal tilpasses din konkrete forretning."],
+  ["🔒 Privatlivspolitik (udkast)","Selve appen indsamler <b>ingen personoplysninger</b> — dine favoritter, spil og indstillinger gemmes kun lokalt i din browser (localStorage) og forlader aldrig din enhed. Hvis du hoster appen, kan din hosting-udbyder og evt. analyseværktøjer behandle data (fx IP-adresse); det skal beskrives her. Betaling håndteres af din betalingsudbyder efter deres privatlivspolitik. Du har efter GDPR ret til indsigt, sletning m.m. — kontakt: <i>din@email.dk</i>."]
+ ],
+ en:[
+  ["📊 Disclaimer","OddsCalc is an analysis and information tool. It is <b>not</b> betting or financial advice, and <b>no profit is guaranteed</b>. Odds, probabilities, value and models are estimates based on public data and may be wrong or delayed. All decisions and bets are at your own risk. Always check the current odds at the bookmaker before betting."],
+  ["🔞 Responsible gambling","You must be <b>18+</b> to gamble. Gambling can be addictive. Set limits on time and money, and only bet what you can afford to lose. Need help? UK: <a href='https://www.begambleaware.org' target='_blank' rel='noopener'>BeGambleAware</a> / <a href='https://www.gamcare.org.uk' target='_blank' rel='noopener'>GamCare</a>. Denmark: <a href='https://www.stopspillet.dk' target='_blank' rel='noopener'>StopSpillet</a>."],
+  ["📄 Terms of service (draft)","A license purchase grants a personal, non-transferable right to use the app. License keys may not be shared or resold. The service is provided \"as is\", without warranty of availability or accuracy. Liability is limited to the amount paid. Withdrawal/refund rights follow applicable consumer law and your payment provider's terms. These terms are a draft and must be adapted to your business."],
+  ["🔒 Privacy policy (draft)","The app itself collects <b>no personal data</b> — your favourites, bets and settings are stored only locally in your browser (localStorage) and never leave your device. If you host the app, your hosting provider and any analytics may process data (e.g. IP address); describe that here. Payments are handled by your payment provider under their privacy policy. Under GDPR you have rights of access, erasure, etc. — contact: <i>your@email.com</i>."]
+ ]
+};
+function renderLegal(){
+  const L=LEGAL[LANG]||LEGAL.da;
+  document.getElementById("legalBody").innerHTML=L.map(([h,p])=>
+    `<div class="legal-card"><h4>${h}</h4><p>${p}</p></div>`).join("");
+}
+
 // ---- hjælp / faq ----
 const HELP={
  da:{concepts:["🧠 Sådan virker motoren"],labels:["📑 Fanerne","🔧 Funktioner i kampene","❓ Ofte stillede spørgsmål"],
@@ -1816,6 +1865,7 @@ function switchTab(name){
   if(name==="results")renderResults();
   if(name==="record")renderRecord();
   if(name==="help")renderHelp();
+  if(name==="legal")renderLegal();
   const gridId={today:"todayList",value:"valueList",all:"allList",fav:"favList",alerts:"alertList",arb:"arbList"}[name];
   if(gridId)animateBars(document.getElementById(gridId));
 }
@@ -1920,29 +1970,45 @@ document.getElementById("gateActivate").addEventListener("click",tryActivate);
 document.getElementById("gateKey").addEventListener("keydown",e=>{if(e.key==="Enter")tryActivate();});
 document.getElementById("gateBuy").href=BUY_URL;
 // ---- auto-refresh (live når hostet med en data.json der opdateres) ----
+let pollFails=0;
 function updateLiveLabel(){
   const lbl=document.getElementById("liveLbl"),dot=document.getElementById("liveDot");
   if(!lbl)return;
   const d=new Date(LAST_BUILT);
   const time=isNaN(d)?"—":d.toLocaleTimeString(LANG==="en"?"en-GB":"da-DK",{hour:"2-digit",minute:"2-digit"});
-  const mins=isNaN(d)?999:(Date.now()-d)/60000;
+  const hrs=isNaN(d)?999:(Date.now()-d)/3.6e6;
   lbl.textContent=(LANG==="en"?"Updated ":"Opdateret ")+time;
-  dot.style.background=mins<90?"var(--pos)":"var(--warn)";
-  dot.style.boxShadow=mins<90?"0 0 8px var(--pos)":"none";
+  dot.style.background=hrs<1.5?"var(--pos)":(hrs<12?"var(--warn)":"var(--crit)");
+  dot.style.boxShadow=hrs<1.5?"0 0 8px var(--pos)":"none";
+  // stale/offline banner
+  const bn=document.getElementById("staleBanner");if(!bn)return;
+  const online=location.protocol==="http:"||location.protocol==="https:";
+  if(online && pollFails>=3){
+    bn.className="stale-banner err show";
+    bn.textContent=LANG==="en"?"⚠️ Can't reach the data server — showing the last known odds. Retrying…"
+      :"⚠️ Kan ikke nå data-serveren — viser de senest kendte odds. Prøver igen…";
+  } else if(hrs>=6){
+    const h=Math.round(hrs);
+    bn.className="stale-banner warn show";
+    bn.textContent=(LANG==="en"?`⚠️ Odds may be delayed — last updated ~${h}h ago. Check the bookmaker before betting.`
+      :`⚠️ Odds kan være forsinkede — sidst opdateret for ~${h}t siden. Tjek bookmakeren før du spiller.`);
+  } else { bn.className="stale-banner"; }
 }
 async function pollData(){
   try{
     const r=await fetch("data.json?"+Date.now(),{cache:"no-store"});
-    if(!r.ok)return false;
+    if(!r.ok)throw new Error("http "+r.status);
     const d=await r.json();
-    if(!d||!Array.isArray(d.matches))return false;
+    if(!d||!Array.isArray(d.matches))throw new Error("bad data");
+    pollFails=0;
     if(d.builtAt && d.builtAt!==LAST_BUILT){
       MATCHES=d.matches; RESULTS=d.results||{}; HIST=d.hist||{}; TIPS=d.tips||{};
       LAST_BUILT=d.builtAt;
-      initFilters();renderAll();switchTab(S.tab);updateLiveLabel();
+      initFilters();renderAll();switchTab(S.tab);
     }
+    updateLiveLabel();
     return true;
-  }catch(e){return false;}
+  }catch(e){pollFails++;updateLiveLabel();return false;}
 }
 function startAutoRefresh(){
   updateLiveLabel();
