@@ -196,7 +196,7 @@ def build_results(scores_raw: list) -> dict:
 TIP_MIN_EDGE = 0.02
 
 
-def update_tips(matches: list, results: dict) -> dict:
+def update_tips(matches: list, results: dict, built_at: str = "", history: dict = None) -> dict:
     """Vedligehold et facit-kartotek over appens value-tips.
 
     - Registrerer appens bedste value-udfald (EV ≥ 2%) pr. kamp som et tip.
@@ -251,6 +251,7 @@ def update_tips(matches: list, results: dict) -> dict:
                 "prob": o["prob"],           # konsensus-sandsynlighed
                 "edge": round(edge, 4),      # EV (andel)
                 "ts": m["commence"],
+                "takenAt": built_at,         # hvornår tippet blev taget (til CLV)
                 "graded": False,             # vandt/tabte afgøres senere
             }
 
@@ -267,12 +268,34 @@ def update_tips(matches: list, results: dict) -> dict:
         t["win"] = t["pick"] == actual
         t["score"] = f"{hs}-{as_}"
 
+    # 3) CLV (Closing Line Value): sammenlign de odds tippet blev taget til
+    #    med en SENERE måling (tættest på kampstart) = "closing line".
+    #    Positiv CLV = du fik bedre odds end markedet lukkede på = dygtigt.
+    history = history or {}
+    side_idx = {"1": 0, "X": 1, "2": 2}
+    for t in tips.values():
+        if t.get("clv") is not None:
+            pass  # opdater altid, closing kan flytte sig
+        mid = f"{t['home']}|{t['away']}|{t['commence']}"
+        snaps = history.get(mid, [])
+        taken = t.get("takenAt", "")
+        later = [s for s in snaps if s.get("t", "") > taken]
+        idx = side_idx.get(t.get("side"))
+        if later and idx is not None:
+            closing = later[-1]["h2h"][idx] if idx < len(later[-1]["h2h"]) else 0
+            if closing and closing > 0:
+                t["closing"] = round(closing, 2)
+                t["clv"] = round(t["odds"] / closing - 1, 4)
+
     tips_path.write_text(
         json.dumps(tips, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
     )
 
     all_tips = list(tips.values())
+    with_clv = [t for t in all_tips if t.get("clv") is not None]
+    avg_clv = sum(t["clv"] for t in with_clv) / len(with_clv) if with_clv else 0
+    beat_close = sum(1 for t in with_clv if t["clv"] > 0)
     graded = [t for t in all_tips if t.get("graded")]
     hits = [t for t in graded if t.get("win")]
     misses = [t for t in graded if not t.get("win")]
@@ -294,6 +317,10 @@ def update_tips(matches: list, results: dict) -> dict:
         "roi": round(profit / staked * 100, 1) if staked else 0,
         "profit": round(profit, 2),
         "avgEv": round(avg_ev * 100, 2),
+        "clvCount": len(with_clv),
+        "avgClv": round(avg_clv * 100, 2),
+        "beatClose": beat_close,
+        "beatCloseRate": round(beat_close / len(with_clv) * 100, 1) if with_clv else 0,
         "rows": rows,
         "recent": sorted(graded, key=lambda t: t["commence"], reverse=True)[:60],
     }
@@ -324,8 +351,6 @@ def main(argv: list) -> int:
     if scores_file and Path(scores_file).exists():
         results = build_results(json.load(open(scores_file, encoding="utf-8")))
 
-    tips_summary = update_tips(matches, results)
-
     from datetime import datetime, timezone
 
     built_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -348,6 +373,9 @@ def main(argv: list) -> int:
             }
         )
         history[mid] = snaps[-60:]  # behold seneste 60 målinger
+
+    # Facit + CLV (kræver historik, så det køres efter snapshot er lagt ind).
+    tips_summary = update_tips(matches, results, built_at, history)
     # Ryd kampe der er mere end 2 dage overstået for at holde filen lille.
     hist_path.write_text(
         json.dumps(history, ensure_ascii=False, separators=(",", ":")),

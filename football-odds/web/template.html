@@ -820,8 +820,10 @@ Object.assign(T.da,{
   help_sub:"Hvordan appen virker, hvad hver funktion gør — og hvorfor.",help_tour:"▶ Vis rundvisning igen",
   st_profit:"Profit (enheder)",st_roi:"ROI",st_hitrate:"Hitrate",st_count:"Antal spil",st_avgev:"Gns. EV",
   st_subline:"{h} ramt · {m} forkert · {p} afventer",db_title:"📒 Alle gemte anbefalinger",export_csv:"⤓ Eksportér CSV",
-  tbl_date:"Dato",tbl_match:"Kamp",tbl_market:"Marked",tbl_pick:"Valg",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Resultat",
-  res_won:"Vandt",res_lost:"Tabte",res_pending:"Afventer"
+  tbl_date:"Dato",tbl_match:"Kamp",tbl_market:"Marked",tbl_pick:"Valg",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Resultat",tbl_clv:"CLV",
+  res_won:"Vandt",res_lost:"Tabte",res_pending:"Afventer",
+  clv_title:"🎯 Closing Line Value (CLV)",clv_avg:"Gns. CLV",clv_beat:"Slår slutodds",clv_count:"Målte tips",
+  clv_expl:"CLV måler om du fik bedre odds end markedet lukkede på. Positiv CLV over tid er det stærkeste tegn på at du slår markedet. Fyldes op efterhånden som odds nærmer sig kampstart.",clv_na:"—"
 });
 Object.assign(T.en,{
   all_countries:"All countries",all_leagues:"All leagues",all_books:"All bookmakers",goals:"goals",
@@ -842,8 +844,10 @@ Object.assign(T.en,{
   help_sub:"How the app works, what each feature does — and why.",help_tour:"▶ Show tour again",
   st_profit:"Profit (units)",st_roi:"ROI",st_hitrate:"Hit rate",st_count:"Bets",st_avgev:"Avg. EV",
   st_subline:"{h} hit · {m} missed · {p} pending",db_title:"📒 All saved recommendations",export_csv:"⤓ Export CSV",
-  tbl_date:"Date",tbl_match:"Match",tbl_market:"Market",tbl_pick:"Pick",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Result",
-  res_won:"Won",res_lost:"Lost",res_pending:"Pending"
+  tbl_date:"Date",tbl_match:"Match",tbl_market:"Market",tbl_pick:"Pick",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Result",tbl_clv:"CLV",
+  res_won:"Won",res_lost:"Lost",res_pending:"Pending",
+  clv_title:"🎯 Closing Line Value (CLV)",clv_avg:"Avg. CLV",clv_beat:"Beats the close",clv_count:"Measured tips",
+  clv_expl:"CLV measures whether you got better odds than the market closed at. Positive CLV over time is the strongest sign you beat the market. Fills in as odds approach kick-off.",clv_na:"—"
 });
 function t(k){return (T[LANG]&&T[LANG][k])||(T.da[k])||k;}
 function applyI18n(){
@@ -1508,7 +1512,14 @@ function renderRecord(){
     <div class="tile"><div class="ic">📋</div><div class="n">${tp.count||0}</div><div class="l">${t('st_count')}</div></div>
     <div class="tile pos"><div class="ic">⚡</div><div class="n" style="color:var(--pos)">+${tp.avgEv||0}%</div><div class="l">${t('st_avgev')}</div></div>
   </div>
-  <div class="sub" style="margin:-6px 2px 16px;color:var(--dim);font-size:12.5px">${t('st_subline').replace('{h}',tp.hits||0).replace('{m}',tp.misses||0).replace('{p}',tp.pending||0)}</div>`;
+  <div class="sub" style="margin:-6px 2px 16px;color:var(--dim);font-size:12.5px">${t('st_subline').replace('{h}',tp.hits||0).replace('{m}',tp.misses||0).replace('{p}',tp.pending||0)}</div>
+  <div class="section-label" style="margin:6px 2px 10px">${t('clv_title')}</div>
+  <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-bottom:6px">
+    <div class="tile"><div class="ic">📊</div><div class="n" style="color:${(tp.avgClv||0)>=0?'var(--pos)':'var(--crit)'}">${tp.clvCount?((tp.avgClv>=0?'+':'')+tp.avgClv+'%'):t('clv_na')}</div><div class="l">${t('clv_avg')}</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${tp.clvCount?(tp.beatCloseRate+'%'):t('clv_na')}</div><div class="l">${t('clv_beat')}</div></div>
+    <div class="tile"><div class="ic">🔢</div><div class="n">${tp.clvCount||0}</div><div class="l">${t('clv_count')}</div></div>
+  </div>
+  <div class="note" style="margin:0 0 18px">${t('clv_expl')}</div>`;
 
   const rows=(tp.rows||[]);
   let db;
@@ -1526,13 +1537,14 @@ function renderRecord(){
         <td class="num">${fmtOdds(r.fair||0)}</td>
         <td class="num strong">${fmtOdds(r.odds||0)}</td>
         <td class="num pos">+${(r.edge*100).toFixed(1)}%</td>
+        <td class="num" style="color:${r.clv==null?'var(--dim)':(r.clv>=0?'var(--pos)':'var(--crit)')}">${r.clv==null?'—':((r.clv>=0?'+':'')+(r.clv*100).toFixed(1)+'%')}</td>
         <td>${badge}</td></tr>`;}).join("");
     db=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center">
         <span>${t('db_title')} (${rows.length})</span>
         <button class="help-restart" id="expCsv" style="margin:0">${t('export_csv')}</button></div>
       <div class="dbwrap"><table class="dbtable"><thead><tr>
         <th>${t('tbl_date')}</th><th>${t('tbl_match')}</th><th>${t('tbl_market')}</th>
-        <th class="num">${t('tbl_fair')}</th><th class="num">${t('tbl_odds')}</th><th class="num">${t('tbl_ev')}</th><th>${t('tbl_result')}</th>
+        <th class="num">${t('tbl_fair')}</th><th class="num">${t('tbl_odds')}</th><th class="num">${t('tbl_ev')}</th><th class="num">${t('tbl_clv')}</th><th>${t('tbl_result')}</th>
       </tr></thead><tbody>${trs}</tbody></table></div>`;
   }
   el.innerHTML=tiles+db;
@@ -1540,10 +1552,10 @@ function renderRecord(){
 }
 function exportCsv(){
   const rows=(TIPS.rows||[]);
-  const head=["Dato","Kamp","Marked","Valg","Fair","Odds","EV%","Resultat"];
+  const head=["Dato","Kamp","Marked","Valg","Fair","Odds","EV%","CLV%","Resultat"];
   const lines=[head.join(",")].concat(rows.map(r=>{
     const res=r.graded?(r.win?"Vandt":"Tabte"):"Afventer";
-    return [r.commence,`${r.home} - ${r.away}`,r.market,r.pick,r.fair,r.odds,(r.edge*100).toFixed(1),res+(r.score?" "+r.score:"")]
+    return [r.commence,`${r.home} - ${r.away}`,r.market,r.pick,r.fair,r.odds,(r.edge*100).toFixed(1),r.clv==null?"":(r.clv*100).toFixed(1),res+(r.score?" "+r.score:"")]
       .map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",");}));
   const blob=new Blob([lines.join("\n")],{type:"text/csv"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="oddscalc-anbefalinger.csv";a.click();
