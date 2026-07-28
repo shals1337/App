@@ -5,12 +5,18 @@ name: OddsCalc auto-update
 # Hostes gratis på GitHub Pages (peg Pages på mappen football-odds/web).
 #
 # KRÆVER en repo-secret: ODDS_API_KEY  (Settings → Secrets → Actions).
-# Juster 'cron' efter din gratis API-kvote — hvert 30. min er ~1440 kald/md,
-# så hold dig til få ligaer, eller kør sjældnere.
+#
+# KVOTE (gratis = 500 credits/md). Pris pr. liga-kald = markeder × regioner.
+# Denne workflow: 5 ligaer × (h2h+totals=2) × (eu=1) = 10 credits odds
+#   + 5 scores (daysFrom=2 hver) = 10 credits  => ~20 credits/kørsel.
+#   Dagligt = ~600/md (lidt OVER gratis). Vælg én:
+#     - dagligt + kun h2h (drop totals) => ~15/kørsel => ~450/md (passer)
+#     - hver 2. dag som nu => ~300/md (passer med god margin)
+# Hyppig "live" (hvert par min) kan IKKE være gratis her — brug Betfair.
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # hvert 30. minut (juster efter kvote)
+    - cron: "0 */12 * * *"   # hver 12. time (~2/dag). Juster efter kvote.
   workflow_dispatch: {}        # + manuel kørsel-knap
 
 concurrency:
