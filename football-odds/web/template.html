@@ -408,6 +408,14 @@
   .gate-feat{display:flex;flex-direction:column;gap:7px;margin:6px 0 18px;text-align:left}
   .gate-feat div{font-size:12.5px;color:var(--muted)}
   .locked-hint{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim);z-index:111}
+  /* 18+ alders-gate */
+  #ageGate{position:fixed;inset:0;z-index:115;display:none;place-items:center;padding:24px;
+    background:radial-gradient(700px 500px at 50% 30%,rgba(52,211,166,.10),transparent 60%),rgba(6,9,8,.97);backdrop-filter:blur(8px)}
+  #ageGate.show{display:grid}
+  .age-ic{font-size:44px;margin:14px 0 4px}
+  .age-no{width:100%;margin-top:10px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);
+    color:var(--muted);font-weight:700;cursor:pointer;font-size:13px}
+  .age-no:hover{color:var(--text)}
   /* onboarding-tur */
   #tour{position:fixed;inset:0;z-index:105;display:none;place-items:center;padding:24px;
     background:rgba(4,7,6,.82);backdrop-filter:blur(8px)}
@@ -485,6 +493,16 @@
   <div class="splash-logo"><span class="ball">⚽</span> Odds<b>Calc</b></div>
   <div class="splash-tag">Live value & odds</div>
   <div class="splash-bar"><i></i></div>
+</div></div>
+
+<div id="ageGate"><div class="gate-card">
+  <div class="gate-logo"><span>⚽</span> Odds<b>Calc</b></div>
+  <div class="age-ic">🔞</div>
+  <h3 id="ageTitle" style="font-family:var(--display);font-size:20px;margin:4px 0 8px"></h3>
+  <div class="gate-sub" id="ageText"></div>
+  <button class="gate-btn" id="ageYes"></button>
+  <button class="age-no" id="ageNo"></button>
+  <div class="gate-err" id="ageErr" style="min-height:0"></div>
 </div></div>
 
 <div id="gate"><div class="gate-card">
@@ -2020,9 +2038,35 @@ function startAutoRefresh(){
   }
 }
 function maybeTour(){if(!localStorage.getItem("oddscalc_tour"))showTour();}
-setTimeout(()=>{const s=document.getElementById("splash");if(s)s.classList.add("hide");
-  if(REQUIRE_LICENSE&&!licensed())document.getElementById("gate").classList.add("show");
-  else maybeTour();},900);
+// 18+ alders-gate
+function renderAgeGate(){
+  const en=LANG==="en";
+  document.getElementById("ageTitle").textContent=en?"Are you 18 or older?":"Er du 18 år eller derover?";
+  document.getElementById("ageText").innerHTML=en
+    ?"OddsCalc is a betting-analysis tool. You must be at least 18 to use it. Gamble responsibly."
+    :"OddsCalc er et værktøj til analyse af spil-odds. Du skal være mindst 18 år for at bruge det. Spil ansvarligt.";
+  document.getElementById("ageYes").textContent=en?"Yes, I'm 18 or older":"Ja, jeg er 18+";
+  document.getElementById("ageNo").textContent=en?"No":"Nej, jeg er under 18";
+}
+function afterSplash(){
+  if(!localStorage.getItem("oddscalc_age18")){renderAgeGate();document.getElementById("ageGate").classList.add("show");return;}
+  if(REQUIRE_LICENSE&&!licensed()){document.getElementById("gate").classList.add("show");return;}
+  maybeTour();
+}
+document.getElementById("ageYes").addEventListener("click",()=>{
+  localStorage.setItem("oddscalc_age18","1");
+  document.getElementById("ageGate").classList.remove("show");
+  afterSplash();
+});
+document.getElementById("ageNo").addEventListener("click",()=>{
+  const en=LANG==="en";
+  document.getElementById("ageErr").textContent=en
+    ?"Sorry — you must be at least 18 to use OddsCalc."
+    :"Beklager — du skal være mindst 18 år for at bruge OddsCalc.";
+  document.getElementById("ageYes").style.display="none";
+  document.getElementById("ageNo").style.display="none";
+});
+setTimeout(()=>{const s=document.getElementById("splash");if(s)s.classList.add("hide");afterSplash();},900);
 </script>
 </body>
 </html>

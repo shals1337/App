@@ -66,8 +66,27 @@ h1{font-family:var(--display);font-size:46px;line-height:1.08;font-weight:800;le
 .fdisc{font-size:12px;color:var(--dim);line-height:1.7;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .copyr{max-width:1140px;margin:0 auto;padding:0 24px 30px;color:var(--dim);font-size:12px}
 .copyr a{color:var(--accent)}
+#ageGate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(700px 500px at 50% 30%,rgba(52,211,166,.10),transparent 60%),rgba(6,9,8,.97);backdrop-filter:blur(8px)}
+.age-card{width:min(420px,100%);background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 30%),var(--panel);
+  border:1px solid rgba(203,232,222,.17);border-radius:22px;padding:30px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.age-card h3{font-family:var(--display);font-size:20px;font-weight:800;margin:4px 0 8px}
+.age-card p{color:var(--muted);font-size:14px;margin-bottom:20px}
+.age-ic{font-size:44px;margin:12px 0 4px}
+.age-no{width:100%;margin-top:10px;padding:11px;border:1px solid var(--line);border-radius:12px;background:#0a100f;color:var(--muted);font-weight:700;cursor:pointer;font-size:13px}
+.age-no:hover{color:var(--text)}
 @media(max-width:860px){.hero{grid-template-columns:1fr;padding-top:44px}.fgrid,.steps{grid-template-columns:1fr}h1{font-size:34px}nav a:not(.btn-ghost){display:none}}
 </style></head><body>
+<div id="ageGate"><div class="age-card">
+  <div class="logo" style="justify-content:center"><span class="ball">⚽</span> Odds<b>Calc</b></div>
+  <div class="age-ic">🔞</div>
+  <h3>Er du 18 år eller derover?</h3>
+  <p>OddsCalc er et værktøj til analyse af spil-odds. Du skal være mindst 18 år. Spil ansvarligt.</p>
+  <button class="btn-primary wide" onclick="localStorage.setItem('oddscalc_age18','1');document.getElementById('ageGate').style.display='none'">Ja, jeg er 18+</button>
+  <button class="age-no" onclick="this.parentElement.innerHTML='&lt;div class=\'logo\' style=\'justify-content:center\'&gt;&lt;span class=&quot;ball&quot;&gt;⚽&lt;/span&gt; Odds&lt;b&gt;Calc&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;age-ic&quot;&gt;🔞&lt;/div&gt;&lt;p style=&quot;margin-top:14px&quot;&gt;Beklager — du skal være mindst 18 år for at bruge OddsCalc.&lt;/p&gt;'">Nej, jeg er under 18</button>
+</div></div>
+<script>if(localStorage.getItem('oddscalc_age18'))document.getElementById('ageGate').style.display='none';</script>
+
 <header class="lp-head"><div class="lp-bar">
   <div class="logo"><span class="ball">⚽</span> Odds<b>Calc</b></div>
   <nav><a href="#features">Features</a><a href="#pricing">Priser</a><a href="https://claude.ai/code/artifact/b96ea100-4aaa-4e19-a81a-0ee7515d7a6b" target="_blank" rel="noopener" class="btn-ghost">Se demo</a></nav>
