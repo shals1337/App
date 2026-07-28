@@ -22,7 +22,7 @@ from collections import Counter, defaultdict
 
 from oddscalc import api
 from oddscalc.odds import decimal_to_implied, fair_odds, remove_vig
-from oddscalc.probs import EXCHANGES, analyse_match
+from oddscalc.probs import EXCHANGES, SHARP_WEIGHTS, DEFAULT_WEIGHT, analyse_match
 
 
 def _best_odds(prices_by_book: dict, name: str, exclude: set):
@@ -63,11 +63,14 @@ def _totals(ev: dict):
     point = max(by_line, key=lambda p: len(by_line[p]))
     books = by_line[point]
 
-    fair_over = []
-    for prices in books.values():
+    # Vægtet konsensus for Over (skarpe bookmakere tæller mere).
+    wsum, acc = 0.0, 0.0
+    for bname, prices in books.items():
         fo, _ = remove_vig([prices["Over"], prices["Under"]])
-        fair_over.append(fo)
-    prob_over = sum(fair_over) / len(fair_over)
+        wt = SHARP_WEIGHTS.get(bname, DEFAULT_WEIGHT)
+        acc += fo * wt
+        wsum += wt
+    prob_over = acc / wsum if wsum else 0.5
     prob_under = 1 - prob_over
 
     def side(name, prob):
@@ -113,6 +116,7 @@ def build_matches(raw: list) -> list:
                 bookmaker_odds=books,
                 commence_time=norm["commence_time"],
                 league=norm["league"],
+                weights=SHARP_WEIGHTS,
             )
         except ValueError:
             continue

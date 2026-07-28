@@ -212,6 +212,7 @@
   .pos{color:var(--pos);font-weight:800}
   .neg{color:var(--neg,#e07a7a)}
   .valrow{background:linear-gradient(90deg,rgba(62,230,164,.07),transparent)}
+  .kelly{font-size:10px;font-weight:700;color:var(--gold);margin-top:2px;white-space:nowrap}
   .badge{background:linear-gradient(100deg,var(--gold2),var(--gold));color:#20170a;
     font-size:9px;font-weight:900;letter-spacing:.4px;padding:2px 8px;border-radius:6px;margin-left:8px;
     vertical-align:middle;box-shadow:0 0 14px var(--goldglow)}
@@ -447,29 +448,30 @@
 <div id="gate"><div class="gate-card">
   <div class="gate-logo"><span>⚽</span> Odds<b>Calc</b></div>
   <div class="gate-pro">PRO</div>
-  <div class="gate-sub">Lås fuld adgang op med din licensnøgle.</div>
+  <div class="gate-sub" data-i18n="gate_sub">Lås fuld adgang op med din licensnøgle.</div>
   <div class="gate-feat">
-    <div>✅ Live value bets på tværs af 40+ ligaer</div>
-    <div>✅ Arbitrage, målmodel, kupon & bet-tracker</div>
-    <div>✅ Facit / træfsikkerhed & statistik</div>
+    <div data-i18n="gate_f1">✅ Live value bets på tværs af 40+ ligaer</div>
+    <div data-i18n="gate_f2">✅ Arbitrage, målmodel, kupon & bet-tracker</div>
+    <div data-i18n="gate_f3">✅ Facit / træfsikkerhed & statistik</div>
   </div>
   <input id="gateKey" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false">
-  <button class="gate-btn" id="gateActivate">Aktivér licens</button>
+  <button class="gate-btn" id="gateActivate" data-i18n="gate_activate">Aktivér licens</button>
   <div class="gate-err" id="gateErr"></div>
-  <a class="gate-buy" id="gateBuy" href="#" target="_blank" rel="noopener">Har du ikke en nøgle? Køb licens →</a>
+  <a class="gate-buy" id="gateBuy" href="#" target="_blank" rel="noopener" data-i18n="gate_buy">Har du ikke en nøgle? Køb licens →</a>
 </div></div>
 <header>
   <div class="bar">
     <div class="logo"><span class="ball">⚽</span> Odds<b>Calc</b></div>
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input id="q" type="search" placeholder="Søg hold, liga eller land…" autocomplete="off">
+      <input id="q" type="search" data-i18n-ph="search_ph" placeholder="Søg hold, liga eller land…" autocomplete="off">
     </div>
     <div class="hstats">
-      <div class="hstat"><div class="n" id="hMatches">0</div><div class="l">Kampe</div></div>
+      <div class="hstat"><div class="n" id="hMatches">0</div><div class="l" data-i18n="h_matches">Kampe</div></div>
       <div class="hstat val"><div class="n" id="hValue">0</div><div class="l">Value</div></div>
-      <div class="hstat"><div class="n" id="hLeagues">0</div><div class="l">Ligaer</div></div>
+      <div class="hstat"><div class="n" id="hLeagues">0</div><div class="l" data-i18n="h_leagues">Ligaer</div></div>
     </div>
+    <div class="bell" id="langBtn" title="Sprog / Language" style="width:auto;padding:0 12px;font-weight:800;font-size:13px">🌐 <span id="langLbl">DA</span></div>
     <div class="bell" id="bell" title="Alerts">🔔<span class="dot" id="belldot" style="display:none"></span></div>
   </div>
 </header>
@@ -477,61 +479,63 @@
 <div class="shell">
   <div class="rail">
     <nav id="nav">
-      <div class="nav-item active" data-tab="today"><span class="ic">🏆</span> I dag <span class="cnt" id="nToday">0</span></div>
-      <div class="nav-item" data-tab="value"><span class="ic">🔥</span> Value bets <span class="cnt" id="nValue">0</span></div>
-      <div class="nav-item" data-tab="all"><span class="ic">📋</span> Alle kampe <span class="cnt" id="nAll">0</span></div>
-      <div class="nav-item" data-tab="fav"><span class="ic">⭐</span> Favoritter <span class="cnt" id="nFav">0</span></div>
-      <div class="nav-item" data-tab="arb"><span class="ic">🛡️</span> Arbitrage <span class="cnt" id="nArb">0</span></div>
-      <div class="nav-item" data-tab="stats"><span class="ic">📊</span> Statistik</div>
-      <div class="nav-item" data-tab="bank"><span class="ic">📒</span> Min bank</div>
-      <div class="nav-item" data-tab="results"><span class="ic">🎯</span> Resultater <span class="cnt" id="nRes">0</span></div>
-      <div class="nav-item" data-tab="record"><span class="ic">🏅</span> Facit / træfsikkerhed</div>
-      <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> EV-beregner</div>
-      <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> Alerts <span class="cnt" id="nAlerts">0</span></div>
-      <div class="nav-item" data-tab="help"><span class="ic">❓</span> Hjælp / FAQ</div>
-      <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> Roadmap</div>
+      <div class="nav-item active" data-tab="today"><span class="ic">🏆</span> <span data-i18n="nav_today">I dag</span> <span class="cnt" id="nToday">0</span></div>
+      <div class="nav-item" data-tab="value"><span class="ic">🔥</span> <span data-i18n="nav_value">Value bets</span> <span class="cnt" id="nValue">0</span></div>
+      <div class="nav-item" data-tab="all"><span class="ic">📋</span> <span data-i18n="nav_all">Alle kampe</span> <span class="cnt" id="nAll">0</span></div>
+      <div class="nav-item" data-tab="fav"><span class="ic">⭐</span> <span data-i18n="nav_fav">Favoritter</span> <span class="cnt" id="nFav">0</span></div>
+      <div class="nav-item" data-tab="arb"><span class="ic">🛡️</span> <span data-i18n="nav_arb">Arbitrage</span> <span class="cnt" id="nArb">0</span></div>
+      <div class="nav-item" data-tab="stats"><span class="ic">📊</span> <span data-i18n="nav_stats">Statistik</span></div>
+      <div class="nav-item" data-tab="bank"><span class="ic">📒</span> <span data-i18n="nav_bank">Min bank</span></div>
+      <div class="nav-item" data-tab="results"><span class="ic">🎯</span> <span data-i18n="nav_results">Resultater</span> <span class="cnt" id="nRes">0</span></div>
+      <div class="nav-item" data-tab="record"><span class="ic">🏅</span> <span data-i18n="nav_record">Facit / træfsikkerhed</span></div>
+      <div class="nav-item" data-tab="calc"><span class="ic">🧮</span> <span data-i18n="nav_calc">EV-beregner</span></div>
+      <div class="nav-item" data-tab="alerts"><span class="ic">🚨</span> <span data-i18n="nav_alerts">Alerts</span> <span class="cnt" id="nAlerts">0</span></div>
+      <div class="nav-item" data-tab="help"><span class="ic">❓</span> <span data-i18n="nav_help">Hjælp / FAQ</span></div>
+      <div class="nav-item" data-tab="road"><span class="ic">🗺️</span> <span data-i18n="nav_road">Roadmap</span></div>
     </nav>
 
     <div class="filters" id="filters">
-      <h3>Filtre <button id="reset">Nulstil</button></h3>
-      <div class="fg"><label>Land</label><select id="fCountry"></select></div>
-      <div class="fg"><label>Liga</label><select id="fLeague"></select></div>
+      <h3><span data-i18n="f_filters">Filtre</span> <button id="reset" data-i18n="f_reset">Nulstil</button></h3>
+      <div class="fg"><label data-i18n="f_country">Land</label><select id="fCountry"></select></div>
+      <div class="fg"><label data-i18n="f_league">Liga</label><select id="fLeague"></select></div>
       <div class="fg"><label>Bookmaker</label><select id="fBook"></select></div>
-      <div class="fg"><label>Odds-range (bedste)</label>
+      <div class="fg"><label data-i18n="f_oddsrange">Odds-range (bedste)</label>
         <div class="row2"><input type="number" id="fOddMin" placeholder="min" step="0.1" min="1">
         <input type="number" id="fOddMax" placeholder="max" step="0.1" min="1"></div></div>
-      <div class="fg"><label>Min. EV: <span class="evval" id="fEvLbl">vis alt</span></label>
+      <div class="fg"><label><span data-i18n="f_minev">Min. EV</span>: <span class="evval" id="fEvLbl" data-i18n="f_showall">vis alt</span></label>
         <input type="range" id="fEv" class="slider" min="-10" max="30" value="-10" step="1"></div>
-      <div class="fg"><label>Risiko</label>
+      <div class="fg"><label data-i18n="f_risk">Risiko</label>
         <div class="risk-chips">
-          <div class="rchip low" data-risk="low" data-on="1">Lav</div>
-          <div class="rchip med" data-risk="med" data-on="1">Mellem</div>
-          <div class="rchip high" data-risk="high" data-on="1">Høj</div>
+          <div class="rchip low" data-risk="low" data-on="1" data-i18n="f_low">Lav</div>
+          <div class="rchip med" data-risk="med" data-on="1" data-i18n="f_med">Mellem</div>
+          <div class="rchip high" data-risk="high" data-on="1" data-i18n="f_high">Høj</div>
         </div></div>
-      <div class="fg"><label>Starttidspunkt</label><select id="fTime">
-        <option value="all">Alle</option>
-        <option value="3">Næste 3 timer</option>
-        <option value="12">Næste 12 timer</option>
-        <option value="24">I dag / 24t</option>
-        <option value="72">Næste 3 dage</option>
+      <div class="fg"><label data-i18n="f_start">Starttidspunkt</label><select id="fTime">
+        <option value="all" data-i18n="f_all">Alle</option>
+        <option value="3" data-i18n="f_3h">Næste 3 timer</option>
+        <option value="12" data-i18n="f_12h">Næste 12 timer</option>
+        <option value="24" data-i18n="f_24h">I dag / 24t</option>
+        <option value="72" data-i18n="f_72h">Næste 3 dage</option>
       </select></div>
-      <div class="tg"><label class="tg"><input type="checkbox" id="exExch" checked> Ekskludér børser</label></div>
+      <div class="tg"><label class="tg"><input type="checkbox" id="exExch" checked> <span data-i18n="f_exch">Ekskludér børser</span></label></div>
+      <div class="fg" style="margin-top:10px"><label data-i18n="f_bankroll">Bankroll (kr) — til Kelly</label>
+        <input type="number" id="fBankroll" step="100" min="0" value="1000"></div>
     </div>
   </div>
 
   <main>
     <!-- I DAG -->
     <section class="tab show" id="tab-today">
-      <div class="head"><div><h2>Mine bedste spil i dag</h2>
-        <div class="sub">De højest scorede value bets — vægtet efter EV, oddsniveau og antal bookmakere.</div></div></div>
+      <div class="head"><div><h2 data-i18n="title_today">Mine bedste spil i dag</h2>
+        <div class="sub" data-i18n="sub_today">De højest scorede value bets — vægtet efter EV, oddsniveau og antal bookmakere.</div></div></div>
       <div class="tiles" id="tiles"></div>
-      <div class="section-label">🔥 Top value lige nu</div>
+      <div class="section-label" data-i18n="topvalue">🔥 Top value lige nu</div>
       <div class="grid" id="todayList"></div>
     </section>
 
     <!-- VALUE -->
     <section class="tab" id="tab-value">
-      <div class="head"><div><h2>Value bets</h2><div class="sub" id="valueSub"></div></div>
+      <div class="head"><div><h2 data-i18n="nav_value">Value bets</h2><div class="sub" id="valueSub"></div></div>
         <select class="sortsel" id="valueSort">
           <option value="score">Sortér: Score</option>
           <option value="ev">Sortér: Højeste EV</option>
@@ -555,13 +559,13 @@
 
     <!-- FAVORITTER -->
     <section class="tab" id="tab-fav">
-      <div class="head"><div><h2>Favoritter</h2><div class="sub">Tryk på ⭐ på en kamp for at gemme den her.</div></div></div>
+      <div class="head"><div><h2 data-i18n="nav_fav">Favoritter</h2><div class="sub">Tryk på ⭐ på en kamp for at gemme den her.</div></div></div>
       <div class="grid" id="favList"></div>
     </section>
 
     <!-- ARBITRAGE -->
     <section class="tab" id="tab-arb">
-      <div class="head"><div><h2>Arbitrage / sikre spil</h2>
+      <div class="head"><div><h2 data-i18n="title_arb">Arbitrage / sikre spil</h2>
         <div class="sub">Kampe hvor de bedste odds på tværs af bookmakere giver garanteret profit uanset resultat. Ægte arbs er sjældne og kortvarige.</div></div></div>
       <div class="note" style="margin-bottom:16px">💡 Fordel indsatsen som vist, så vinder du det samme uanset udfaldet. Odds skifter hurtigt — tjek altid inden du spiller. Børser er inkluderet her (det er der arbs oftest findes).</div>
       <div class="grid" id="arbList"></div>
@@ -569,7 +573,7 @@
 
     <!-- MIN BANK (bet tracker) -->
     <section class="tab" id="tab-bank">
-      <div class="head"><div><h2>Min bank</h2>
+      <div class="head"><div><h2 data-i18n="nav_bank">Min bank</h2>
         <div class="sub">Log dine spil og følg P/L, ROI og win-rate. Gemmes kun i din browser.</div></div></div>
       <div class="tiles" id="bankTiles" style="grid-template-columns:repeat(4,1fr)"></div>
       <div id="bankWL" class="wl"></div>
@@ -588,28 +592,28 @@
 
     <!-- RESULTATER -->
     <section class="tab" id="tab-results">
-      <div class="head"><div><h2>Resultater</h2>
+      <div class="head"><div><h2 data-i18n="nav_results">Resultater</h2>
         <div class="sub">Afsluttede kampe (seneste dage) med 1X2-, over/under- og BTTS-facit. Bruges til at afregne dine spil automatisk.</div></div></div>
       <div id="resultsBody"></div>
     </section>
 
     <!-- FACIT / TRÆFSIKKERHED -->
     <section class="tab" id="tab-record">
-      <div class="head"><div><h2>Facit / træfsikkerhed</h2>
+      <div class="head"><div><h2 data-i18n="nav_record">Facit / træfsikkerhed</h2>
         <div class="sub">Hvor ofte appens value-tips rammer rigtigt. Hvert tip afgøres automatisk når kampen er spillet.</div></div></div>
       <div id="recordBody"></div>
     </section>
 
     <!-- STATISTIK -->
     <section class="tab" id="tab-stats">
-      <div class="head"><div><h2>Statistik</h2>
+      <div class="head"><div><h2 data-i18n="nav_stats">Statistik</h2>
         <div class="sub">Analyse på tværs af alle scannede kampe — opdateres med filtrene i siden.</div></div></div>
       <div id="statsBody"></div>
     </section>
 
     <!-- EV-BEREGNER -->
     <section class="tab" id="tab-calc">
-      <div class="head"><div><h2>EV-beregner</h2>
+      <div class="head"><div><h2 data-i18n="nav_calc">EV-beregner</h2>
         <div class="sub">Indtast dine odds og din egen vurdering — se implied probability, forventet værdi og Kelly-indsats.</div></div></div>
       <div class="calc">
         <div class="field"><label>Decimal odds (fx 2.50)</label>
@@ -630,7 +634,7 @@
 
     <!-- ALERTS -->
     <section class="tab" id="tab-alerts">
-      <div class="head"><div><h2>Alerts</h2>
+      <div class="head"><div><h2 data-i18n="nav_alerts">Alerts</h2>
         <div class="sub">Kampe der starter snart og har value. Slå browser-notifikationer til for at få besked.</div></div>
         <button class="sortsel" id="enableNotif" style="cursor:pointer">🔔 Slå notifikationer til</button></div>
       <div class="note" id="notifState" style="margin-bottom:16px"></div>
@@ -639,7 +643,7 @@
 
     <!-- HJÆLP / FAQ -->
     <section class="tab" id="tab-help">
-      <div class="head"><div><h2>Hjælp / FAQ</h2>
+      <div class="head"><div><h2 data-i18n="nav_help">Hjælp / FAQ</h2>
         <div class="sub">Hvordan appen virker, hvad hver funktion gør — og hvorfor.</div></div></div>
 
       <div class="section-label">🧠 Sådan virker motoren</div>
@@ -664,7 +668,7 @@
 
     <!-- ROADMAP -->
     <section class="tab" id="tab-road">
-      <div class="head"><div><h2>Funktioner & roadmap</h2>
+      <div class="head"><div><h2 data-i18n="title_road">Funktioner & roadmap</h2>
         <div class="sub">Ærlig status: hvad der virker nu, og hvad de resterende ønsker kræver.</div></div></div>
       <div class="road" id="road"></div>
     </section>
@@ -692,6 +696,81 @@ const RESULTS = /*__RESULTS__*/{};
 const TIPS = /*__TIPS__*/{};
 const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
+
+// ---- i18n (dansk / engelsk) ----
+let LANG = localStorage.getItem("oddscalc_lang") || "da";
+const T = {
+  da:{
+    nav_today:"I dag",nav_value:"Value bets",nav_all:"Alle kampe",nav_fav:"Favoritter",nav_arb:"Arbitrage",
+    nav_stats:"Statistik",nav_bank:"Min bank",nav_results:"Resultater",nav_record:"Facit / træfsikkerhed",
+    nav_calc:"EV-beregner",nav_alerts:"Alerts",nav_help:"Hjælp / FAQ",nav_road:"Roadmap",
+    search_ph:"Søg hold, liga eller land…",h_matches:"Kampe",h_leagues:"Ligaer",
+    f_filters:"Filtre",f_reset:"Nulstil",f_country:"Land",f_league:"Liga",f_oddsrange:"Odds-range (bedste)",
+    f_minev:"Min. EV",f_showall:"vis alt",f_risk:"Risiko",f_low:"Lav",f_med:"Mellem",f_high:"Høj",
+    f_start:"Starttidspunkt",f_all:"Alle",f_3h:"Næste 3 timer",f_12h:"Næste 12 timer",f_24h:"I dag / 24t",
+    f_72h:"Næste 3 dage",f_exch:"Ekskludér børser",f_bankroll:"Bankroll (kr) — til Kelly",
+    gate_sub:"Lås fuld adgang op med din licensnøgle.",gate_f1:"✅ Live value bets på tværs af 40+ ligaer",
+    gate_f2:"✅ Arbitrage, målmodel, kupon & bet-tracker",gate_f3:"✅ Facit / træfsikkerhed & statistik",
+    gate_activate:"Aktivér licens",gate_buy:"Har du ikke en nøgle? Køb licens →",
+    gate_err:"Ugyldig nøgle. Tjek at den er tastet korrekt (20 tegn).",
+    th_outcome:"Udfald",th_chance:"Chance (konsensus)",th_impl:"Impl.",th_fair:"Fair",th_best:"Bedste",
+    th_book:"Bookmaker",th_value:"Value",topvalue:"🔥 Top value lige nu",
+    empty_match:"Ingen kampe matcher dine filtre.",showmodel:"🧮 Vis målmodel (BTTS, korrekt resultat)",
+    hidemodel:"🧮 Skjul målmodel",matches:"kampe",withvalue:"med value",books:"bookmakere",margin:"margin",
+  },
+  en:{
+    nav_today:"Today",nav_value:"Value bets",nav_all:"All matches",nav_fav:"Favourites",nav_arb:"Arbitrage",
+    nav_stats:"Statistics",nav_bank:"My bank",nav_results:"Results",nav_record:"Track record",
+    nav_calc:"EV calculator",nav_alerts:"Alerts",nav_help:"Help / FAQ",nav_road:"Roadmap",
+    search_ph:"Search team, league or country…",h_matches:"Matches",h_leagues:"Leagues",
+    f_filters:"Filters",f_reset:"Reset",f_country:"Country",f_league:"League",f_oddsrange:"Odds range (best)",
+    f_minev:"Min. EV",f_showall:"show all",f_risk:"Risk",f_low:"Low",f_med:"Medium",f_high:"High",
+    f_start:"Kick-off",f_all:"All",f_3h:"Next 3 hours",f_12h:"Next 12 hours",f_24h:"Today / 24h",
+    f_72h:"Next 3 days",f_exch:"Exclude exchanges",f_bankroll:"Bankroll — for Kelly",
+    gate_sub:"Unlock full access with your license key.",gate_f1:"✅ Live value bets across 40+ leagues",
+    gate_f2:"✅ Arbitrage, goal model, bet slip & tracker",gate_f3:"✅ Track record & statistics",
+    gate_activate:"Activate license",gate_buy:"Don't have a key? Buy a license →",
+    gate_err:"Invalid key. Check that it is typed correctly (20 characters).",
+    th_outcome:"Outcome",th_chance:"Chance (consensus)",th_impl:"Impl.",th_fair:"Fair",th_best:"Best",
+    th_book:"Bookmaker",th_value:"Value",topvalue:"🔥 Top value right now",
+    empty_match:"No matches fit your filters.",showmodel:"🧮 Show goal model (BTTS, correct score)",
+    hidemodel:"🧮 Hide goal model",matches:"matches",withvalue:"with value",books:"bookmakers",margin:"margin",
+  }
+};
+Object.assign(T.da,{
+  all_countries:"Alle lande",all_leagues:"Alle ligaer",all_books:"Alle bookmakere",goals:"mål",
+  tl_scanned:"Kampe scannet",tl_valuefound:"Value bets fundet",tl_val24:"Value inden for 24t",tl_avgmargin:"Gns. bookmaker-margin",
+  title_today:"Mine bedste spil i dag",sub_today:"De højest scorede value bets — vægtet efter EV, oddsniveau og antal bookmakere.",
+  sub_value:m=>`${m} kampe med mindst ét value bet (EV ≥ 2%).`,
+  rc_hit:"Ramt rigtigt",rc_miss:"Ramt forkert",rc_rate:"Træfsikkerhed",rc_roi:"ROI (1 enhed/tip)",rc_pending:"Afventer resultat",
+  bk_won:"Penge vundet (kr)",bk_lost:"Penge tabt (kr)",bk_net:"Netto (kr)",bk_wr:"Win-rate",bk_settled:"afgjort",
+  re_finished:"Afsluttede kampe",re_over:"Over 2.5 mål",re_btts:"Begge scorede",re_home:"Hjemmesejr",
+  allbooks:"Alle bookmakere",empty_fav:"Ingen favoritter endnu.",empty_alerts:"Ingen value-kampe starter inden for 6 timer lige nu.",
+  empty_arb:"Ingen arbitrage-muligheder i udvalget lige nu.",empty_rec:"Ingen afgjorte tips endnu.",
+  title_arb:"Arbitrage / sikre spil",title_road:"Funktioner & roadmap",search_prefix:"Søgning"
+});
+Object.assign(T.en,{
+  all_countries:"All countries",all_leagues:"All leagues",all_books:"All bookmakers",goals:"goals",
+  tl_scanned:"Matches scanned",tl_valuefound:"Value bets found",tl_val24:"Value within 24h",tl_avgmargin:"Avg. bookmaker margin",
+  title_today:"My best bets today",sub_today:"The highest-scoring value bets — weighted by EV, odds level and number of bookmakers.",
+  sub_value:m=>`${m} matches with at least one value bet (EV ≥ 2%).`,
+  rc_hit:"Hit",rc_miss:"Missed",rc_rate:"Hit rate",rc_roi:"ROI (1 unit/tip)",rc_pending:"Awaiting result",
+  bk_won:"Money won",bk_lost:"Money lost",bk_net:"Net",bk_wr:"Win rate",bk_settled:"settled",
+  re_finished:"Finished matches",re_over:"Over 2.5 goals",re_btts:"Both scored",re_home:"Home win",
+  allbooks:"All bookmakers",empty_fav:"No favourites yet.",empty_alerts:"No value matches start within 6 hours right now.",
+  empty_arb:"No arbitrage opportunities in the selection right now.",empty_rec:"No settled tips yet.",
+  title_arb:"Arbitrage / sure bets",title_road:"Features & roadmap",search_prefix:"Search"
+});
+function t(k){return (T[LANG]&&T[LANG][k])||(T.da[k])||k;}
+function applyI18n(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{el.textContent=t(el.getAttribute("data-i18n"));});
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{el.placeholder=t(el.getAttribute("data-i18n-ph"));});
+  const ll=document.getElementById("langLbl");if(ll)ll.textContent=LANG.toUpperCase();
+  document.documentElement.lang=LANG;
+}
+function setLang(l){LANG=l;localStorage.setItem("oddscalc_lang",l);applyI18n();
+  if(typeof initFilters==="function")initFilters();renderAll();
+  if(S.tab==="help")renderHelp();switchTab(S.tab);}
 const BUILT_AT = "__BUILT_AT__";
 
 // Bookmaker-hjemmesider til "åbn hos"-knap (ingen ægte deep link fra API'et).
@@ -727,21 +806,28 @@ function tryActivate(){
   const k=document.getElementById("gateKey").value;
   if(licValid(k)){localStorage.setItem("oddscalc_lic",k.toUpperCase().replace(/[^A-Z0-9]/g,""));
     document.getElementById("gateErr").textContent="";document.getElementById("gate").classList.remove("show");}
-  else{document.getElementById("gateErr").textContent="Ugyldig nøgle. Tjek at den er tastet korrekt (20 tegn).";}
+  else{document.getElementById("gateErr").textContent=t('gate_err');}
 }
 
 // ---- land ud fra sport_key ----
 const COUNTRY = {
-  argentina:"Argentina",austria:"Østrig",belgium:"Belgien",brazil:"Brasilien",chile:"Chile",
-  china:"Kina",denmark:"Danmark",england:"England",efl:"England",epl:"England",spl:"Skotland",
-  finland:"Finland",france:"Frankrig",germany:"Tyskland",greece:"Grækenland",italy:"Italien",
-  korea:"Sydkorea",league:"Irland",mexico:"Mexico",netherlands:"Holland",norway:"Norge",
-  poland:"Polen",portugal:"Portugal",russia:"Rusland",spain:"Spanien",sweden:"Sverige",
-  switzerland:"Schweiz",turkey:"Tyrkiet",uefa:"Europa",conmebol:"Sydamerika",usa:"USA"
+  da:{argentina:"Argentina",austria:"Østrig",belgium:"Belgien",brazil:"Brasilien",chile:"Chile",
+   china:"Kina",denmark:"Danmark",england:"England",efl:"England",epl:"England",spl:"Skotland",
+   finland:"Finland",france:"Frankrig",germany:"Tyskland",greece:"Grækenland",italy:"Italien",
+   korea:"Sydkorea",league:"Irland",mexico:"Mexico",netherlands:"Holland",norway:"Norge",
+   poland:"Polen",portugal:"Portugal",russia:"Rusland",spain:"Spanien",sweden:"Sverige",
+   switzerland:"Schweiz",turkey:"Tyrkiet",uefa:"Europa",conmebol:"Sydamerika",usa:"USA",_:"Øvrige"},
+  en:{argentina:"Argentina",austria:"Austria",belgium:"Belgium",brazil:"Brazil",chile:"Chile",
+   china:"China",denmark:"Denmark",england:"England",efl:"England",epl:"England",spl:"Scotland",
+   finland:"Finland",france:"France",germany:"Germany",greece:"Greece",italy:"Italy",
+   korea:"South Korea",league:"Ireland",mexico:"Mexico",netherlands:"Netherlands",norway:"Norway",
+   poland:"Poland",portugal:"Portugal",russia:"Russia",spain:"Spain",sweden:"Sweden",
+   switzerland:"Switzerland",turkey:"Turkey",uefa:"Europe",conmebol:"South America",usa:"USA",_:"Other"}
 };
 function countryOf(m){
   const k=(m.sportKey||"").replace("soccer_","").split("_")[0];
-  return COUNTRY[k]||"Øvrige";
+  const map=COUNTRY[LANG]||COUNTRY.da;
+  return map[k]||map._;
 }
 function leagueShort(l){return (l||"").split(" - ")[0];}
 
@@ -772,7 +858,7 @@ function hasValue(m,exExch){return matchBestEdge(m,exExch)>=MIN_VALUE;}
 
 // ---- tid ----
 function fmtTime(iso){if(!iso)return"";const d=new Date(iso);if(isNaN(d))return iso.slice(0,16).replace("T"," ");
-  return d.toLocaleString("da-DK",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});}
+  return d.toLocaleString(LANG==="en"?"en-GB":"da-DK",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});}
 function hoursUntil(iso){const d=new Date(iso);return (d-Date.now())/3.6e6;}
 
 // ---- favoritter (localStorage) ----
@@ -800,7 +886,14 @@ function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);
 
 // ---- state ----
 const S={tab:"today",q:"",country:"",league:"",book:"",oddMin:null,oddMax:null,
-  minEv:-10,risk:{low:1,med:1,high:1},time:"all",exExch:true,valueSort:"score",allSort:"time"};
+  minEv:-10,risk:{low:1,med:1,high:1},time:"all",exExch:true,valueSort:"score",allSort:"time",
+  bankroll:+(localStorage.getItem("oddscalc_bankroll")||1000)};
+// Half-Kelly indsats for et value-udfald.
+function kellyStake(v){
+  if(v.best<=1||v.edge<=0) return 0;
+  const f=v.edge/(v.best-1);      // fuld Kelly
+  return Math.max(0, f/2*S.bankroll); // half-Kelly (mere konservativt)
+}
 
 // ---- filtrering ----
 function passes(m){
@@ -841,7 +934,7 @@ function outcomeRow(o,idx,pres,m,slip){
     <td class="num">${o.fair.toFixed(2)}</td>
     <td class="num strong">${v.best.toFixed(2)}</td>
     <td>${bet}${add}</td>
-    <td class="num ${cls}">${edge>=0?'+':''}${edge.toFixed(1)}%</td>
+    <td class="num ${cls}">${edge>=0?'+':''}${edge.toFixed(1)}%${isVal?`<div class="kelly" title="Anbefalet ½-Kelly-indsats ud fra din bankroll">½K ${Math.round(kellyStake(v))} kr</div>`:''}</td>
   </tr>`;
 }
 // SVG-sparkline af favorittens bedste odds over tid.
@@ -860,9 +953,9 @@ function sparkline(m){
 }
 function totalsSection(m){
   if(!m.totals) return "";
-  const t=m.totals, pres=["O","U"];
-  const rows=t.outcomes.map((o,i)=>outcomeRow(o,i,pres,m,false)).join("");
-  return `<div class="ou"><div class="ou-h">⚽ Over/Under ${t.point} mål · ${t.books} bookmakere</div>
+  const tt=m.totals, pres=["O","U"];
+  const rows=tt.outcomes.map((o,i)=>outcomeRow(o,i,pres,m,false)).join("");
+  return `<div class="ou"><div class="ou-h">⚽ Over/Under ${tt.point} ${t('goals')} · ${tt.books} ${t('books')}</div>
     <table><tbody>${rows}</tbody></table></div>`;
 }
 function card(m,i){
@@ -889,11 +982,11 @@ function card(m,i){
         <span class="score ${scls}" title="Value-score 0-100">${sc}</span>
       </span>
     </div>
-    <div class="meta">${soon} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} bookmakere · margin ${m.margin.toFixed(1)}% ${sparkline(m)}</div>
-    <table><thead><tr><th></th><th>Chance (konsensus)</th><th title="Implied prob af bedste odds">Impl.</th><th>Fair</th><th>Bedste</th><th>Bookmaker</th><th>Value</th></tr></thead>
+    <div class="meta">${soon} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} ${t('books')} · ${t('margin')} ${m.margin.toFixed(1)}% ${sparkline(m)}</div>
+    <table><thead><tr><th></th><th>${t('th_chance')}</th><th title="Implied">${t('th_impl')}</th><th>${t('th_fair')}</th><th>${t('th_best')}</th><th>${t('th_book')}</th><th>${t('th_value')}</th></tr></thead>
     <tbody>${rows}</tbody></table>
     ${totalsSection(m)}
-    ${n===3?`<button class="modelbtn" data-model="${id.replace(/"/g,'&quot;')}">🧮 Vis målmodel (BTTS, korrekt resultat)</button><div class="model" data-modelfor="${id.replace(/"/g,'&quot;')}"></div>`:''}
+    ${n===3?`<button class="modelbtn" data-model="${id.replace(/"/g,'&quot;')}">${t('showmodel')}</button><div class="model" data-modelfor="${id.replace(/"/g,'&quot;')}"></div>`:''}
   </div>`;
 }
 function matchById(id){return MATCHES.find(m=>matchId(m)===id);}
@@ -901,7 +994,7 @@ function animateBars(container){
   requestAnimationFrame(()=>{container.querySelectorAll(".bar").forEach(b=>{b.style.width=b.dataset.w+"%";});});
 }
 function fillGrid(el,list){
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🔍</div>Ingen kampe matcher dine filtre.</div>`;return;}
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🔍</div>${t('empty_match')}</div>`;return;}
   el.innerHTML=list.map((m,i)=>card(m,i)).join("");
   animateBars(el);
 }
@@ -921,10 +1014,10 @@ function renderToday(){
   const avgMargin=(MATCHES.reduce((s,m)=>s+m.margin,0)/MATCHES.length).toFixed(1);
   const soonV=withValue.filter(m=>{const h=hoursUntil(m.commence);return h>=0&&h<=24;}).length;
   tiles.innerHTML=`
-    <div class="tile"><div class="ic">📋</div><div class="n" data-n="${MATCHES.length}">0</div><div class="l">Kampe scannet</div></div>
-    <div class="tile pos"><div class="ic">🔥</div><div class="n" data-n="${withValue.length}">0</div><div class="l">Value bets fundet</div></div>
-    <div class="tile"><div class="ic">⏱</div><div class="n" data-n="${soonV}">0</div><div class="l">Value inden for 24t</div></div>
-    <div class="tile"><div class="ic">📊</div><div class="n">${avgMargin}%</div><div class="l">Gns. bookmaker-margin</div></div>`;
+    <div class="tile"><div class="ic">📋</div><div class="n" data-n="${MATCHES.length}">0</div><div class="l">${t('tl_scanned')}</div></div>
+    <div class="tile pos"><div class="ic">🔥</div><div class="n" data-n="${withValue.length}">0</div><div class="l">${t('tl_valuefound')}</div></div>
+    <div class="tile"><div class="ic">⏱</div><div class="n" data-n="${soonV}">0</div><div class="l">${t('tl_val24')}</div></div>
+    <div class="tile"><div class="ic">📊</div><div class="n">${avgMargin}%</div><div class="l">${t('tl_avgmargin')}</div></div>`;
   tiles.querySelectorAll(".n[data-n]").forEach(el=>countUp(el,+el.dataset.n));
   const top=sortBy(withValue.filter(passes),"score").slice(0,12);
   fillGrid(document.getElementById("todayList"),top);
@@ -933,19 +1026,19 @@ function renderToday(){
 
 function renderValue(){
   const list=sortBy(MATCHES.filter(m=>hasValue(m,S.exExch)&&passes(m)),S.valueSort);
-  document.getElementById("valueSub").textContent=`${list.length} kampe med mindst ét value bet (EV ≥ 2%).`;
+  document.getElementById("valueSub").textContent=t('sub_value')(list.length);
   fillGrid(document.getElementById("valueList"),list);
 }
 function renderAllTab(){
   const list=sortBy(MATCHES.filter(passes),S.allSort);
-  document.getElementById("allTitle").textContent=S.league?leagueShort(S.league):(S.q?`Søgning: “${S.q}”`:"Alle kampe");
+  document.getElementById("allTitle").textContent=S.league?leagueShort(S.league):(S.q?`${t('search_prefix')}: “${S.q}”`:t('nav_all'));
   document.getElementById("allSub").textContent=`${list.length} kampe · ${list.filter(m=>hasValue(m,S.exExch)).length} med value`;
   fillGrid(document.getElementById("allList"),list);
 }
 function renderFav(){
   const list=MATCHES.filter(m=>favs.has(matchId(m)));
   const el=document.getElementById("favList");
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">⭐</div>Ingen favoritter endnu.<br>Tryk på stjernen på en kamp.</div>`;}
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">⭐</div>${t('empty_fav')}</div>`;}
   else fillGrid(el,sortBy(list,"time"));
   document.getElementById("nFav").textContent=favs.size;
 }
@@ -953,7 +1046,7 @@ function renderAlerts(){
   const list=MATCHES.filter(m=>{const h=hoursUntil(m.commence);return h>=0&&h<=6&&hasValue(m,S.exExch);});
   list.sort((a,b)=>hoursUntil(a.commence)-hoursUntil(b.commence));
   const el=document.getElementById("alertList");
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🚨</div>Ingen value-kampe starter inden for 6 timer lige nu.</div>`;}
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🚨</div>${t('empty_alerts')}</div>`;}
   else fillGrid(el,list);
   document.getElementById("nAlerts").textContent=list.length;
   const dot=document.getElementById("belldot");dot.style.display=list.length?"block":"none";
@@ -1079,7 +1172,7 @@ function openModal(id){
     <h3>${m.home} vs ${m.away}</h3>
     <div class="meta" style="margin:6px 0 14px">${leagueShort(m.league)} · ${countryOf(m)} · 🕒 ${fmtTime(m.commence)} · ${m.books} bookmakere</div>
     ${n===3?`<div class="model show" style="border-top:none;margin-top:0">${modelHtml(m)}</div>`:""}
-    <div class="section-label" style="margin:18px 2px 8px">Alle bookmakere</div>
+    <div class="section-label" style="margin:18px 2px 8px">${t('allbooks')}</div>
     ${cmp}
     ${graph}`;
   document.getElementById("modal").classList.add("show");
@@ -1115,7 +1208,7 @@ function renderArb(){
   rows.sort((x,y)=>y.a.profit-x.a.profit);
   document.getElementById("nArb").textContent=rows.length;
   const el=document.getElementById("arbList");
-  if(!rows.length){el.innerHTML=`<div class="empty"><div class="big">🛡️</div>Ingen arbitrage-muligheder i udvalget lige nu.<br>De er sjældne — prøv at fjerne filtre eller slå børser til.</div>`;return;}
+  if(!rows.length){el.innerHTML=`<div class="empty"><div class="big">🛡️</div>${t('empty_arb')}</div>`;return;}
   el.innerHTML=rows.slice(0,40).map(({m,mk,a},i)=>`
     <div class="card hasvalue" style="animation-delay:${Math.min(i*.03,.5)}s">
       <div class="chead">
@@ -1219,10 +1312,10 @@ function renderBank(){
   settleFromResults();saveBets();
   const s=bankStats();
   document.getElementById("bankTiles").innerHTML=`
-    <div class="tile pos"><div class="ic">🟢</div><div class="n" style="color:var(--pos)">+${Math.round(s.wonKr)}</div><div class="l">Penge vundet (kr)</div></div>
-    <div class="tile"><div class="ic">🔴</div><div class="n" style="color:var(--crit)">−${Math.round(s.lostKr)}</div><div class="l">Penge tabt (kr)</div></div>
-    <div class="tile"><div class="ic">💰</div><div class="n" style="color:${s.profit>=0?'var(--pos)':'var(--crit)'}">${s.profit>=0?'+':''}${Math.round(s.profit)}</div><div class="l">Netto (kr)</div></div>
-    <div class="tile"><div class="ic">🎯</div><div class="n">${s.wr.toFixed(0)}%</div><div class="l">Win-rate (${s.settled} afgjort)</div></div>`;
+    <div class="tile pos"><div class="ic">🟢</div><div class="n" style="color:var(--pos)">+${Math.round(s.wonKr)}</div><div class="l">${t('bk_won')}</div></div>
+    <div class="tile"><div class="ic">🔴</div><div class="n" style="color:var(--crit)">−${Math.round(s.lostKr)}</div><div class="l">${t('bk_lost')}</div></div>
+    <div class="tile"><div class="ic">💰</div><div class="n" style="color:${s.profit>=0?'var(--pos)':'var(--crit)'}">${s.profit>=0?'+':''}${Math.round(s.profit)}</div><div class="l">${t('bk_net')}</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${s.wr.toFixed(0)}%</div><div class="l">${t('bk_wr')} (${s.settled} ${t('bk_settled')})</div></div>`;
   // vundet vs tabt-bjælke
   const tot=s.wonKr+s.lostKr;const wp=tot>0?s.wonKr/tot*100:0;
   document.getElementById("bankWL").innerHTML=tot>0?`
@@ -1250,10 +1343,10 @@ function renderResults(){
   const el=document.getElementById("resultsBody");
   if(!list.length){el.innerHTML=`<div class="empty"><div class="big">🎯</div>Ingen afsluttede resultater i datasættet endnu.</div>`;return;}
   el.innerHTML=`<div class="tiles" style="grid-template-columns:repeat(4,1fr)">
-    <div class="tile"><div class="ic">🎯</div><div class="n">${list.length}</div><div class="l">Afsluttede kampe</div></div>
-    <div class="tile"><div class="ic">⚽</div><div class="n">${Math.round(list.filter(r=>r.hs+r.as>2.5).length/list.length*100)}%</div><div class="l">Over 2.5 mål</div></div>
-    <div class="tile"><div class="ic">🤝</div><div class="n">${Math.round(list.filter(r=>r.hs>0&&r.as>0).length/list.length*100)}%</div><div class="l">Begge scorede</div></div>
-    <div class="tile"><div class="ic">🏠</div><div class="n">${Math.round(list.filter(r=>r.hs>r.as).length/list.length*100)}%</div><div class="l">Hjemmesejr</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${list.length}</div><div class="l">${t('re_finished')}</div></div>
+    <div class="tile"><div class="ic">⚽</div><div class="n">${Math.round(list.filter(r=>r.hs+r.as>2.5).length/list.length*100)}%</div><div class="l">${t('re_over')}</div></div>
+    <div class="tile"><div class="ic">🤝</div><div class="n">${Math.round(list.filter(r=>r.hs>0&&r.as>0).length/list.length*100)}%</div><div class="l">${t('re_btts')}</div></div>
+    <div class="tile"><div class="ic">🏠</div><div class="n">${Math.round(list.filter(r=>r.hs>r.as).length/list.length*100)}%</div><div class="l">${t('re_home')}</div></div>
   </div>`+list.slice(0,80).map(r=>{
     const res=r.hs>r.as?"1":r.hs<r.as?"2":"X";const ou=r.hs+r.as>2.5?"Over":"Under";const btts=r.hs>0&&r.as>0?"Ja":"Nej";
     return `<div class="lrow"><span class="who">${r.home} <span class="vs">vs</span> ${r.away}<div class="sm">${leagueShort(r.league)} · ${fmtTime(r.commence)}</div></span>
@@ -1263,75 +1356,113 @@ function renderResults(){
 
 // ---- facit / træfsikkerhed ----
 function renderRecord(){
-  const t=TIPS||{};const graded=(t.hits||0)+(t.misses||0);
+  const tp=TIPS||{};const graded=(tp.hits||0)+(tp.misses||0);
   const el=document.getElementById("recordBody");
   const tiles=`<div class="tiles" style="grid-template-columns:repeat(5,1fr)">
-    <div class="tile pos"><div class="ic">✅</div><div class="n" style="color:var(--pos)">${t.hits||0}</div><div class="l">Ramt rigtigt</div></div>
-    <div class="tile"><div class="ic">❌</div><div class="n" style="color:var(--crit)">${t.misses||0}</div><div class="l">Ramt forkert</div></div>
-    <div class="tile"><div class="ic">🎯</div><div class="n">${graded?(t.hitRate||0)+'%':'—'}</div><div class="l">Træfsikkerhed</div></div>
-    <div class="tile"><div class="ic">📈</div><div class="n" style="color:${(t.roi||0)>=0?'var(--pos)':'var(--crit)'}">${graded?((t.roi>=0?'+':'')+t.roi+'%'):'—'}</div><div class="l">ROI (1 enhed/tip)</div></div>
-    <div class="tile"><div class="ic">⏳</div><div class="n">${t.pending||0}</div><div class="l">Afventer resultat</div></div>
+    <div class="tile pos"><div class="ic">✅</div><div class="n" style="color:var(--pos)">${tp.hits||0}</div><div class="l">${t('rc_hit')}</div></div>
+    <div class="tile"><div class="ic">❌</div><div class="n" style="color:var(--crit)">${tp.misses||0}</div><div class="l">${t('rc_miss')}</div></div>
+    <div class="tile"><div class="ic">🎯</div><div class="n">${graded?(tp.hitRate||0)+'%':'—'}</div><div class="l">${t('rc_rate')}</div></div>
+    <div class="tile"><div class="ic">📈</div><div class="n" style="color:${(tp.roi||0)>=0?'var(--pos)':'var(--crit)'}">${graded?((tp.roi>=0?'+':'')+tp.roi+'%'):'—'}</div><div class="l">${t('rc_roi')}</div></div>
+    <div class="tile"><div class="ic">⏳</div><div class="n">${tp.pending||0}</div><div class="l">${t('rc_pending')}</div></div>
   </div>`;
   let body;
   if(!graded){
-    body=`<div class="empty"><div class="big">🏅</div>Ingen afgjorte tips endnu.<br>
-      Appen har registreret <b>${t.pending||0}</b> value-tips, der afgøres automatisk når kampene er spillet.<br>
-      <span style="font-size:12px;color:var(--dim)">Facit fyldes op efterhånden som resultaterne kommer ind (den ugentlige opdatering henter dem).</span></div>`;
+    body=`<div class="empty"><div class="big">🏅</div>${t('empty_rec')}<br>
+      <b>${tp.pending||0}</b> ${LANG==='en'?'value tips recorded — graded automatically once matches are played.':'value-tips registreret, der afgøres automatisk når kampene er spillet.'}<br>
+      <span style="font-size:12px;color:var(--dim)">${LANG==='en'?'Fills in as results arrive (the weekly update fetches them).':'Facit fyldes op efterhånden som resultaterne kommer ind.'}</span></div>`;
   } else {
-    const rows=(t.recent||[]).map(r=>`<div class="lrow">
-      <span class="pill2 ${r.win?'p-won':'p-lost'}">${r.win?'✓ Ramt':'✗ Forkert'}</span>
+    const rows=(tp.recent||[]).map(r=>`<div class="lrow">
+      <span class="pill2 ${r.win?'p-won':'p-lost'}">${r.win?(LANG==='en'?'✓ Hit':'✓ Ramt'):(LANG==='en'?'✗ Miss':'✗ Forkert')}</span>
       <span class="who">${r.pick} <span class="sm">(${r.side})</span><div class="sm">${r.home} – ${r.away} · ${leagueShort(r.league)}</div></span>
       <span class="score-badge">${r.score||''}</span>
       <span class="amt" style="color:${r.win?'var(--pos)':'var(--crit)'}">${r.win?('+'+(r.odds-1).toFixed(2)):'−1.00'}</span>
       <span class="book">@ ${r.odds.toFixed(2)}</span></div>`).join("");
-    body=`<div class="section-label">Seneste afgjorte tips</div>${rows}`;
+    body=`<div class="section-label">${LANG==='en'?'Most recent graded tips':'Seneste afgjorte tips'}</div>${rows}`;
   }
   el.innerHTML=tiles+body;
   requestAnimationFrame(()=>document.querySelectorAll("#recordBody .tile .n").forEach(()=>{}));
 }
 
 // ---- hjælp / faq ----
-const HELP_TABS=[
-  ["🏆 I dag","Dashboard med nøgletal og de højest scorede value bets lige nu. Dit hurtige overblik."],
-  ["🔥 Value bets","Alle kampe med mindst ét value bet (EV ≥ 2%). Her ligger mulighederne — sortér efter score, EV eller tid."],
-  ["📋 Alle kampe","Alle scannede kampe uanset value. Brug søgning og filtre til at finde præcis det du leder efter."],
-  ["⭐ Favoritter","Kampe du har markeret med stjernen. Gemmes i din browser."],
-  ["🛡️ Arbitrage","'Sikre spil' hvor de bedste odds på tværs af bookmakere giver garanteret profit uanset resultat — inkl. hvordan du fordeler indsatsen."],
-  ["📊 Statistik","Value pr. land og liga, hvilke ligaer der er skarpest (lavest margin), og hvilke bookmakere der oftest har de bedste odds."],
-  ["📒 Min bank","Log dine spil og se penge vundet vs. tabt, netto, ROI og win-rate. Åbne spil afregnes automatisk mod resultaterne."],
-  ["🎯 Resultater","Afsluttede kampe med 1X2-, over/under- og BTTS-facit. Bruges også til at afregne dine spil."],
-  ["🏅 Facit / træfsikkerhed","Hvor ofte appens egne value-tips rammer rigtigt vs. forkert. Hvert tip afgøres automatisk når kampen er spillet."],
-  ["🧮 EV-beregner","Tast dine egne odds og din vurdering → se implied probability, EV og anbefalet Kelly-indsats."],
-  ["🚨 Alerts","Value-kampe der starter snart. Slå browser-notifikationer til for at få besked."],
-  ["🗺️ Roadmap","Ærlig status over hvad der virker nu, og hvad de resterende ønsker kræver."],
-];
-const HELP_FEAT=[
-  ["🧮 Målmodel (Poisson)","Klik 'Vis målmodel' på en kamp. Udleder forventede mål fra oddsene og beregner selv BTTS, over/under og de mest sandsynlige slutresultater."],
-  ["🎟️ Kupon / akkumulator","Tryk ＋ på udfald for at bygge en kupon: samlet odds, samlet EV og advarsel hvis to valg er fra samme kamp."],
-  ["🔍 Kamp-detaljer","Klik på et kampnavn for at se alle bookmakeres odds side om side (bedste fremhævet), målmodel og odds-graf."],
-  ["📈 Sparkline / historik","Den lille graf viser om favoritodds stiger eller falder over tid. Faldende odds = 'sharp money' strømmer ind."],
-  ["🔗 Bookmaker-knap","Åbner den bookmaker der har de bedste odds for udfaldet."],
-  ["🎚️ Filtre","Land, liga, bookmaker, odds-range, minimum-EV, risiko og starttidspunkt — kombinér frit."],
-];
-const FAQ=[
-  ["Hvad betyder 'value'?","At de bedste tilgængelige odds er højere end den sande chance (konsensus) tilsiger. Det giver positiv forventet værdi — en matematisk fordel på lang sigt."],
-  ["Hvorfor er de høje value-tal (+50%) mistænkelige?","De sidder oftest på outsidere hvor én bookmaker er langsom eller har en holdning. Ægte, holdbar value ligger typisk på 2-5%. Kig altid på risiko-tagget og scoren."],
-  ["Hvad er forskellen på 'fair' og 'bedste' odds?","Fair = de odds der præcis matcher konsensus-chancen (ingen margin). Bedste = de højeste odds nogen bookmaker faktisk tilbyder. Er bedste højere end fair, er der value."],
-  ["Hvorfor kan jeg ekskludere børser?","Børser (Betfair, Matchbook) har næsten ingen margin, så deres odds ligger altid lidt over konsensus og laver falske value-signaler. De tæller dog stadig med i konsensus, fordi de er skarpe."],
-  ["Hvor kommer dataene fra?","Live odds og resultater fra The Odds API — rigtige odds fra 30+ bookmakere. En automatisk opdatering henter friske data."],
-  ["Betyder value at jeg vinder?","Nej. Value = positiv forventet værdi hvis konsensus er korrekt. Enkeltspil kan sagtens tabe; fordelen viser sig først over mange spil. Derfor findes 'Min bank' og 'Facit'."],
-  ["Hvordan regnes værdien i 'Min bank'?","Vundet = gevinst på vindende spil (indsats × (odds−1)). Tabt = indsats på tabende spil. Netto = vundet − tabt. ROI = netto ÷ samlet indsats."],
-  ["Hvad er arbitrage?","Når forskellige bookmakere er så uenige at du kan spille alle udfald og vinde uanset resultat. Sjældent og kortvarigt — og odds skifter hurtigt, så tjek altid inden."],
-  ["Hvordan virker målmodellen?","Den finder de forventede mål (Poisson) der bedst matcher konsensus-oddsene, og beregner derfra markeder API'et ikke leverer, som BTTS og korrekt resultat. Et estimat, ikke et facit."],
-  ["Hvorfor står facit på 0 ramt?","Facit afgøres først når kampene er spillet. Appen har registreret tips, der afgøres automatisk efterhånden som resultaterne kommer ind."],
-];
+const HELP={
+ da:{concepts:["🧠 Sådan virker motoren"],labels:["📑 Fanerne","🔧 Funktioner i kampene","❓ Ofte stillede spørgsmål"],
+  note:"⚠️ <b>Vigtigt:</b> value og modeller er estimater. Positiv EV betyder gevinst <i>på lang sigt hvis konsensus er korrekt</i> — ikke garanti på det enkelte spil. Derfor findes “Min bank” og “Facit”. Spil ansvarligt. 18+.",
+  tabs:[
+   ["🏆 I dag","Dashboard med nøgletal og de højest scorede value bets. Dit hurtige overblik."],
+   ["🔥 Value bets","Alle kampe med mindst ét value bet (EV ≥ 2%). Sortér efter score, EV eller tid."],
+   ["📋 Alle kampe","Alle scannede kampe uanset value. Brug søgning og filtre."],
+   ["⭐ Favoritter","Kampe du har markeret med stjernen. Gemmes i din browser."],
+   ["🛡️ Arbitrage","'Sikre spil' hvor bedste odds på tværs af bookmakere giver garanteret profit — inkl. hvordan du fordeler indsatsen."],
+   ["📊 Statistik","Value pr. land/liga, skarpeste ligaer, og hvilke bookmakere der oftest har bedste odds."],
+   ["📒 Min bank","Log dine spil og se penge vundet vs. tabt, netto, ROI og win-rate. Afregnes automatisk."],
+   ["🎯 Resultater","Afsluttede kampe med 1X2-, over/under- og BTTS-facit."],
+   ["🏅 Facit","Hvor ofte appens value-tips rammer rigtigt vs. forkert. Afgøres automatisk."],
+   ["🧮 EV-beregner","Tast egne odds og din vurdering → implied probability, EV og Kelly-indsats."],
+   ["🚨 Alerts","Value-kampe der starter snart + browser-notifikationer."],
+   ["🗺️ Roadmap","Ærlig status over hvad der virker og hvad der kræver mere."]],
+  feat:[
+   ["🧮 Målmodel (Poisson)","Udleder forventede mål fra oddsene og beregner BTTS, over/under og mest sandsynlige resultater."],
+   ["🎟️ Kupon","Tryk ＋ på udfald: samlet odds, samlet EV og korrelations-advarsel."],
+   ["🔍 Kamp-detaljer","Klik et kampnavn: alle bookmakeres odds side om side, målmodel og odds-graf."],
+   ["📈 Sparkline","Viser om favoritodds stiger/falder. Faldende odds = 'sharp money'."],
+   ["🔗 Bookmaker-knap","Åbner bookmakeren med bedste odds."],
+   ["🎚️ Filtre","Land, liga, bookmaker, odds-range, EV, risiko og tid."]],
+  faq:[
+   ["Hvad betyder 'value'?","At de bedste odds er højere end den sande chance (konsensus) tilsiger — positiv forventet værdi, en matematisk fordel på lang sigt."],
+   ["Hvorfor er høje value-tal (+50%) mistænkelige?","De sidder oftest på outsidere hvor én bookmaker er langsom. Ægte value ligger typisk på 2-5%. Kig på risiko og score."],
+   ["Forskel på 'fair' og 'bedste' odds?","Fair = matcher konsensus (ingen margin). Bedste = højeste odds nogen tilbyder. Bedste > fair = value."],
+   ["Hvorfor ekskludere børser?","Børser har næsten ingen margin, så de laver falske value-signaler. De tæller dog med i konsensus, fordi de er skarpe."],
+   ["Hvor kommer data fra?","Live odds og resultater fra The Odds API — 30+ bookmakere. Opdateres automatisk."],
+   ["Betyder value at jeg vinder?","Nej. Value = positiv forventet værdi hvis konsensus er korrekt. Fordelen viser sig over mange spil."],
+   ["Hvordan regnes 'Min bank'?","Vundet = indsats × (odds−1) på vindere. Tabt = indsats på tabere. Netto = vundet − tabt. ROI = netto ÷ indsats."],
+   ["Hvad er arbitrage?","Når bookmakere er så uenige at du kan spille alle udfald og vinde uanset resultat. Sjældent og kortvarigt."],
+   ["Hvordan virker målmodellen?","Finder de forventede mål (Poisson) der matcher oddsene, og prissætter BTTS/korrekt resultat. Et estimat."],
+   ["Hvorfor står facit på 0 ramt?","Facit afgøres først når kampene er spillet. Tips afgøres automatisk når resultaterne kommer ind."]]},
+ en:{concepts:["🧠 How the engine works"],labels:["📑 The tabs","🔧 In-match features","❓ Frequently asked questions"],
+  note:"⚠️ <b>Important:</b> value and models are estimates. Positive EV means profit <i>long-term if the consensus is correct</i> — not a guarantee on any single bet. That's why 'My bank' and 'Track record' exist. Gamble responsibly. 18+.",
+  tabs:[
+   ["🏆 Today","Dashboard with key figures and the highest-scoring value bets. Your quick overview."],
+   ["🔥 Value bets","All matches with at least one value bet (EV ≥ 2%). Sort by score, EV or time."],
+   ["📋 All matches","Every scanned match regardless of value. Use search and filters."],
+   ["⭐ Favourites","Matches you've starred. Saved in your browser."],
+   ["🛡️ Arbitrage","'Sure bets' where the best odds across bookmakers guarantee a profit — with the stake split."],
+   ["📊 Statistics","Value per country/league, sharpest leagues, and which bookmakers most often have the best odds."],
+   ["📒 My bank","Log your bets and see money won vs lost, net, ROI and win-rate. Settled automatically."],
+   ["🎯 Results","Finished matches with 1X2, over/under and BTTS outcomes."],
+   ["🏅 Track record","How often the app's value tips hit vs miss. Graded automatically."],
+   ["🧮 EV calculator","Enter your own odds and estimate → implied probability, EV and Kelly stake."],
+   ["🚨 Alerts","Value matches starting soon + browser notifications."],
+   ["🗺️ Roadmap","Honest status of what works and what needs more."]],
+  feat:[
+   ["🧮 Goal model (Poisson)","Derives expected goals from the odds and prices BTTS, over/under and the most likely correct scores."],
+   ["🎟️ Bet slip","Tap ＋ on outcomes: combined odds, combined EV and correlation warning."],
+   ["🔍 Match details","Click a fixture: every bookmaker's odds side by side, goal model and odds graph."],
+   ["📈 Sparkline","Shows whether the favourite's odds rise/fall. Falling odds = 'sharp money'."],
+   ["🔗 Bookmaker button","Opens the bookmaker with the best odds."],
+   ["🎚️ Filters","Country, league, bookmaker, odds range, EV, risk and time."]],
+  faq:[
+   ["What does 'value' mean?","The best available odds are higher than the true chance (consensus) implies — positive expected value, a mathematical edge long-term."],
+   ["Why are high value figures (+50%) suspicious?","They usually sit on longshots where one bookmaker is slow. Real value is typically 2-5%. Check the risk tag and score."],
+   ["Difference between 'fair' and 'best' odds?","Fair = matches consensus (no margin). Best = highest odds anyone offers. Best > fair = value."],
+   ["Why exclude exchanges?","Exchanges have almost no margin, so they create false value signals. They still count in the consensus because they're sharp."],
+   ["Where does the data come from?","Live odds and results from The Odds API — 30+ bookmakers. Updated automatically."],
+   ["Does value mean I win?","No. Value = positive expected value if the consensus is correct. The edge shows over many bets."],
+   ["How is 'My bank' calculated?","Won = stake × (odds−1) on winners. Lost = stake on losers. Net = won − lost. ROI = net ÷ staked."],
+   ["What is arbitrage?","When bookmakers disagree enough that you can back every outcome and profit regardless. Rare and short-lived."],
+   ["How does the goal model work?","It finds the expected goals (Poisson) matching the odds, then prices BTTS/correct score. An estimate."],
+   ["Why does the track record show 0 hits?","Tips are graded only once matches are played. They settle automatically as results arrive."]]}
+};
 function renderHelp(){
-  document.getElementById("helpTabs").innerHTML=HELP_TABS.map(([t,d])=>
-    `<div class="hl-row"><div class="t">${t}</div><div class="d">${d}</div></div>`).join("");
-  document.getElementById("helpFeat").innerHTML=HELP_FEAT.map(([t,d])=>
-    `<div class="hl-row"><div class="t">${t}</div><div class="d">${d}</div></div>`).join("");
-  document.getElementById("faq").innerHTML=FAQ.map(([q,a])=>
+  const H=HELP[LANG]||HELP.da;
+  document.getElementById("helpTabs").innerHTML=H.tabs.map(([a,d])=>
+    `<div class="hl-row"><div class="t">${a}</div><div class="d">${d}</div></div>`).join("");
+  document.getElementById("helpFeat").innerHTML=H.feat.map(([a,d])=>
+    `<div class="hl-row"><div class="t">${a}</div><div class="d">${d}</div></div>`).join("");
+  document.getElementById("faq").innerHTML=H.faq.map(([q,a])=>
     `<div class="fq"><div class="fq-q">${q}<span class="chev">▾</span></div><div class="fq-a"><div>${a}</div></div></div>`).join("");
+  document.querySelectorAll("#tab-help .section-label").forEach((el,i)=>{
+    if(i===0)el.textContent=H.concepts[0]; else if(H.labels[i-1])el.textContent=H.labels[i-1];});
+  const note=document.querySelector("#tab-help .note");if(note)note.innerHTML=H.note;
   document.querySelectorAll("#faq .fq-q").forEach(q=>q.addEventListener("click",()=>q.parentElement.classList.toggle("open")));
 }
 
@@ -1404,17 +1535,17 @@ function renderAll(){
 function fillSelect(el,opts,cur){el.innerHTML=opts.map(o=>`<option value="${o.v.replace(/"/g,'&quot;')}"${o.v===cur?' selected':''}>${o.t}</option>`).join("");}
 function initFilters(){
   const countries=[...new Set(MATCHES.map(countryOf))].sort();
-  fillSelect(document.getElementById("fCountry"),[{v:"",t:"Alle lande"}].concat(countries.map(c=>({v:c,t:c}))),"");
+  fillSelect(document.getElementById("fCountry"),[{v:"",t:t('all_countries')}].concat(countries.map(c=>({v:c,t:c}))),S.country);
   refreshLeagueSelect();
   const books=[...new Set(MATCHES.flatMap(m=>m.outcomes.flatMap(o=>[o.bookAll,o.bookNE])).filter(Boolean))].sort();
-  fillSelect(document.getElementById("fBook"),[{v:"",t:"Alle bookmakere"}].concat(books.map(b=>({v:b,t:b}))),"");
+  fillSelect(document.getElementById("fBook"),[{v:"",t:t('all_books')}].concat(books.map(b=>({v:b,t:b}))),S.book);
 }
 function refreshLeagueSelect(){
   const inC=MATCHES.filter(m=>!S.country||countryOf(m)===S.country);
   const counts={};inC.forEach(m=>counts[m.league]=(counts[m.league]||0)+1);
   const lgs=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
   fillSelect(document.getElementById("fLeague"),
-    [{v:"",t:"Alle ligaer"}].concat(lgs.map(l=>({v:l,t:leagueShort(l)+" ("+counts[l]+")"}))),S.league);
+    [{v:"",t:t('all_leagues')}].concat(lgs.map(l=>({v:l,t:leagueShort(l)+" ("+counts[l]+")"}))),S.league);
 }
 
 // ---- events ----
@@ -1438,8 +1569,8 @@ document.querySelector("main").addEventListener("click",e=>{
   const dl=e.target.closest(".detaillink");if(dl){openModal(dl.dataset.detail);return;}
   const mb=e.target.closest(".modelbtn");
   if(mb){const id=mb.dataset.model;const box=document.querySelector(`.model[data-modelfor="${CSS.escape(id)}"]`);
-    if(box){if(box.classList.contains("show")){box.classList.remove("show");mb.textContent="🧮 Vis målmodel (BTTS, korrekt resultat)";}
-      else{const m=matchById(id);if(m){box.innerHTML=modelHtml(m);box.classList.add("show");mb.textContent="🧮 Skjul målmodel";}}}
+    if(box){if(box.classList.contains("show")){box.classList.remove("show");mb.textContent=t('showmodel');}
+      else{const m=matchById(id);if(m){box.innerHTML=modelHtml(m);box.classList.add("show");mb.textContent=t('hidemodel');}}}
     return;}
   // bet-tracker: status-skift + slet
   const del=e.target.closest(".del");
@@ -1468,6 +1599,7 @@ document.getElementById("fEv").addEventListener("input",e=>{S.minEv=+e.target.va
   document.getElementById("fEvLbl").textContent=S.minEv<=-10?"vis alt":(S.minEv>=0?'+':'')+S.minEv+"%";renderAll();});
 document.getElementById("fTime").addEventListener("change",e=>{S.time=e.target.value;renderAll();});
 document.getElementById("exExch").addEventListener("change",e=>{S.exExch=e.target.checked;initFilters();renderAll();});
+document.getElementById("fBankroll").addEventListener("input",e=>{S.bankroll=+e.target.value||0;localStorage.setItem("oddscalc_bankroll",S.bankroll);renderAll();});
 document.querySelectorAll(".rchip").forEach(c=>c.addEventListener("click",()=>{
   const r=c.dataset.risk;S.risk[r]=S.risk[r]?0:1;c.dataset.on=S.risk[r];renderAll();}));
 document.getElementById("valueSort").addEventListener("change",e=>{S.valueSort=e.target.value;renderValue();});
@@ -1519,6 +1651,8 @@ function scheduleNotifs(){
 // ---- init ----
 document.getElementById("foot").innerHTML=
   `Konsensus = gennemsnit af margin-rensede sandsynligheder på tværs af alle bookmakere · Value = konsensus-chance × bedste odds − 1 · Score vægter EV, antal bookmakere og oddsniveau.<br>Data hentet fra The Odds API${BUILT_AT&&!BUILT_AT.startsWith("__")?" · "+fmtTime(BUILT_AT):""}. Kun til analyse — spil ansvarligt. 18+.`;
+document.getElementById("langBtn").addEventListener("click",()=>setLang(LANG==="da"?"en":"da"));
+applyI18n();
 initFilters();renderCalc();renderRoad();renderAll();switchTab("today");
 // licens-gate + splash
 document.getElementById("gateActivate").addEventListener("click",tryActivate);

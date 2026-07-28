@@ -58,19 +58,19 @@ class MatchAnalysis:
 def _fair_probs_per_bookmaker(
     bookmaker_odds: Dict[str, Dict[str, float]],
     outcome_names: List[str],
-) -> List[List[float]]:
+) -> List[tuple]:
     """Rens hver bookmakers marked for margin.
 
-    Returnerer en liste (én pr. bookmaker) af fair sandsynligheder, i samme
-    rækkefølge som ``outcome_names``. Bookmakere der ikke har priser på alle
-    udfald springes over.
+    Returnerer en liste af ``(bookmaker_navn, [fair sandsynligheder])`` i
+    samme rækkefølge som ``outcome_names``. Bookmakere der ikke har priser på
+    alle udfald springes over.
     """
-    per_bookmaker: List[List[float]] = []
-    for prices in bookmaker_odds.values():
-        if not all(name in prices for name in outcome_names):
+    per_bookmaker: List[tuple] = []
+    for name, prices in bookmaker_odds.items():
+        if not all(o in prices for o in outcome_names):
             continue
-        market = [prices[name] for name in outcome_names]
-        per_bookmaker.append(remove_vig(market))
+        market = [prices[o] for o in outcome_names]
+        per_bookmaker.append((name, remove_vig(market)))
     return per_bookmaker
 
 
@@ -78,6 +78,18 @@ def _fair_probs_per_bookmaker(
 # næsten altid lidt over konsensus. De giver derfor falske "value"-signaler
 # og kan valgfrit udelukkes fra jagten på bedste odds.
 EXCHANGES = {"Betfair", "Matchbook", "Smarkets"}
+
+# "Skarpe" bookmakere har den bedste prissætning. Ved at vægte dem højere i
+# konsensus får vi et mere præcist estimat af de sande sandsynligheder.
+SHARP_WEIGHTS = {
+    "Pinnacle": 3.0,
+    "Betfair": 2.0,
+    "Matchbook": 2.0,
+    "Smarkets": 2.0,
+    "BetOnline.ag": 1.5,
+    "Circa Sports": 2.0,
+}
+DEFAULT_WEIGHT = 1.0
 
 
 def analyse_match(
@@ -88,6 +100,7 @@ def analyse_match(
     commence_time: Optional[str] = None,
     league: Optional[str] = None,
     exclude_from_best: Optional[set] = None,
+    weights: Optional[Dict[str, float]] = None,
 ) -> MatchAnalysis:
     """Beregn konsensus-sandsynligheder og value bets for én kamp.
 
@@ -117,11 +130,19 @@ def analyse_match(
             "ingen bookmaker har komplette priser for alle udfald"
         )
 
-    # Konsensus-sandsynlighed pr. udfald = gennemsnit på tværs af bookmakere.
+    # Konsensus-sandsynlighed pr. udfald = (vægtet) gennemsnit på tværs af
+    # bookmakere. Skarpe bookmakere kan vægtes højere (mere præcist estimat).
+    if weights is None:
+        weights = {}
+    w = [weights.get(name, DEFAULT_WEIGHT) for name, _ in fair_per_book]
+    wsum = sum(w) or 1.0
     consensus = [
-        mean(book[i] for book in fair_per_book)
+        sum(book[i] * w[j] for j, (_, book) in enumerate(fair_per_book)) / wsum
         for i in range(len(outcome_names))
     ]
+    # Normalisér så konsensus summer til præcis 1.
+    tot = sum(consensus) or 1.0
+    consensus = [c / tot for c in consensus]
 
     # Gennemsnitlig margin (til info om hvor "dyrt" markedet er).
     overrounds = []
