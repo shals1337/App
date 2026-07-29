@@ -13,12 +13,62 @@ Brug::
 from __future__ import annotations
 
 import json
+import re
 import sys
+import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from collections import Counter, defaultdict
+
+
+# Almindelige klub-"støjord" der fjernes ved navne-matchning på tværs af
+# datakilder (The Odds API vs football-data.org bruger fx "Manchester City"
+# vs "Manchester City FC").
+_CLUB_STOPWORDS = {
+    "fc", "afc", "cf", "sc", "ac", "if", "bk", "fk", "sk", "ssc", "ss",
+    "us", "ud", "cd", "rc", "sv", "vfl", "vfb", "tsg", "sd", "cp", "de",
+    "the", "club", "calcio", "aef", "aek",
+}
+# Kendte alias'er hvor normalisering ikke er nok (kortnavne osv.).
+_TEAM_ALIASES = {
+    "wolves": "wolverhampton wanderers",
+    "spurs": "tottenham hotspur",
+    "man city": "manchester city",
+    "man utd": "manchester united",
+    "man united": "manchester united",
+    "brighton": "brighton hove albion",
+    "nottm forest": "nottingham forest",
+    "inter": "internazionale",
+    "inter milan": "internazionale",
+    "psg": "paris saint germain",
+    "atletico madrid": "atletico de madrid",
+    "betis": "real betis",
+}
+
+
+def normalize_team(name: str) -> str:
+    """Reducér et holdnavn til en robust match-nøgle på tværs af datakilder."""
+    if not name:
+        return ""
+    s = unicodedata.normalize("NFKD", str(name))
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = s.lower()
+    s = re.sub(r"[.\-'&/]", " ", s)
+    s = re.sub(r"[^a-z0-9 ]", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    s = _TEAM_ALIASES.get(s, s)
+    toks = [t for t in s.split(" ") if t and t not in _CLUB_STOPWORDS]
+    return " ".join(toks) if toks else s
+
+
+def _match_keys(home: str, away: str):
+    """Nøgler et resultat kan slås op på: både rå og normaliseret hold-par."""
+    return (
+        f"{home}|{away}".lower(),
+        f"{normalize_team(home)}|{normalize_team(away)}",
+    )
 
 from oddscalc import api
 from oddscalc.odds import decimal_to_implied, fair_odds, remove_vig
@@ -180,8 +230,7 @@ def build_results(scores_raw: list) -> dict:
             hs, as_ = int(smap.get(home)), int(smap.get(away))
         except (TypeError, ValueError):
             continue
-        key = f"{home}|{away}".lower()
-        res[key] = {
+        rec = {
             "id": ev.get("id", ""),
             "home": home,
             "away": away,
@@ -190,6 +239,10 @@ def build_results(scores_raw: list) -> dict:
             "commence": ev.get("commence_time", ""),
             "league": ev.get("sport_title", ""),
         }
+        # Slå både rå og normaliseret hold-par op, så resultater fra en anden
+        # datakilde (fx football-data.org) også matcher tips fra The Odds API.
+        for key in _match_keys(home, away):
+            res.setdefault(key, rec)
     return res
 
 
@@ -218,7 +271,11 @@ def update_tips(matches: list, results: dict, built_at: str = "", history: dict 
         r = by_id.get(tip.get("id"))
         if r:
             return r
-        return results.get(f"{tip['home']}|{tip['away']}".lower())
+        for key in _match_keys(tip["home"], tip["away"]):
+            r = results.get(key)
+            if r:
+                return r
+        return None
 
     # 1) Registrér nye tips fra de aktuelle kampe.
     for m in matches:

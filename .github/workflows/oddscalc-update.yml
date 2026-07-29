@@ -36,16 +36,20 @@ jobs:
         working-directory: football-odds
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          # GRATIS resultat-kilde til facit (ramt/forkert). Hent en nøgle på
+          # https://www.football-data.org/client/register og læg den som
+          # repo-secret FOOTBALL_DATA_KEY. Så bruges odds-credits KUN på odds.
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
         run: |
+          # 1) Odds fra The Odds API (kun h2h+totals for at spare kvoten).
           python - <<'PY'
           import os, json, urllib.request, urllib.parse, sys
           key = os.environ["ODDS_API_KEY"]
-          # Hold dig til få ligaer for at spare gratis-kvoten:
           leagues = [
               "soccer_epl", "soccer_spain_la_liga", "soccer_italy_serie_a",
               "soccer_germany_bundesliga", "soccer_denmark_superliga",
           ]
-          odds, scores = [], []
+          odds = []
           for lg in leagues:
               u = "https://api.the-odds-api.com/v4/sports/%s/odds?%s" % (
                   lg, urllib.parse.urlencode({
@@ -56,17 +60,17 @@ jobs:
                       odds += json.loads(r.read())
               except Exception as e:
                   print("odds", lg, "fejl", e, file=sys.stderr)
-              s = "https://api.the-odds-api.com/v4/sports/%s/scores?%s" % (
-                  lg, urllib.parse.urlencode({"apiKey": key, "daysFrom": 3}))
-              try:
-                  with urllib.request.urlopen(s, timeout=40) as r:
-                      scores += json.loads(r.read())
-              except Exception as e:
-                  print("scores", lg, "fejl", e, file=sys.stderr)
           json.dump(odds, open("all_soccer.json", "w"))
-          json.dump(scores, open("all_scores.json", "w"))
-          print("hentede", len(odds), "kampe,", len(scores), "resultater")
+          print("hentede", len(odds), "kampe")
           PY
+          # 2) Resultater GRATIS fra football-data.org (springer over uden nøgle).
+          if [ -n "$FOOTBALL_DATA_KEY" ]; then
+            python web/results_fd.py 4 all_scores.json || echo "[]" > all_scores.json
+          else
+            echo "Ingen FOOTBALL_DATA_KEY — facit afgøres ikke denne kørsel."
+            echo "[]" > all_scores.json
+          fi
+          # 3) Byg siden (afgør facit ud fra resultaterne).
           python web/build.py all_soccer.json --scores all_scores.json
 
       - name: Commit updated data
