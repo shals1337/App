@@ -383,6 +383,83 @@ def update_tips(matches: list, results: dict, built_at: str = "", history: dict 
     }
 
 
+def update_picks(matches: list, results: dict, built_at: str = "") -> dict:
+    """Spor modellens træfsikkerhed over ALLE kampe (ikke kun value-tips).
+
+    For hver kamp gemmes modellens mest sandsynlige udfald (favoritten). Når
+    kampen er spillet, afgøres om forudsigelsen ramte. Returnerer en
+    opsummering: hvor mange kampe ud af alle afgjorte den regnede rigtigt i.
+    """
+    picks_path = Path(__file__).parent / "picks.json"
+    picks = {}
+    if picks_path.exists():
+        try:
+            picks = json.loads(picks_path.read_text(encoding="utf-8"))
+        except ValueError:
+            picks = {}
+
+    # 1) Registrér modellens favorit for hver aktuel kamp.
+    for m in matches:
+        mid = m["id"]
+        if mid in picks:
+            continue  # allerede gemt (favoritten fastholdes fra første måling)
+        if not m["outcomes"]:
+            continue
+        best_i = max(range(len(m["outcomes"])), key=lambda i: m["outcomes"][i]["prob"])
+        o = m["outcomes"][best_i]
+        side = (["1", "X", "2"] if len(m["outcomes"]) == 3 else ["1", "2"])[best_i]
+        picks[mid] = {
+            "id": mid,
+            "home": m["home"],
+            "away": m["away"],
+            "commence": m["commence"],
+            "league": m["league"],
+            "side": side,
+            "pick": o["name"],
+            "prob": o["prob"],
+            "graded": False,
+        }
+
+    # 2) Afgør ugraderede forudsigelser der nu har et resultat.
+    by_id = {r["id"]: r for r in results.values() if r.get("id")}
+
+    def result_for(p):
+        r = by_id.get(p.get("id"))
+        if r:
+            return r
+        for key in _match_keys(p["home"], p["away"]):
+            r = results.get(key)
+            if r:
+                return r
+        return None
+
+    for p in picks.values():
+        if p.get("graded"):
+            continue
+        r = result_for(p)
+        if not r:
+            continue
+        hs, as_ = r["hs"], r["as"]
+        actual = p["home"] if hs > as_ else (p["away"] if as_ > hs else "Draw")
+        p["graded"] = True
+        p["correct"] = p["pick"] == actual
+        p["score"] = f"{hs}-{as_}"
+
+    picks_path.write_text(
+        json.dumps(picks, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+
+    graded = [p for p in picks.values() if p.get("graded")]
+    correct = sum(1 for p in graded if p.get("correct"))
+    return {
+        "total": len(picks),
+        "graded": len(graded),
+        "correct": correct,
+        "accuracy": round(100 * correct / len(graded), 1) if graded else 0,
+    }
+
+
 def main(argv: list) -> int:
     # Simpel arg-parsing: <raw.json> [out.html] [--scores <fil>]
     scores_file = None
@@ -433,6 +510,8 @@ def main(argv: list) -> int:
 
     # Facit + CLV (kræver historik, så det køres efter snapshot er lagt ind).
     tips_summary = update_tips(matches, results, built_at, history)
+    # Model-træfsikkerhed over ALLE kampe (favoritten pr. kamp).
+    picks_summary = update_picks(matches, results, built_at)
     # Ryd kampe der er mere end 2 dage overstået for at holde filen lille.
     hist_path.write_text(
         json.dumps(history, ensure_ascii=False, separators=(",", ":")),
@@ -455,12 +534,14 @@ def main(argv: list) -> int:
     font_css = font_path.read_text(encoding="utf-8") if font_path.exists() else ""
 
     tips_json = json.dumps(tips_summary, ensure_ascii=False, separators=(",", ":"))
+    picks_json = json.dumps(picks_summary, ensure_ascii=False, separators=(",", ":"))
     html = (
         template.replace("/*__FONT__*/", font_css)
         .replace("/*__DATA__*/[]", data_json)
         .replace("/*__HIST__*/{}", hist_json)
         .replace("/*__RESULTS__*/{}", res_json)
         .replace("/*__TIPS__*/{}", tips_json)
+        .replace("/*__PICKS__*/{}", picks_json)
         .replace("__BUILT_AT__", built_at)
     )
 
@@ -479,6 +560,7 @@ def main(argv: list) -> int:
         "results": results,
         "hist": embed_hist,
         "tips": tips_summary,
+        "picks": picks_summary,
     }
     Path(Path(out_path).parent / "data.json").write_text(
         json.dumps(data_bundle, ensure_ascii=False, separators=(",", ":")),

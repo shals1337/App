@@ -812,6 +812,7 @@ let MATCHES = /*__DATA__*/[];
 let HIST = /*__HIST__*/{};
 let RESULTS = /*__RESULTS__*/{};
 let TIPS = /*__TIPS__*/{};
+let PICKS = /*__PICKS__*/{};
 const EXCHANGES = new Set(["Betfair","Matchbook","Smarkets"]);
 const MIN_VALUE = 0.02;
 
@@ -1576,6 +1577,17 @@ function renderRecord(){
     <div class="tile pos"><div class="ic">⚡</div><div class="n" style="color:var(--pos)">+${tp.avgEv||0}%</div><div class="l">${t('st_avgev')}</div></div>
   </div>
   <div class="sub" style="margin:-6px 2px 16px;color:var(--dim);font-size:12.5px">${t('st_subline').replace('{h}',tp.hits||0).replace('{m}',tp.misses||0).replace('{p}',tp.pending||0)}</div>
+  ${(()=>{const pk=PICKS||{};const en=LANG==='en';
+    const acc=pk.graded?pk.accuracy+'%':'—';
+    return `<div class="section-label" style="margin:6px 2px 10px">${en?'Model accuracy — all matches':'Model-træfsikkerhed — alle kampe'}</div>
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-bottom:6px">
+      <div class="tile"><div class="ic">🧠</div><div class="n">${acc}</div><div class="l">${en?'Predictions hit':'Ramte forudsigelser'}</div></div>
+      <div class="tile"><div class="ic">✅</div><div class="n">${pk.correct||0}<span style="color:var(--dim);font-size:16px"> / ${pk.graded||0}</span></div><div class="l">${en?'Matches called right':'Kampe regnet rigtigt'}</div></div>
+      <div class="tile"><div class="ic">📡</div><div class="n">${pk.total||0}</div><div class="l">${en?'Matches tracked':'Kampe fulgt'}</div></div>
+    </div>
+    <div class="note" style="margin:0 0 14px">${en
+      ?'For every match the model predicts the most likely outcome (the favourite). This is how often that prediction was right across all graded matches — not just value bets. Fills in automatically as matches finish.'
+      :'For hver kamp forudsiger modellen det mest sandsynlige udfald (favoritten). Dette er hvor ofte den forudsigelse ramte på tværs af alle afgjorte kampe — ikke kun value-spil. Fyldes ud automatisk efterhånden som kampene spilles.'}</div>`;})()}
   <div class="section-label" style="margin:6px 2px 10px">${t('clv_title')}</div>
   <div class="tiles" style="grid-template-columns:repeat(3,1fr);margin-bottom:6px">
     <div class="tile"><div class="ic">📊</div><div class="n" style="color:${(tp.avgClv||0)>=0?'var(--pos)':'var(--crit)'}">${tp.clvCount?((tp.avgClv>=0?'+':'')+tp.avgClv+'%'):t('clv_na')}</div><div class="l">${t('clv_avg')}</div></div>
@@ -2042,7 +2054,7 @@ async function pollData(){
     if(!d||!Array.isArray(d.matches))throw new Error("bad data");
     pollFails=0;
     if(d.builtAt && d.builtAt!==LAST_BUILT){
-      MATCHES=d.matches; RESULTS=d.results||{}; HIST=d.hist||{}; TIPS=d.tips||{};
+      MATCHES=d.matches; RESULTS=d.results||{}; HIST=d.hist||{}; TIPS=d.tips||{}; PICKS=d.picks||{};
       LAST_BUILT=d.builtAt;
       initFilters();renderAll();switchTab(S.tab);
     }
