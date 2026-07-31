@@ -318,8 +318,26 @@ def _totals_market(markets: dict, catalog: dict):
     return best[1] if best else None
 
 
+# Turneringer danske spillere faktisk følger — bruges når vi må vælge få.
+# (Uden dette valgte vi dem med FLEST kampe, hvilket gav klubvenskabskampe
+# og lave divisioner i stedet for de ligaer folk rent faktisk spiller på.)
+DK_PRIORITY_TOURNAMENTS = [
+    39,     # Superliga (DK)
+    34480,  # UEFA Conference League
+    679,    # UEFA Europa League
+    7,      # UEFA Champions League
+    17,     # Premier League
+    8,      # LaLiga
+    23,     # Serie A
+    35,     # Bundesliga
+    34,     # Ligue 1
+    47,     # 1. Division (DK)
+    37,     # Eredivisie
+]
+
+
 def collect(sport_id: int = 10, bookmakers: list = None, days: int = 7,
-            max_tournaments: int = None) -> list:
+            max_tournaments: int = None, prefer: list = None) -> list:
     """Hent alt og returnér kampe i The Odds API's form.
 
     Én forespørgsel pr. bookmaker (plus én til kampene), så det er billigt
@@ -335,11 +353,17 @@ def collect(sport_id: int = 10, bookmakers: list = None, days: int = 7,
     by_id = {f["fixtureId"]: f for f in fx}
     tids = sorted({f["tournamentId"] for f in fx})
     if max_tournaments:
-        # Prioritér turneringer med flest kampe.
         counts = {}
         for f in fx:
             counts[f["tournamentId"]] = counts.get(f["tournamentId"], 0) + 1
-        tids = sorted(counts, key=lambda t: -counts[t])[:max_tournaments]
+        # Foretrukne turneringer først (de ligaer brugerne rent faktisk
+        # spiller på), derefter dem med flest kampe som udfyldning.
+        wanted = [t for t in (prefer or []) if t in counts]
+        rest = sorted(
+            (t for t in counts if t not in set(wanted)),
+            key=lambda t: -counts[t],
+        )
+        tids = (wanted + rest)[:max_tournaments]
         keep = set(tids)
         by_id = {k: v for k, v in by_id.items() if v["tournamentId"] in keep}
 

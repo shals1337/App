@@ -536,25 +536,100 @@ def update_picks(matches: list, results: dict, built_at: str = "") -> dict:
     }
 
 
+def _book_key(title: str) -> str:
+    """Nøgle til at genkende samme bookmaker på tværs af datakilder."""
+    s = normalize_team(title)  # genbruger normaliseringen (accenter, tegn, små bogstaver)
+    return s.replace(" ", "")
+
+
+def merge_events(*sources: list) -> list:
+    """Flet kampe fra flere odds-udbydere til én liste.
+
+    Samme kamp hos to udbydere samles, så alle bookmakere tælles med i
+    konsensus — det giver et mere retvisende billede end én kilde alene.
+    Kampe matches på normaliserede holdnavne + kampdato (samme værn som ved
+    resultat-matchning), og bookmakere der findes hos begge udbydere tages
+    kun med én gang, ellers ville deres pris tælle dobbelt.
+    """
+    merged: list = []
+    index: dict = {}  # (norm_home, norm_away, dato) -> event
+
+    for src in sources:
+        for ev in src or []:
+            home, away = ev.get("home_team", ""), ev.get("away_team", "")
+            if not home or not away:
+                continue
+            day = (ev.get("commence_time") or "")[:10]
+            key = (normalize_team(home), normalize_team(away), day)
+
+            target = index.get(key)
+            if target is None:
+                # Prøv et blødere match (fx "Man City" vs "Manchester City FC").
+                for k, cand in index.items():
+                    if k[2] != day:
+                        continue
+                    if _teams_compatible(cand["home_team"], home) and _teams_compatible(
+                        cand["away_team"], away
+                    ):
+                        target = cand
+                        break
+
+            if target is None:
+                copy = dict(ev)
+                copy["bookmakers"] = list(ev.get("bookmakers") or [])
+                index[key] = copy
+                merged.append(copy)
+                continue
+
+            # Flet bookmakere ind — spring dem over vi allerede har.
+            have = {_book_key(b.get("title", "")) for b in target["bookmakers"]}
+            for b in ev.get("bookmakers") or []:
+                bk = _book_key(b.get("title", ""))
+                if bk and bk not in have:
+                    target["bookmakers"].append(b)
+                    have.add(bk)
+            # Behold de rigeste metadata (danske bøger, sportsnavn, land).
+            for field in ("sport_name", "country"):
+                if not target.get(field) and ev.get(field):
+                    target[field] = ev[field]
+    return merged
+
+
 def main(argv: list) -> int:
     # Simpel arg-parsing: <raw.json> [out.html] [--scores <fil>]
     scores_file = None
+    extra_sources = []
     positional = []
     i = 0
     while i < len(argv):
         if argv[i] == "--scores" and i + 1 < len(argv):
             scores_file = argv[i + 1]
             i += 2
+        elif argv[i] == "--merge" and i + 1 < len(argv):
+            # Ekstra odds-kilde (fx OddsPapi) der flettes ind i samme kampe.
+            extra_sources.append(argv[i + 1])
+            i += 2
         else:
             positional.append(argv[i])
             i += 1
     if not positional:
         print(
-            "brug: python web/build.py <raw.json> [out.html] [--scores <fil>]",
+            "brug: python web/build.py <raw.json> [out.html] "
+            "[--merge <anden.json>] [--scores <fil>]",
             file=sys.stderr,
         )
         return 2
     raw = json.load(open(positional[0], encoding="utf-8"))
+    if extra_sources:
+        loaded = [raw]
+        for path in extra_sources:
+            if Path(path).exists():
+                loaded.append(json.load(open(path, encoding="utf-8")))
+            else:
+                print(f"advarsel: {path} findes ikke — springes over", file=sys.stderr)
+        before = sum(len(x) for x in loaded)
+        raw = merge_events(*loaded)
+        print(f"flettede {before} kampe fra {len(loaded)} kilder -> {len(raw)} unikke")
     matches = build_matches(raw)
 
     results = {}

@@ -40,6 +40,11 @@ def main(argv: list) -> int:
     )
     ap.add_argument("--days", type=int, default=7, help="dage frem")
     ap.add_argument(
+        "--prefer-dk",
+        action="store_true",
+        help="prioritér de ligaer danske spillere følger (Superliga, CL/EL/UCL, PL, LaLiga ...)",
+    )
+    ap.add_argument(
         "--books",
         default="",
         help="komma-separerede bookmaker-slugs (standard: danske + skarpe)",
@@ -66,6 +71,7 @@ def main(argv: list) -> int:
                 bookmakers=books,
                 days=args.days,
                 max_tournaments=args.tournaments,
+                prefer=(op.DK_PRIORITY_TOURNAMENTS if args.prefer_dk and sid == 10 else None),
             )
         except op.OddsPapiError as e:
             print(f"  ! springer over: {e}", file=sys.stderr)
