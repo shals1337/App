@@ -27,9 +27,17 @@ from collections import Counter, defaultdict
 # datakilder (The Odds API vs football-data.org bruger fx "Manchester City"
 # vs "Manchester City FC").
 _CLUB_STOPWORDS = {
+    # generiske forkortelser (Europa)
     "fc", "afc", "cf", "sc", "ac", "if", "bk", "fk", "sk", "ssc", "ss",
-    "us", "ud", "cd", "rc", "sv", "vfl", "vfb", "tsg", "sd", "cp", "de",
-    "the", "club", "calcio", "aef", "aek",
+    "us", "ud", "cd", "rc", "sv", "vfl", "vfb", "tsg", "sd", "cp",
+    "cfr", "nk", "hk", "ik", "gk", "ff", "bsc", "tsv", "fsv", "spvgg",
+    "rcd", "ogc", "asd", "ssd", "csd", "afk", "mfk", "zfk",
+    # Syd-/Latinamerika og Portugal/Brasilien
+    "se", "ec", "cr", "ca", "fr", "af", "aa", "ad", "ef", "ce", "cs",
+    "clube", "esporte", "esportivo", "sociedade", "regatas", "recreativo",
+    # småord / artikler
+    "de", "do", "da", "dos", "das", "del", "the", "und",
+    "club", "calcio", "aef", "aek",
 }
 # Kendte alias'er hvor normalisering ikke er nok (kortnavne osv.).
 _TEAM_ALIASES = {
@@ -45,6 +53,21 @@ _TEAM_ALIASES = {
     "psg": "paris saint germain",
     "atletico madrid": "atletico de madrid",
     "betis": "real betis",
+    # by-/sprogvarianter mellem datakilder
+    "bayern munich": "bayern munchen",
+    "bayern muenchen": "bayern munchen",
+    "borussia monchengladbach": "monchengladbach",
+    "borussia mgladbach": "monchengladbach",
+    "cologne": "koln",
+    "eintracht frankfurt": "frankfurt",
+    "sporting lisbon": "sporting",
+    "sporting cp": "sporting",
+    "benfica lisbon": "benfica",
+    "fc copenhagen": "kobenhavn",
+    "copenhagen": "kobenhavn",
+    "fc porto": "porto",
+    "olympiacos": "olympiakos",
+    "red star belgrade": "crvena zvezda",
 }
 
 
@@ -69,6 +92,56 @@ def _match_keys(home: str, away: str):
         f"{home}|{away}".lower(),
         f"{normalize_team(home)}|{normalize_team(away)}",
     )
+
+
+def _teams_compatible(a: str, b: str) -> bool:
+    """Er to holdnavne (efter normalisering) sandsynligvis samme klub?
+
+    Enten identiske, eller den ene navns ord er en delmængde af den andens
+    ("Paranaense" ⊂ "Atletico Paranaense"). Delmængde-reglen bruges kun
+    sammen med at BEGGE hold i kampen matcher + datoen passer, så risikoen
+    for falske match er lille.
+    """
+    na, nb = normalize_team(a), normalize_team(b)
+    if not na or not nb:
+        return False
+    if na == nb:
+        return True
+    ta, tb = set(na.split()), set(nb.split())
+    return bool(ta) and bool(tb) and (ta <= tb or tb <= ta)
+
+
+def _same_fixture(res_rec: dict, home: str, away: str, commence: str = "") -> bool:
+    """Er et resultat den samme kamp som (home, away, commence)?"""
+    if not (
+        _teams_compatible(res_rec.get("home", ""), home)
+        and _teams_compatible(res_rec.get("away", ""), away)
+    ):
+        return False
+    # Dato-værn: kampe skal ligge inden for få dage af hinanden.
+    rc, tc = (res_rec.get("commence") or "")[:10], (commence or "")[:10]
+    if rc and tc:
+        try:
+            from datetime import date
+
+            d1 = date(*(int(x) for x in rc.split("-")))
+            d2 = date(*(int(x) for x in tc.split("-")))
+            return abs((d1 - d2).days) <= 3
+        except (ValueError, TypeError):
+            return True
+    return True
+
+
+def find_result(results: dict, home: str, away: str, commence: str = ""):
+    """Slå et resultat op — først på nøgle, ellers via fleksibelt navne-match."""
+    for key in _match_keys(home, away):
+        r = results.get(key)
+        if r:
+            return r
+    for r in results.values():
+        if _same_fixture(r, home, away, commence):
+            return r
+    return None
 
 from oddscalc import api
 from oddscalc.odds import decimal_to_implied, fair_odds, remove_vig
@@ -271,11 +344,7 @@ def update_tips(matches: list, results: dict, built_at: str = "", history: dict 
         r = by_id.get(tip.get("id"))
         if r:
             return r
-        for key in _match_keys(tip["home"], tip["away"]):
-            r = results.get(key)
-            if r:
-                return r
-        return None
+        return find_result(results, tip["home"], tip["away"], tip.get("commence", ""))
 
     # 1) Registrér nye tips fra de aktuelle kampe.
     for m in matches:
@@ -427,11 +496,7 @@ def update_picks(matches: list, results: dict, built_at: str = "") -> dict:
         r = by_id.get(p.get("id"))
         if r:
             return r
-        for key in _match_keys(p["home"], p["away"]):
-            r = results.get(key)
-            if r:
-                return r
-        return None
+        return find_result(results, p["home"], p["away"], p.get("commence", ""))
 
     for p in picks.values():
         if p.get("graded"):
