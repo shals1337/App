@@ -207,6 +207,16 @@ def markets_catalog(sport_id: int) -> dict:
     """
     if sport_id in _CATALOG_CACHE:
         return _CATALOG_CACHE[sport_id]
+    # API'et returnerer det samme katalog uanset sportsgren, så vi gemmer det
+    # på disk og genbruger det — det sparer en forespørgsel pr. sportsgren.
+    cache_file = os.path.join(os.path.dirname(__file__), "markets_cache.json")
+    if os.path.exists(cache_file):
+        try:
+            cat = json.load(open(cache_file, encoding="utf-8"))
+            _CATALOG_CACHE[sport_id] = cat
+            return cat
+        except (ValueError, OSError):
+            pass
     cat = {}
     for m in _get("markets", sportId=sport_id):
         if m.get("playerProp"):
@@ -221,19 +231,49 @@ def markets_catalog(sport_id: int) -> dict:
             },
         }
     _CATALOG_CACHE[sport_id] = cat
+    try:
+        json.dump(cat, open(cache_file, "w", encoding="utf-8"))
+    except OSError:
+        pass
     return cat
 
 
-def _h2h_market(markets: dict, catalog: dict, home: str, away: str):
-    """Byg et h2h-marked (1X2 eller 2-vejs) i The Odds API-form."""
-    # Find kampvinder-markedet: 1x2 (fodbold) eller moneyline (fx basketball).
-    for mid, m in markets.items():
+# Sportsgrene hvor uafgjort er et ægte udfald i hovedmarkedet.
+# I fx basketball spilles der forlænget, så et "uafgjort" (efter ordinær tid)
+# er et sidemarked som næsten ingen bookmakere prissætter — tages det med som
+# hovedmarked, ser tynd støj ud som kæmpe value, og brugeren taber penge.
+DRAW_SPORTS = {10, 20, 24, 26, 39}  # fodbold, håndbold, rugby, futsal, m.fl.
+
+
+def _h2h_market(markets: dict, catalog: dict, home: str, away: str,
+                sport_id: int = 10):
+    """Byg kampvinder-markedet (1X2 eller 2-vejs) i The Odds API-form.
+
+    Rækkefølgen er vigtig: for sportsgrene uden uafgjort vælges 2-vejs-
+    markedet FØRST, så vi ikke forveksler et sjældent 3-vejs sidemarked med
+    hovedmarkedet.
+    """
+    wants_draw = sport_id in DRAW_SPORTS
+    # Sortér kandidater: det ønskede antal udfald først.
+    def rank(item):
+        mid, _ = item
+        spec = catalog.get(mid) or {}
+        n = len(spec.get("outcomes") or {})
+        if wants_draw:
+            return (0 if n == 3 else 1, mid)
+        return (0 if n == 2 else 1, mid)
+
+    for mid, m in sorted(markets.items(), key=rank):
         spec = catalog.get(mid)
         if not spec or spec["type"] not in ("1x2", "moneyline"):
             continue
-        if spec.get("period") not in (None, "fulltime"):
+        # "fulltime" bruges af holdsport; "result" af fx tennis (2-vejs).
+        if spec.get("period") not in (None, "fulltime", "result"):
             continue
         if not m.get("marketActive"):
+            continue
+        # Uden uafgjort-sport: spring 3-vejs-markeder helt over.
+        if not wants_draw and len(spec.get("outcomes") or {}) == 3:
             continue
         # Udfaldsnavn "1"/"X"/"2" oversættes til holdnavne.
         label = {"1": home, "X": "Draw", "2": away,
@@ -334,7 +374,7 @@ def collect(sport_id: int = 10, bookmakers: list = None, days: int = 7,
                 continue
             info = meta.get(slug, {})
             mk = []
-            h2h = _h2h_market(markets, catalog, home, away)
+            h2h = _h2h_market(markets, catalog, home, away, sport_id)
             if h2h:
                 mk.append(h2h)
             tot = _totals_market(markets, catalog)

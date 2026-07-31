@@ -267,18 +267,29 @@ def build_matches(raw: list) -> list:
             for b, prices in books.items()
             if all(n in prices for n in norm["outcome_names"])
         }
+        # Hvilke af bookmakerne er danske? Brugerne kan reelt kun spille der,
+        # så det skal kunne filtreres og vises i appen.
+        danish = sorted(
+            b.get("title", "")
+            for b in ev.get("bookmakers", [])
+            if b.get("isDanish") and b.get("title") in books
+        )
         match = {
             "id": ev.get("id", ""),
             "home": a.home_team,
             "away": a.away_team,
             "league": a.league or "",
             "sportKey": ev.get("sport_key", ""),
+            "sport": ev.get("sport_name", "") or "Fodbold",
+            "country": ev.get("country", ""),
             "commence": a.commence_time or "",
             "books": a.num_bookmakers,
             "margin": round((a.avg_overround - 1) * 100, 1),
             "outcomes": outcomes,
             "allBooks": all_books,
         }
+        if danish:
+            match["dkBooks"] = danish
         tot = _totals(ev)
         if tot:
             match["totals"] = tot

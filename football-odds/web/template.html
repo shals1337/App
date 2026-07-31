@@ -258,6 +258,14 @@
   .note{font-size:12px;color:var(--dim);background:var(--panel2);border:1px solid var(--line);
     border-radius:12px;padding:12px 14px;margin-top:14px;line-height:1.6}
 
+  /* danske bookmakere — hvor brugeren faktisk kan spille */
+  .dkrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}
+  .dklab{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--gold)}
+  .dkbook{font-size:10.5px;font-weight:700;color:var(--accent);background:var(--chip);
+    border:1px solid var(--chipline);border-radius:6px;padding:2px 8px}
+  /* checkbox-filter */
+  .fg label.chk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--muted)}
+  .fg label.chk input{width:auto;margin:0}
   /* over/under sektion */
   .ou{margin-top:12px;padding-top:11px;border-top:1px dashed var(--line)}
   .ou-h{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);font-weight:800;margin-bottom:8px}
@@ -566,6 +574,8 @@
 
     <div class="filters" id="filters">
       <h3><span data-i18n="f_filters">Filtre</span> <button id="reset" data-i18n="f_reset">Nulstil</button></h3>
+      <div class="fg"><label data-i18n="f_sport">Sportsgren</label><select id="fSport"></select></div>
+      <div class="fg"><label class="chk"><input type="checkbox" id="fDkOnly"> <span data-i18n="f_dkonly">Kun danske bookmakere</span></label></div>
       <div class="fg"><label data-i18n="f_country">Land</label><select id="fCountry"></select></div>
       <div class="fg"><label data-i18n="f_league">Liga</label><select id="fLeague"></select></div>
       <div class="fg"><label>Bookmaker</label><select id="fBook"></select></div>
@@ -826,6 +836,7 @@ const T = {
     nav_calc:"EV-beregner",nav_alerts:"Alerts",nav_help:"Hjælp / FAQ",nav_road:"Roadmap",
     search_ph:"Søg hold, liga eller land…",h_matches:"Kampe",h_leagues:"Ligaer",
     f_filters:"Filtre",f_reset:"Nulstil",f_country:"Land",f_league:"Liga",f_oddsrange:"Odds-range (bedste)",
+    f_sport:"Sportsgren",f_dkonly:"Kun danske bookmakere",
     f_minev:"Min. EV",f_showall:"vis alt",f_risk:"Risiko",f_low:"Lav",f_med:"Mellem",f_high:"Høj",
     f_start:"Starttidspunkt",f_all:"Alle",f_3h:"Næste 3 timer",f_12h:"Næste 12 timer",f_24h:"I dag / 24t",
     f_72h:"Næste 3 dage",f_exch:"Ekskludér børser",f_bankroll:"Bankroll (kr) — til Kelly",
@@ -845,6 +856,7 @@ const T = {
     nav_calc:"EV calculator",nav_alerts:"Alerts",nav_help:"Help / FAQ",nav_road:"Roadmap",
     search_ph:"Search team, league or country…",h_matches:"Matches",h_leagues:"Leagues",
     f_filters:"Filters",f_reset:"Reset",f_country:"Country",f_league:"League",f_oddsrange:"Odds range (best)",
+    f_sport:"Sport",f_dkonly:"Danish bookmakers only",
     f_minev:"Min. EV",f_showall:"show all",f_risk:"Risk",f_low:"Low",f_med:"Medium",f_high:"High",
     f_start:"Kick-off",f_all:"All",f_3h:"Next 3 hours",f_12h:"Next 12 hours",f_24h:"Today / 24h",
     f_72h:"Next 3 days",f_exch:"Exclude exchanges",f_bankroll:"Bankroll — for Kelly",
@@ -861,6 +873,7 @@ const T = {
 };
 Object.assign(T.da,{
   all_countries:"Alle lande",all_leagues:"Alle ligaer",all_books:"Alle bookmakere",goals:"mål",
+  all_sports:"Alle sportsgrene",dk_books:"Spil hos",
   tl_scanned:"Kampe scannet",tl_valuefound:"Value bets fundet",tl_val24:"Value inden for 24t",tl_avgmargin:"Gns. bookmaker-margin",
   title_today:"Mine bedste spil i dag",sub_today:"De højest scorede value bets — vægtet efter EV, oddsniveau og antal bookmakere.",
   sub_value:m=>`${m} kampe med mindst ét value bet (EV ≥ 2%).`,
@@ -887,6 +900,7 @@ Object.assign(T.da,{
 });
 Object.assign(T.en,{
   all_countries:"All countries",all_leagues:"All leagues",all_books:"All bookmakers",goals:"goals",
+  all_sports:"All sports",dk_books:"Bet at",
   tl_scanned:"Matches scanned",tl_valuefound:"Value bets found",tl_val24:"Value within 24h",tl_avgmargin:"Avg. bookmaker margin",
   title_today:"My best bets today",sub_today:"The highest-scoring value bets — weighted by EV, odds level and number of bookmakers.",
   sub_value:m=>`${m} matches with at least one value bet (EV ≥ 2%).`,
@@ -1040,7 +1054,7 @@ function toggleFav(id){favs.has(id)?favs.delete(id):favs.add(id);
 })();
 
 // ---- state ----
-const S={tab:"today",q:"",country:"",league:"",book:"",oddMin:null,oddMax:null,
+const S={tab:"today",q:"",sport:"",dkOnly:false,country:"",league:"",book:"",oddMin:null,oddMax:null,
   minEv:-10,risk:{low:1,med:1,high:1},time:"all",exExch:true,valueSort:"score",allSort:"time",
   bankroll:+(LS.getItem("oddscalc_bankroll")||1000),
   oddsFmt:LS.getItem("oddscalc_oddsfmt")||"decimal"};
@@ -1068,6 +1082,10 @@ function kellyStake(v){
 
 // ---- filtrering ----
 function passes(m){
+  if(S.sport && (m.sport||"Fodbold")!==S.sport) return false;
+  // Danske brugere kan kun spille hos danske bookmakere — så odds andre
+  // steder er reelt uinteressante for dem.
+  if(S.dkOnly && !(m.dkBooks&&m.dkBooks.length)) return false;
   if(S.country && countryOf(m)!==S.country) return false;
   if(S.league && m.league!==S.league) return false;
   if(S.q){const h=(m.home+" "+m.away+" "+m.league+" "+countryOf(m)).toLowerCase();
@@ -1122,6 +1140,11 @@ function sparkline(m){
   const dir=up?"▲":"▼";
   return `<span class="sparkwrap" title="Bedste odds på favoritten over tid"><svg class="spark" width="${W}" height="${H}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.6"/></svg>${dir} ${series[0].toFixed(2)}→${series[series.length-1].toFixed(2)}</span>`;
 }
+// Ikon pr. sportsgren, så multi-sport kan skelnes med et blik.
+const SPORT_ICONS={"Fodbold":"⚽","Basketball":"🏀","Tennis":"🎾","Ishockey":"🏒",
+  "Håndbold":"🤾","Baseball":"⚾","Amerikansk fodbold":"🏈","Volleyball":"🏐",
+  "Bordtennis":"🏓","Snooker":"🎱","Rugby":"🏉","Cricket":"🏏"};
+function sportIcon(m){const s=m.sport||"Fodbold";return (SPORT_ICONS[s]||"🏅")+" "+s+" ·";}
 function totalsSection(m){
   if(!m.totals) return "";
   const tt=m.totals, pres=["O","U"];
@@ -1155,11 +1178,12 @@ function card(m,i){
         <span class="score ${scls}" title="Value-score 0-100">${sc}</span>
       </span>
     </div>
-    <div class="meta">${soon} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} ${t('books')} · ${t('margin')} ${m.margin.toFixed(1)}% ${sparkline(m)}</div>
+    <div class="meta">${soon} ${sportIcon(m)} 🕒 ${fmtTime(m.commence)} · ${countryOf(m)} · ${m.books} ${t('books')} · ${t('margin')} ${m.margin.toFixed(1)}% ${sparkline(m)}</div>
+    ${m.dkBooks&&m.dkBooks.length?`<div class="dkrow"><span class="dklab">🇩🇰 ${t('dk_books')}</span>${m.dkBooks.map(b=>`<span class="dkbook">${b}</span>`).join("")}</div>`:""}
     <div class="tscroll"><table><thead><tr><th></th><th>${t('th_chance')}</th><th title="Implied">${t('th_impl')}</th><th>${t('th_fair')}</th><th>${t('th_best')}</th><th>${t('th_book')}</th><th>${t('th_value')}</th></tr></thead>
     <tbody>${rows}</tbody></table></div>
     ${totalsSection(m)}
-    ${n===3?`<button class="modelbtn" data-model="${id.replace(/"/g,'&quot;')}">${t('showmodel')}</button><div class="model" data-modelfor="${id.replace(/"/g,'&quot;')}"></div>`:''}
+    ${n===3&&(m.sport||"Fodbold")==="Fodbold"?`<button class="modelbtn" data-model="${id.replace(/"/g,'&quot;')}">${t('showmodel')}</button><div class="model" data-modelfor="${id.replace(/"/g,'&quot;')}"></div>`:''}
   </div>`;
 }
 function matchById(id){return MATCHES.find(m=>matchId(m)===id);}
@@ -1893,14 +1917,20 @@ function renderAll(){
 // ---- opsæt filtre ----
 function fillSelect(el,opts,cur){el.innerHTML=opts.map(o=>`<option value="${o.v.replace(/"/g,'&quot;')}"${o.v===cur?' selected':''}>${o.t}</option>`).join("");}
 function initFilters(){
-  const countries=[...new Set(MATCHES.map(countryOf))].sort();
+  const sc={};MATCHES.forEach(m=>{const s=m.sport||"Fodbold";sc[s]=(sc[s]||0)+1;});
+  const sports=Object.keys(sc).sort((a,b)=>sc[b]-sc[a]);
+  fillSelect(document.getElementById("fSport"),
+    [{v:"",t:t('all_sports')}].concat(sports.map(s=>({v:s,t:s+" ("+sc[s]+")"}))),S.sport);
+  const dk=document.getElementById("fDkOnly");if(dk)dk.checked=S.dkOnly;
+  const countries=[...new Set(MATCHES.filter(m=>!S.sport||(m.sport||"Fodbold")===S.sport).map(countryOf))].sort();
   fillSelect(document.getElementById("fCountry"),[{v:"",t:t('all_countries')}].concat(countries.map(c=>({v:c,t:c}))),S.country);
   refreshLeagueSelect();
   const books=[...new Set(MATCHES.flatMap(m=>m.outcomes.flatMap(o=>[o.bookAll,o.bookNE])).filter(Boolean))].sort();
   fillSelect(document.getElementById("fBook"),[{v:"",t:t('all_books')}].concat(books.map(b=>({v:b,t:b}))),S.book);
 }
 function refreshLeagueSelect(){
-  const inC=MATCHES.filter(m=>!S.country||countryOf(m)===S.country);
+  const inC=MATCHES.filter(m=>(!S.sport||(m.sport||"Fodbold")===S.sport)
+    &&(!S.country||countryOf(m)===S.country));
   const counts={};inC.forEach(m=>counts[m.league]=(counts[m.league]||0)+1);
   const lgs=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
   fillSelect(document.getElementById("fLeague"),
@@ -1950,6 +1980,8 @@ document.getElementById("bAdd").addEventListener("click",()=>{
   document.getElementById("bMatch").value="";renderBank();
 });
 document.getElementById("q").addEventListener("input",e=>{S.q=e.target.value.trim().toLowerCase();renderAll();});
+document.getElementById("fSport").addEventListener("change",e=>{S.sport=e.target.value;S.country="";S.league="";initFilters();renderAll();});
+document.getElementById("fDkOnly").addEventListener("change",e=>{S.dkOnly=e.target.checked;renderAll();});
 document.getElementById("fCountry").addEventListener("change",e=>{S.country=e.target.value;S.league="";refreshLeagueSelect();renderAll();});
 document.getElementById("fLeague").addEventListener("change",e=>{S.league=e.target.value;renderAll();});
 document.getElementById("fBook").addEventListener("change",e=>{S.book=e.target.value;renderAll();});
@@ -1966,7 +1998,7 @@ document.querySelectorAll(".rchip").forEach(c=>c.addEventListener("click",()=>{
 document.getElementById("valueSort").addEventListener("change",e=>{S.valueSort=e.target.value;renderValue();});
 document.getElementById("allSort").addEventListener("change",e=>{S.allSort=e.target.value;renderAllTab();});
 document.getElementById("reset").addEventListener("click",()=>{
-  Object.assign(S,{q:"",country:"",league:"",book:"",oddMin:null,oddMax:null,minEv:-10,risk:{low:1,med:1,high:1},time:"all"});
+  Object.assign(S,{q:"",sport:"",dkOnly:false,country:"",league:"",book:"",oddMin:null,oddMax:null,minEv:-10,risk:{low:1,med:1,high:1},time:"all"});
   document.getElementById("q").value="";document.getElementById("fOddMin").value="";document.getElementById("fOddMax").value="";
   document.getElementById("fEv").value=-10;document.getElementById("fEvLbl").textContent="vis alt";document.getElementById("fTime").value="all";
   document.querySelectorAll(".rchip").forEach(c=>c.dataset.on="1");

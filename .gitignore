@@ -20,3 +20,7 @@ Packages/
 
 # Netlify build output
 _site/
+
+# OddsPapi markedskatalog — cache, genhentes automatisk
+markets_cache.json
+all_sports.json
