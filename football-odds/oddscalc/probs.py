@@ -79,6 +79,62 @@ def _fair_probs_per_bookmaker(
 # og kan valgfrit udelukkes fra jagten på bedste odds.
 EXCHANGES = {"Betfair", "Matchbook", "Smarkets"}
 
+# Samme bookmaker hedder forskellige ting hos forskellige datakilder
+# ("Pinnacle" vs "Pinnacle Sports", "Betfair" vs "BetFair Exchange", og
+# lande-udgaver som "Betano DK"). Uden en fælles nøgle bliver skarpe
+# bookmakere ikke vægtet korrekt, og den samme pris kan tælles to gange.
+_BOOK_SUFFIXES = {
+    "sports", "sportsbook", "sport", "exchange", "betting", "bet",
+    "dk", "uk", "de", "se", "no", "fi", "es", "it", "fr", "nl", "com",
+    "ca", "au", "nj", "br", "mx", "pl", "ro", "bg", "pe", "eu",
+}
+_BOOK_ALIASES = {
+    "betfairex": "betfair",
+    "betfairspb": "betfair",
+    "williamhill": "williamhill",
+    "bet365nj": "bet365",
+}
+
+
+def canonical_book(name: str) -> str:
+    """Fælles nøgle for en bookmaker på tværs af datakilder.
+
+    "Pinnacle Sports", "Pinnacle" og "pinnacle" giver alle ``"pinnacle"``.
+    Bruges både til at genkende skarpe bookmakere/børser og til at undgå at
+    tælle den samme bookmaker to gange når kilder flettes.
+    """
+    if not name:
+        return ""
+    s = "".join(c.lower() if c.isalnum() else " " for c in str(name))
+    toks = [t for t in s.split() if t]
+    # Fjern kendte hale-ord (land, "sports", "exchange" ...) — men aldrig
+    # det sidste identificerende ord.
+    while len(toks) > 1 and toks[-1] in _BOOK_SUFFIXES:
+        toks.pop()
+    key = "".join(toks)
+    return _BOOK_ALIASES.get(key, key)
+
+
+# Opslag på normaliseret form, så navnevarianter også rammer.
+_SHARP_CANON = None
+_EXCHANGE_CANON = None
+
+
+def _sharp_weight(name: str, weights: Dict[str, float]) -> float:
+    """Vægt for en bookmaker — også når navnet staves anderledes."""
+    if name in weights:
+        return weights[name]
+    canon = {canonical_book(k): v for k, v in weights.items()}
+    return canon.get(canonical_book(name), DEFAULT_WEIGHT)
+
+
+def is_exchange(name: str) -> bool:
+    """Er dette en odds-børs? Tåler navnevarianter (fx BetFair Exchange)."""
+    global _EXCHANGE_CANON
+    if _EXCHANGE_CANON is None:
+        _EXCHANGE_CANON = {canonical_book(x) for x in EXCHANGES}
+    return canonical_book(name) in _EXCHANGE_CANON
+
 # "Skarpe" bookmakere har den bedste prissætning. Ved at vægte dem højere i
 # konsensus får vi et mere præcist estimat af de sande sandsynligheder.
 SHARP_WEIGHTS = {
@@ -134,7 +190,7 @@ def analyse_match(
     # bookmakere. Skarpe bookmakere kan vægtes højere (mere præcist estimat).
     if weights is None:
         weights = {}
-    w = [weights.get(name, DEFAULT_WEIGHT) for name, _ in fair_per_book]
+    w = [_sharp_weight(name, weights) for name, _ in fair_per_book]
     wsum = sum(w) or 1.0
     consensus = [
         sum(book[i] * w[j] for j, (_, book) in enumerate(fair_per_book)) / wsum

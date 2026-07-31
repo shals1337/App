@@ -145,18 +145,42 @@ def find_result(results: dict, home: str, away: str, commence: str = ""):
 
 from oddscalc import api
 from oddscalc.odds import decimal_to_implied, fair_odds, remove_vig
-from oddscalc.probs import EXCHANGES, SHARP_WEIGHTS, DEFAULT_WEIGHT, analyse_match
+from oddscalc.probs import (EXCHANGES, SHARP_WEIGHTS, DEFAULT_WEIGHT,
+                            analyse_match, canonical_book, is_exchange,
+                            _sharp_weight)
 
 
 def _best_odds(prices_by_book: dict, name: str, exclude: set):
     """Bedste (højeste) odds for et udfald, evt. med bookmakere ekskluderet."""
     best_odds, best_book = 0.0, ""
+    # Sammenlign på kanonisk form, så "BetFair Exchange" også genkendes
+    # som den børs der står i ``exclude`` under navnet "Betfair".
+    excl = {canonical_book(x) for x in (exclude or set())}
     for book, prices in prices_by_book.items():
-        if book in exclude:
+        if canonical_book(book) in excl:
             continue
         if name in prices and prices[name] > best_odds:
             best_odds, best_book = prices[name], book
     return best_odds, best_book
+
+
+def _dedupe_books(prices_by_book: dict) -> dict:
+    """Behold én udgave pr. bookmaker-firma.
+
+    Datakilderne lister ofte samme bookmaker i flere lande-udgaver med
+    stort set identiske priser. Til konsensus skal de tælle som ÉN kilde,
+    ellers vægtes den bookmakers vurdering kunstigt højt. Vi vælger den
+    udgave med flest priser (og derefter alfabetisk), så valget er stabilt
+    mellem kørsler.
+    """
+    groups: dict = {}
+    for book, prices in prices_by_book.items():
+        groups.setdefault(canonical_book(book), []).append((book, prices))
+    out = {}
+    for _, members in groups.items():
+        book, prices = sorted(members, key=lambda kv: (-len(kv[1]), kv[0]))[0]
+        out[book] = prices
+    return out
 
 
 def _totals(ev: dict):
@@ -187,10 +211,11 @@ def _totals(ev: dict):
     books = by_line[point]
 
     # Vægtet konsensus for Over (skarpe bookmakere tæller mere).
+    # Samme bookmaker i flere lande-udgaver må kun tælle én gang.
     wsum, acc = 0.0, 0.0
-    for bname, prices in books.items():
+    for bname, prices in _dedupe_books(books).items():
         fo, _ = remove_vig([prices["Over"], prices["Under"]])
-        wt = SHARP_WEIGHTS.get(bname, DEFAULT_WEIGHT)
+        wt = _sharp_weight(bname, SHARP_WEIGHTS)
         acc += fo * wt
         wsum += wt
     prob_over = acc / wsum if wsum else 0.5
@@ -199,7 +224,7 @@ def _totals(ev: dict):
     def side(name, prob):
         best_all = max((p[name] for p in books.values()), default=0.0)
         book_all = next((b for b, p in books.items() if p[name] == best_all), "")
-        ne = {b: p for b, p in books.items() if b not in EXCHANGES}
+        ne = {b: p for b, p in books.items() if not is_exchange(b)}
         best_ne = max((p[name] for p in ne.values()), default=0.0)
         book_ne = next((b for b, p in ne.items() if p[name] == best_ne), "")
         return {
@@ -231,12 +256,19 @@ def build_matches(raw: list) -> list:
         books = norm["bookmaker_odds"]
         if not books:
             continue
+        # Konsensus må kun tælle hver bookmaker én gang. Datakilderne lister
+        # samme firma flere gange ("Unibet (FR)", "Unibet (SE)", "Unibet (NL)",
+        # "Pinnacle" vs "Pinnacle Sports"); tælles de hver for sig, fylder den
+        # ene bookmakers holdning tre gange så meget som den skal.
+        # Til *bedste odds* bruges stadig alle udgaver — der er de reelle
+        # priser man kan spille til.
+        consensus_books = _dedupe_books(books)
         try:
             a = analyse_match(
                 home_team=norm["home_team"],
                 away_team=norm["away_team"],
                 outcome_names=norm["outcome_names"],
-                bookmaker_odds=books,
+                bookmaker_odds=consensus_books,
                 commence_time=norm["commence_time"],
                 league=norm["league"],
                 weights=SHARP_WEIGHTS,
@@ -537,9 +569,12 @@ def update_picks(matches: list, results: dict, built_at: str = "") -> dict:
 
 
 def _book_key(title: str) -> str:
-    """Nøgle til at genkende samme bookmaker på tværs af datakilder."""
-    s = normalize_team(title)  # genbruger normaliseringen (accenter, tegn, små bogstaver)
-    return s.replace(" ", "")
+    """Nøgle til at genkende samme bookmaker på tværs af datakilder.
+
+    Bruger den fælles kanonisering, så "Pinnacle" og "Pinnacle Sports" ses
+    som samme bookmaker og ikke tælles to gange i konsensus.
+    """
+    return canonical_book(title)
 
 
 def merge_events(*sources: list) -> list:
@@ -581,13 +616,23 @@ def merge_events(*sources: list) -> list:
                 merged.append(copy)
                 continue
 
-            # Flet bookmakere ind — spring dem over vi allerede har.
-            have = {_book_key(b.get("title", "")) for b in target["bookmakers"]}
+            # Flet bookmakere ind — samme bookmaker må kun tælle én gang.
+            have = {}
+            for b in target["bookmakers"]:
+                have[_book_key(b.get("title", ""))] = b
             for b in ev.get("bookmakers") or []:
                 bk = _book_key(b.get("title", ""))
-                if bk and bk not in have:
+                if not bk:
+                    continue
+                if bk not in have:
                     target["bookmakers"].append(b)
-                    have.add(bk)
+                    have[bk] = b
+                elif b.get("isDanish") and not have[bk].get("isDanish"):
+                    # Behold den danske udgave (fx "Betano DK" frem for
+                    # "Betano"), så brugeren kan se hvor de kan spille.
+                    idx = target["bookmakers"].index(have[bk])
+                    target["bookmakers"][idx] = b
+                    have[bk] = b
             # Behold de rigeste metadata (danske bøger, sportsnavn, land).
             for field in ("sport_name", "country"):
                 if not target.get(field) and ev.get(field):
