@@ -2,21 +2,31 @@ name: OddsCalc auto-update
 
 # Gratis "live"-opdatering: kører builderen på en tidsplan, henter friske
 # odds + resultater, og committer web/index.html + web/data.json.
-# Hostes gratis på GitHub Pages (peg Pages på mappen football-odds/web).
 #
-# KRÆVER en repo-secret: ODDS_API_KEY  (Settings → Secrets → Actions).
+# SECRETS (Settings → Secrets and variables → Actions):
+#   ODDS_API_KEY       (påkrævet)  — odds fra the-odds-api.com
+#   FOOTBALL_DATA_KEY  (valgfri)   — GRATIS resultater til facit
 #
-# KVOTE (gratis = 500 credits/md). Pris pr. liga-kald = markeder × regioner.
-# Denne workflow: 5 ligaer × (h2h+totals=2) × (eu=1) = 10 credits odds
-#   + 5 scores (daysFrom=2 hver) = 10 credits  => ~20 credits/kørsel.
-#   Dagligt = ~600/md (lidt OVER gratis). Vælg én:
-#     - dagligt + kun h2h (drop totals) => ~15/kørsel => ~450/md (passer)
-#     - hver 2. dag som nu => ~300/md (passer med god margin)
-# Hyppig "live" (hvert par min) kan IKKE være gratis her — brug Betfair.
+# KVOTE-REGNESTYKKE (gratis = 500 credits/md)
+#   Pris pr. liga-kald = markeder × regioner. Vi henter ALLE aktive
+#   fodbold-ligaer (~41) i regionen eu:
+#     kun h2h        = 1 credit/liga  => ~41 credits pr. kørsel
+#     h2h + totals   = 2 credits/liga => ~82 credits pr. kørsel
+#   Resultater koster 0 (hentes gratis via football-data.org).
+#
+#   Med standarden herunder (kun h2h, hver 3. dag ≈ 10 kørsler/md):
+#     10 × 41 = ~410 credits/md  → passer i gratis-kvoten. ✅
+#
+#   Vil du have over/under + målmodel med (ODDS_MARKETS: h2h,totals),
+#   så halvér frekvensen (fx hver 6. dag) — ellers sprænger du kvoten.
+#   CREDIT_RESERVE stopper hentningen før kvoten er helt opbrugt.
+#
+# Hyppig "live" (hvert par minutter) kan IKKE være gratis — kræver betalt
+# plan eller Betfair Exchange.
 
 on:
   schedule:
-    - cron: "0 */12 * * *"   # hver 12. time (~2/dag). Juster efter kvote.
+    - cron: "0 4 */3 * *"    # hver 3. dag kl. 04 UTC (≈10 kørsler/md)
   workflow_dispatch: {}        # + manuel kørsel-knap
 
 concurrency:
@@ -40,28 +50,55 @@ jobs:
           # https://www.football-data.org/client/register og læg den som
           # repo-secret FOOTBALL_DATA_KEY. Så bruges odds-credits KUN på odds.
           FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+          # Markeder pr. liga. "h2h" = 1 credit/liga (billigst, 1X2-value).
+          # "h2h,totals" = 2 credits/liga og giver også over/under + målmodel.
+          ODDS_MARKETS: "h2h"
+          # Stop hentningen når der er så få credits tilbage (sikkerhedsmargin).
+          CREDIT_RESERVE: "20"
         run: |
-          # 1) Odds fra The Odds API (kun h2h+totals for at spare kvoten).
+          # 1) Odds fra The Odds API for ALLE aktive fodbold-ligaer.
+          #    Ligalisten hentes dynamisk (gratis opslag), så turneringer der
+          #    lige er blevet aktive — fx Europa/Conference League-kvalifikation
+          #    — kommer automatisk med uden at redigere denne fil.
+          #    CREDIT_RESERVE stopper hentningen før kvoten er helt brugt.
           python - <<'PY'
           import os, json, urllib.request, urllib.parse, sys
           key = os.environ["ODDS_API_KEY"]
-          leagues = [
-              "soccer_epl", "soccer_spain_la_liga", "soccer_italy_serie_a",
-              "soccer_germany_bundesliga", "soccer_denmark_superliga",
-          ]
-          odds = []
+          RESERVE = int(os.environ.get("CREDIT_RESERVE", "20"))
+
+          # Gratis opslag: hvilke fodbold-ligaer er aktive lige nu?
+          try:
+              with urllib.request.urlopen(
+                      "https://api.the-odds-api.com/v4/sports?apiKey=" + key,
+                      timeout=40) as r:
+                  sports = json.loads(r.read())
+              leagues = [s["key"] for s in sports
+                         if s.get("group") == "Soccer" and s.get("active")]
+          except Exception as e:
+              print("kunne ikke hente ligaliste:", e, file=sys.stderr)
+              leagues = ["soccer_epl", "soccer_spain_la_liga",
+                         "soccer_italy_serie_a", "soccer_germany_bundesliga",
+                         "soccer_denmark_superliga"]
+          print("aktive ligaer:", len(leagues))
+
+          odds, remaining = [], None
           for lg in leagues:
+              if remaining is not None and int(remaining) <= RESERVE:
+                  print("stopper: kun", remaining, "credits tilbage")
+                  break
               u = "https://api.the-odds-api.com/v4/sports/%s/odds?%s" % (
                   lg, urllib.parse.urlencode({
                       "apiKey": key, "regions": "eu",
-                      "markets": "h2h,totals", "oddsFormat": "decimal"}))
+                      "markets": os.environ.get("ODDS_MARKETS", "h2h"),
+                      "oddsFormat": "decimal"}))
               try:
-                  with urllib.request.urlopen(u, timeout=40) as r:
+                  with urllib.request.urlopen(u, timeout=45) as r:
                       odds += json.loads(r.read())
+                      remaining = r.headers.get("x-requests-remaining", remaining)
               except Exception as e:
                   print("odds", lg, "fejl", e, file=sys.stderr)
           json.dump(odds, open("all_soccer.json", "w"))
-          print("hentede", len(odds), "kampe")
+          print("hentede", len(odds), "kampe | credits tilbage:", remaining)
           PY
           # 2) Resultater GRATIS fra football-data.org (springer over uden nøgle).
           if [ -n "$FOOTBALL_DATA_KEY" ]; then
