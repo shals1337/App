@@ -27,21 +27,49 @@ from datetime import datetime, timedelta, timezone
 
 API = "https://api.football-data.org/v4/matches"
 
+# Gratis-planen afviser intervaller længere end 10 dage (HTTP 400), så
+# længere perioder hentes i flere vinduer.
+MAX_WINDOW_DAYS = 10
 
-def fetch_finished(key: str, days: int = 4) -> list:
-    """Hent færdigspillede kampe de seneste ``days`` dage (alle ligaer i planen)."""
-    today = datetime.now(timezone.utc).date()
+
+def _fetch_window(key: str, date_from, date_to) -> list:
     params = urllib.parse.urlencode(
         {
-            "dateFrom": (today - timedelta(days=days)).isoformat(),
-            "dateTo": today.isoformat(),
+            "dateFrom": date_from.isoformat(),
+            "dateTo": date_to.isoformat(),
             "status": "FINISHED",
         }
     )
     req = urllib.request.Request(API + "?" + params, headers={"X-Auth-Token": key})
     with urllib.request.urlopen(req, timeout=40) as r:
-        data = json.loads(r.read())
-    return data.get("matches", [])
+        return json.loads(r.read()).get("matches", [])
+
+
+def fetch_finished(key: str, days: int = 4) -> list:
+    """Hent færdigspillede kampe de seneste ``days`` dage.
+
+    Perioden deles automatisk i 10-dages vinduer, så man kan hente et
+    efterslæb (fx efter en pause i opdateringerne) uden at API'et afviser
+    kaldet. Kampe kan optræde i flere vinduer og afdubleres på kamp-id.
+    """
+    today = datetime.now(timezone.utc).date()
+    out, seen = [], set()
+    remaining = max(int(days), 0)
+    cursor = today
+    while remaining >= 0:
+        span = min(MAX_WINDOW_DAYS, remaining)
+        start = cursor - timedelta(days=span)
+        for m in _fetch_window(key, start, cursor):
+            mid = m.get("id")
+            if mid in seen:
+                continue
+            seen.add(mid)
+            out.append(m)
+        if remaining == 0:
+            break
+        remaining -= span + 1
+        cursor = start - timedelta(days=1)
+    return out
 
 
 def to_scores_format(matches: list) -> list:
