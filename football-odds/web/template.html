@@ -890,7 +890,7 @@ Object.assign(T.da,{
   dutch_note:"Du dækker flere udfald. Dækning over 100% = du betaler en præmie for sikkerhed; under 100% = garanteret gevinst.",
   help_sub:"Hvordan appen virker, hvad hver funktion gør — og hvorfor.",help_tour:"▶ Vis rundvisning igen",
   st_profit:"Profit (enheder)",st_roi:"ROI",st_hitrate:"Hitrate",st_count:"Antal spil",st_avgev:"Gns. EV",
-  st_subline:"{h} ramt · {m} forkert · {p} afventer",db_title:"📒 Alle gemte anbefalinger",export_csv:"⤓ Eksportér CSV",
+  st_subline:"{h} ramt · {m} forkert · {p} afventer",st_unsettled:"{u} kunne ikke afgøres (resultat ikke tilgængeligt for ligaen)",db_title:"📒 Alle gemte anbefalinger",export_csv:"⤓ Eksportér CSV",
   tbl_date:"Dato",tbl_match:"Kamp",tbl_market:"Marked",tbl_pick:"Valg",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Resultat",tbl_clv:"CLV",
   res_won:"Vandt",res_lost:"Tabte",res_pending:"Afventer",
   clv_title:"🎯 Closing Line Value (CLV)",clv_avg:"Gns. CLV",clv_beat:"Slår slutodds",clv_count:"Målte tips",
@@ -917,7 +917,7 @@ Object.assign(T.en,{
   dutch_note:"You're covering several outcomes. Coverage over 100% = you pay a premium for safety; under 100% = guaranteed profit.",
   help_sub:"How the app works, what each feature does — and why.",help_tour:"▶ Show tour again",
   st_profit:"Profit (units)",st_roi:"ROI",st_hitrate:"Hit rate",st_count:"Bets",st_avgev:"Avg. EV",
-  st_subline:"{h} hit · {m} missed · {p} pending",db_title:"📒 All saved recommendations",export_csv:"⤓ Export CSV",
+  st_subline:"{h} hit · {m} missed · {p} pending",st_unsettled:"{u} could not be settled (no result available for the league)",db_title:"📒 All saved recommendations",export_csv:"⤓ Export CSV",
   tbl_date:"Date",tbl_match:"Match",tbl_market:"Market",tbl_pick:"Pick",tbl_fair:"Fair",tbl_odds:"Odds",tbl_ev:"EV %",tbl_result:"Result",tbl_clv:"CLV",
   res_won:"Won",res_lost:"Lost",res_pending:"Pending",
   clv_title:"🎯 Closing Line Value (CLV)",clv_avg:"Avg. CLV",clv_beat:"Beats the close",clv_count:"Measured tips",
@@ -1600,7 +1600,7 @@ function renderRecord(){
     <div class="tile"><div class="ic">📋</div><div class="n">${tp.count||0}</div><div class="l">${t('st_count')}</div></div>
     <div class="tile pos"><div class="ic">⚡</div><div class="n" style="color:var(--pos)">+${tp.avgEv||0}%</div><div class="l">${t('st_avgev')}</div></div>
   </div>
-  <div class="sub" style="margin:-6px 2px 16px;color:var(--dim);font-size:12.5px">${t('st_subline').replace('{h}',tp.hits||0).replace('{m}',tp.misses||0).replace('{p}',tp.pending||0)}</div>
+  <div class="sub" style="margin:-6px 2px 16px;color:var(--dim);font-size:12.5px">${t('st_subline').replace('{h}',tp.hits||0).replace('{m}',tp.misses||0).replace('{p}',tp.pending||0)}${tp.unsettled?` · ${t('st_unsettled').replace('{u}',tp.unsettled)}`:''}</div>
   ${(()=>{const pk=PICKS||{};const en=LANG==='en';
     const acc=pk.graded?pk.accuracy+'%':'—';
     return `<div class="section-label" style="margin:6px 2px 10px">${en?'Model accuracy — all matches':'Model-træfsikkerhed — alle kampe'}</div>

@@ -469,6 +469,30 @@ def update_tips(matches: list, results: dict, built_at: str = "", history: dict 
     hits = [t for t in graded if t.get("win")]
     misses = [t for t in graded if not t.get("win")]
     pending = [t for t in all_tips if not t.get("graded")]
+    # Et tip "afventer" kun hvis kampen reelt kan nå at blive afgjort.
+    # Resultater kan kun hentes for de ligaer football-data dækker, eller
+    # inden for The Odds API's 3-dages vindue — så tips i andre ligaer, hvis
+    # kamp ligger uger tilbage, bliver aldrig afgjort. At tælle dem som
+    # "afventer" ville få facit til at se mere ufærdigt ud end det er.
+    from datetime import datetime as _dt, timezone as _tz
+
+    def _days_since(t):
+        try:
+            when = _dt.fromisoformat((t.get("commence") or "").replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        return (_dt.now(_tz.utc) - when).days
+
+    UNSETTLED_AFTER_DAYS = 14
+    awaiting, unsettled = [], []
+    for t in pending:
+        age = _days_since(t)
+        if age is not None and age > UNSETTLED_AFTER_DAYS:
+            t["unsettled"] = True
+            unsettled.append(t)
+        else:
+            t.pop("unsettled", None)
+            awaiting.append(t)
     staked = len(graded)
     profit = sum((t["odds"] - 1) if t.get("win") else -1 for t in graded)
     avg_ev = (
@@ -479,7 +503,8 @@ def update_tips(matches: list, results: dict, built_at: str = "", history: dict 
     return {
         "hits": len(hits),
         "misses": len(misses),
-        "pending": len(pending),
+        "pending": len(awaiting),
+        "unsettled": len(unsettled),
         "count": len(all_tips),
         "graded": staked,
         "hitRate": round(len(hits) / staked * 100, 1) if staked else 0,
