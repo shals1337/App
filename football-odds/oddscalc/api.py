@@ -120,9 +120,17 @@ def normalise_event(event: dict) -> dict:
         for market in book.get("markets", []):
             if market.get("key") != "h2h":
                 continue
-            prices = {
-                o["name"]: float(o["price"]) for o in market.get("outcomes", [])
-            }
+            # Odds på 1.00 eller derunder er ikke en rigtig pris, men et
+            # suspenderet/afgjort marked. Sådan en kvotering kan ikke
+            # margin-renses, så bookmakeren udelades for denne kamp.
+            prices = {}
+            for o in market.get("outcomes", []):
+                try:
+                    price = float(o["price"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if price > 1.0:
+                    prices[o["name"]] = price
             # Behold kun bookmakere med priser på alle udfald.
             if all(name in prices for name in outcome_names):
                 bookmaker_odds[book["title"]] = prices

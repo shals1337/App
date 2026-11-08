@@ -199,7 +199,17 @@ def _totals(ev: dict):
             prices = {}
             point = None
             for o in market.get("outcomes", []):
-                prices[o["name"]] = float(o["price"])
+                try:
+                    price = float(o["price"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                # Odds på 1.00 (eller lavere) er ikke en rigtig pris — det er
+                # et suspenderet eller afgjort marked. Tages den med, vælter
+                # margin-rensningen, og før dette tjek stoppede én sådan
+                # kvotering hele bygget.
+                if price <= 1.0:
+                    continue
+                prices[o["name"]] = price
                 point = o.get("point")
             if point is not None and "Over" in prices and "Under" in prices:
                 by_line[point][book["title"]] = prices
